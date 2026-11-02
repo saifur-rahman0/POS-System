@@ -23,7 +23,6 @@ private-keys/
 customer-data/
 
 # Documentation, starter prompts, and agent instructions
-docs/
-prompts/
-AGENTS.md
+pos-antigravity-starter/*
+
 
