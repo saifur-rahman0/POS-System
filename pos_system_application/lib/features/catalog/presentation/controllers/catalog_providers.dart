@@ -246,3 +246,4 @@ final productMutationProvider =
   final apiService = ref.watch(catalogApiServiceProvider);
   return ProductMutationNotifier(apiService, ref);
 });
+

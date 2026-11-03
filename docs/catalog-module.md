@@ -193,3 +193,4 @@ cd pos_system_application
 flutter analyze
 flutter test
 ```
+
