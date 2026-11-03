@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     POSTGRES_DB: str = "pos_db"
     POSTGRES_USER: str = "pos_user"
-    POSTGRES_PASSWORD: str = "change_this_to_a_secure_password"
+    POSTGRES_PASSWORD: str = "pos_password_dev"
     DATABASE_URL: str = ""
 
     # Security
