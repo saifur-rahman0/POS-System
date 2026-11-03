@@ -54,3 +54,19 @@ async def validation_exception_handler(
             }
         },
     )
+
+
+async def database_timeout_exception_handler(
+    request: Request, exc: TimeoutError
+) -> JSONResponse:
+    """Error envelope when database connection times out."""
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "error": {
+                "code": "DATABASE_UNAVAILABLE",
+                "message": "Database connection timed out. Please ensure Docker Desktop and PostgreSQL (pos_shop_db) are running.",
+                "details": {},
+            }
+        },
+    )

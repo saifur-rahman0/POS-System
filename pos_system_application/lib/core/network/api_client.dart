@@ -41,6 +41,20 @@ class ApiClient {
     if (error.response?.data != null) {
       final data = error.response!.data;
       if (data is Map) {
+        final err = data['error'];
+        if (err is Map) {
+          return ApiException(
+            message: err['message']?.toString() ?? 'An error occurred',
+            code: err['code']?.toString(),
+            statusCode: error.response?.statusCode,
+          );
+        } else if (err is String) {
+          return ApiException(
+            message: err,
+            statusCode: error.response?.statusCode,
+          );
+        }
+
         final detail = data['detail'];
         if (detail is Map) {
           return ApiException(

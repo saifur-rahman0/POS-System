@@ -11,10 +11,15 @@ from pydantic import BaseModel
 from app.config import get_settings
 from app.shared.exceptions import AppException
 
-
 DEV_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 DEV_BUSINESS_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
-DEV_PERMISSIONS = {"*", "catalog:read", "catalog:write"}
+DEV_PERMISSIONS = {
+    "*",
+    "catalog:read",
+    "catalog:write",
+    "sales:create",
+    "sales:read",
+}
 
 
 class CurrentUser(BaseModel):

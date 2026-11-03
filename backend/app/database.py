@@ -48,7 +48,7 @@ def get_engine() -> AsyncEngine:
                 pool_pre_ping=True,
                 pool_size=10,
                 max_overflow=20,
-                connect_args={"timeout": 3.0},
+                connect_args={"timeout": 10.0},
             )
     return _engine
 
