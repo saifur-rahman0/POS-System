@@ -1,2 +1,1 @@
 """POS Application package."""
-

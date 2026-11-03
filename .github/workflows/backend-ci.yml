@@ -48,12 +48,12 @@ jobs:
 
       - name: Run Ruff Lint and Format Checks
         run: |
-          ruff check backend/app backend/tests
-          ruff format --check backend/app backend/tests
+          ruff check backend/app backend/tests backend/alembic
+          ruff format --check backend/app backend/tests backend/alembic
 
       - name: Run Mypy Type Check
         run: |
-          mypy backend/app
+          mypy backend/app backend/tests
 
       - name: Run Pytest Suite with Coverage
         env:

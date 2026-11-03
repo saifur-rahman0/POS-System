@@ -1,10 +1,12 @@
 import asyncio
 from logging.config import fileConfig
+
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
 
+import app.modules  # noqa: F401
+from alembic import context
 from app.config import get_settings
 from app.database import Base
 
@@ -17,7 +19,13 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    """Read database URL from application settings."""
+    """Read database URL from CLI -x url, alembic config, or application settings."""
+    x_args = context.get_x_argument(as_dictionary=True)
+    if "url" in x_args:
+        return x_args["url"]
+    override = config.get_main_option("sqlalchemy.url")
+    if override:
+        return override
     return get_settings().get_database_url()
 
 
@@ -61,11 +69,27 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    asyncio.run(run_async_migrations())
+    connectable = config.attributes.get("connection", None)
+    if connectable is not None:
+        do_run_migrations(connectable)
+        return
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(asyncio.run, run_async_migrations())
+            future.result()
+    else:
+        asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
