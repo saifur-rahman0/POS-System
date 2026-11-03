@@ -35,7 +35,9 @@ async def _seed_dev_business() -> None:
 
         from app.modules.business.models import Branch
         from app.modules.catalog.models import ProductVariant
+        from app.modules.identity.models import Membership, User
         from app.modules.inventory.models import StockBalance
+        from app.shared.auth import DEV_USER_ID
 
         session_factory = get_session_maker()
         async with session_factory() as session:
@@ -50,6 +52,32 @@ async def _seed_dev_business() -> None:
                 )
                 session.add(dev_biz)
                 await session.flush()
+
+            existing_user = await session.get(User, DEV_USER_ID)
+            if not existing_user:
+                dev_user = User(
+                    id=DEV_USER_ID,
+                    username="dev_cashier",
+                    password_hash="dev_dummy_hash_not_for_prod",
+                    display_name="Dev Cashier",
+                    is_active=True,
+                )
+                session.add(dev_user)
+                await session.flush()
+
+            m_stmt = select(Membership).where(
+                Membership.business_id == DEV_BUSINESS_ID,
+                Membership.user_id == DEV_USER_ID,
+            )
+            m_res = await session.execute(m_stmt)
+            if not m_res.scalars().first():
+                session.add(
+                    Membership(
+                        business_id=DEV_BUSINESS_ID,
+                        user_id=DEV_USER_ID,
+                        status="ACTIVE",
+                    )
+                )
 
             existing_branch = await session.get(Branch, DEV_BRANCH_ID)
             if not existing_branch:
