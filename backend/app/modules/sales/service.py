@@ -3,6 +3,7 @@
 import hashlib
 import json
 import uuid
+from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import select
@@ -19,10 +20,12 @@ from app.modules.sales.repository import SalesRepository
 from app.modules.sales.schemas import (
     CheckoutItem,
     CheckoutRequest,
+    PaginatedSales,
     PaymentTenderOut,
     SaleFinancials,
     SaleItemOut,
     SaleOut,
+    SaleSummaryOut,
 )
 from app.shared.exceptions import AppException
 
@@ -533,3 +536,80 @@ class CheckoutService:
             customer_name=customer.name if customer else None,
         )
         return sale_out, False
+
+    async def list_sales(
+        self,
+        session: AsyncSession,
+        business_id: uuid.UUID,
+        branch_id: uuid.UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        cashier_id: uuid.UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> PaginatedSales:
+        """Fetch filtered paginated sales with item count and summary metrics."""
+        total = await self.sales_repo.count_sales(
+            session=session,
+            business_id=business_id,
+            branch_id=branch_id,
+            start_date=start_date,
+            end_date=end_date,
+            cashier_id=cashier_id,
+            status=status,
+            search=search,
+        )
+        sales = await self.sales_repo.list_sales(
+            session=session,
+            business_id=business_id,
+            branch_id=branch_id,
+            start_date=start_date,
+            end_date=end_date,
+            cashier_id=cashier_id,
+            status=status,
+            search=search,
+            page=page,
+            page_size=page_size,
+        )
+
+        customer_ids = [s.customer_id for s in sales if s.customer_id is not None]
+        customer_map: dict[uuid.UUID, str] = {}
+        if customer_ids:
+            c_res = await session.execute(
+                select(Customer).where(Customer.id.in_(customer_ids))
+            )
+            customer_map = {c.id: c.name for c in c_res.scalars().all()}
+
+        items_out = [
+            SaleSummaryOut(
+                id=s.id,
+                business_id=s.business_id,
+                branch_id=s.branch_id,
+                receipt_no=s.receipt_no,
+                status=s.status,
+                cashier_id=s.cashier_id,
+                customer_id=s.customer_id,
+                customer_name=customer_map.get(s.customer_id) if s.customer_id else None,
+                subtotal=s.subtotal,
+                discount_total=s.discount_total,
+                tax_total=s.tax_total,
+                grand_total=s.grand_total,
+                paid_total=s.paid_total,
+                due_total=s.due_total,
+                items_count=len(s.items),
+                created_at=s.created_at,
+            )
+            for s in sales
+        ]
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+
+        return PaginatedSales(
+            items=items_out,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )

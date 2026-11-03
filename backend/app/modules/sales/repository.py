@@ -3,7 +3,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -12,7 +12,78 @@ from app.modules.sales.models import PaymentTender, Sale, SaleItem
 
 
 class SalesRepository:
-    """Repository handling sales persistence and sequential receipt generation."""
+    """Repository handling sales persistence, filtering, and sequential receipt generation."""
+
+    async def list_sales(
+        self,
+        session: AsyncSession,
+        business_id: uuid.UUID,
+        branch_id: uuid.UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        cashier_id: uuid.UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> list[Sale]:
+        """Fetch paginated sales ordered by created_at DESC matching multiple filter criteria."""
+        stmt = (
+            select(Sale)
+            .options(
+                selectinload(Sale.items),
+                selectinload(Sale.payments),
+            )
+            .where(Sale.business_id == business_id)
+        )
+        if branch_id:
+            stmt = stmt.where(Sale.branch_id == branch_id)
+        if start_date:
+            stmt = stmt.where(Sale.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(Sale.created_at <= end_date)
+        if cashier_id:
+            stmt = stmt.where(Sale.cashier_id == cashier_id)
+        if status:
+            stmt = stmt.where(Sale.status == status.strip().upper())
+        if search and search.strip():
+            stmt = stmt.where(Sale.receipt_no.ilike(f"%{search.strip()}%"))
+
+        stmt = stmt.order_by(Sale.created_at.desc())
+        offset = (page - 1) * page_size
+        stmt = stmt.offset(offset).limit(page_size)
+
+        result = await session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_sales(
+        self,
+        session: AsyncSession,
+        business_id: uuid.UUID,
+        branch_id: uuid.UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        cashier_id: uuid.UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+    ) -> int:
+        """Count total sales matching filter criteria."""
+        stmt = select(func.count(Sale.id)).where(Sale.business_id == business_id)
+        if branch_id:
+            stmt = stmt.where(Sale.branch_id == branch_id)
+        if start_date:
+            stmt = stmt.where(Sale.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(Sale.created_at <= end_date)
+        if cashier_id:
+            stmt = stmt.where(Sale.cashier_id == cashier_id)
+        if status:
+            stmt = stmt.where(Sale.status == status.strip().upper())
+        if search and search.strip():
+            stmt = stmt.where(Sale.receipt_no.ilike(f"%{search.strip()}%"))
+
+        result = await session.execute(stmt)
+        return int(result.scalar_one() or 0)
 
     async def get_by_id(
         self,

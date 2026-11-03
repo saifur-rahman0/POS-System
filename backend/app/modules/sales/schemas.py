@@ -160,3 +160,42 @@ class SaleOut(BaseModel):
     idempotency_key: str
     created_at: datetime
 
+
+class SaleSummaryOut(BaseModel):
+    """Condensed sale record for lists, tables, and paginated searches."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    business_id: uuid.UUID
+    branch_id: uuid.UUID
+    receipt_no: str
+    status: str
+    cashier_id: uuid.UUID
+    customer_id: uuid.UUID | None
+    customer_name: str | None = None
+    subtotal: Decimal
+    discount_total: Decimal
+    tax_total: Decimal
+    grand_total: Decimal
+    paid_total: Decimal
+    due_total: Decimal
+    items_count: int
+    created_at: datetime
+
+
+class PaginatedSales(BaseModel):
+    """Paginated collection of sales."""
+
+    items: list[SaleSummaryOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class VoidSaleRequest(BaseModel):
+    """Payload to void a completed sale and reverse inventory/payment status."""
+
+    reason: str = Field(..., min_length=2, max_length=500, description="Audit reason for voiding")
+

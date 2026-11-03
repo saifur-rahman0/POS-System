@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../catalog/presentation/views/catalog_screen.dart';
 import '../../checkout/presentation/views/pos_register_screen.dart';
+import '../../sales/presentation/views/sales_history_screen.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -99,7 +100,9 @@ class _ShellScreenState extends State<ShellScreen> {
                 ? const PosRegisterScreen()
                 : _selectedIndex == 1
                     ? const CatalogScreen()
-                    : Center(
+                    : _selectedIndex == 2
+                        ? const SalesHistoryScreen()
+                        : Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
