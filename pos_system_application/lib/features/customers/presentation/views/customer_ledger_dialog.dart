@@ -228,3 +228,4 @@ class CustomerLedgerDialog extends ConsumerWidget {
     );
   }
 }
+

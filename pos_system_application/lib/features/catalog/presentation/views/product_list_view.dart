@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../inventory/presentation/controllers/inventory_controller.dart';
+import '../../../inventory/presentation/views/stock_adjustment_dialog.dart';
+import '../../../inventory/presentation/views/stock_movements_dialog.dart';
 import '../../domain/models/product.dart';
 import '../controllers/catalog_providers.dart';
 import 'product_form_dialog.dart';
@@ -39,6 +42,11 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     final filter = ref.watch(productFilterProvider);
     final filterNotifier = ref.read(productFilterProvider.notifier);
     final categoriesAsync = ref.watch(categoryListProvider);
+    final balancesAsync = ref.watch(stockBalancesProvider);
+    final balancesMap = balancesAsync.maybeWhen(
+      data: (map) => map,
+      orElse: () => <String, double>{},
+    );
 
     final categories = categoriesAsync.maybeWhen(
       data: (cats) => cats,
@@ -226,6 +234,7 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                                 DataColumn(label: Text('Barcode', style: TextStyle(fontWeight: FontWeight.bold))),
                                 DataColumn(label: Text('Selling Price', style: TextStyle(fontWeight: FontWeight.bold))),
                                 DataColumn(label: Text('Cost Price', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Stock on Hand', style: TextStyle(fontWeight: FontWeight.bold))),
                                 DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
                                 DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
                               ],
@@ -238,6 +247,9 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                                     ? '\$${variant.costPrice.toStringAsFixed(2)}'
                                     : '-';
                                 final barcode = variant?.barcode ?? '-';
+                                final stockQty = variant != null
+                                    ? (balancesMap[variant.id] ?? 0.0)
+                                    : 0.0;
 
                                 return DataRow(
                                   cells: [
@@ -304,6 +316,42 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
+                                          color: stockQty <= 0
+                                              ? Colors.red.shade50
+                                              : stockQty <= 5
+                                                  ? Colors.amber.shade50
+                                                  : Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: stockQty <= 0
+                                                ? Colors.red.shade300
+                                                : stockQty <= 5
+                                                    ? Colors.amber.shade300
+                                                    : Colors.green.shade300,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          stockQty <= 0
+                                              ? 'Out of Stock (0)'
+                                              : stockQty <= 5
+                                                  ? 'Low: ${stockQty.toStringAsFixed(0)}'
+                                                  : '${stockQty.toStringAsFixed(0)} on hand',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: stockQty <= 0
+                                                ? Colors.red.shade800
+                                                : stockQty <= 5
+                                                    ? Colors.amber.shade900
+                                                    : Colors.green.shade800,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
                                           color: prod.isActive ? Colors.green.shade50 : Colors.grey.shade100,
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
@@ -321,10 +369,44 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                                       ),
                                     ),
                                     DataCell(
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_outlined, size: 20),
-                                        tooltip: 'Edit Product',
-                                        onPressed: () => _openFormDialog(prod),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.tune, size: 20),
+                                            tooltip: 'Adjust Physical Stock',
+                                            onPressed: () async {
+                                              if (variant == null) return;
+                                              final adjusted = await StockAdjustmentDialog.show(
+                                                context,
+                                                productVariantId: variant.id,
+                                                productName: prod.name,
+                                                currentStock: stockQty,
+                                              );
+                                              if (adjusted != null) {
+                                                ref.invalidate(stockBalancesProvider);
+                                                ref.invalidate(paginatedProductsProvider);
+                                              }
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.history, size: 20),
+                                            tooltip: 'Stock Movement Ledger',
+                                            onPressed: () {
+                                              if (variant == null) return;
+                                              StockMovementsDialog.show(
+                                                context,
+                                                productVariantId: variant.id,
+                                                productName: prod.name,
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit_outlined, size: 20),
+                                            tooltip: 'Edit Product',
+                                            onPressed: () => _openFormDialog(prod),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
