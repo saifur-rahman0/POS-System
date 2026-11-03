@@ -119,3 +119,4 @@ class ReturnItem(Base):
     )  # RESTOCKED, DEFECTIVE, SCRAPPED
 
     return_order: Mapped["Return"] = relationship("Return", back_populates="items")
+

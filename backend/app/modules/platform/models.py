@@ -200,3 +200,4 @@ class SyncOutbox(Base):
         index=True,
     )
     synced_at: Mapped[datetime | None] = mapped_column(nullable=True, index=True)
+
