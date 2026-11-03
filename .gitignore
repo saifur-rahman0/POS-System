@@ -1,28 +1,54 @@
+# Environment & secrets
 .env
 .env.*
 !.env.example
+secrets/
+private-keys/
+customer-data/
+
+# Python
 .venv/
 venv/
+ENV/
+env/
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+htmlcov/
+.coverage
+
+# Flutter & Dart
 .dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-build/
-dist/
-coverage/
+.packages
+.pub-cache/
+.pub/
+client/build/
+client/.dart_tool/
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+windows/flutter/ephemeral/
+
+# Databases, logs & backups
 *.log
 *.sqlite
 *.db
 *.dump
 *.backup
-secrets/
-private-keys/
-customer-data/
 
-# Documentation, starter prompts, and agent instructions
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Starter documentation & prompts (local only)
 pos-antigravity-starter/
-
-
