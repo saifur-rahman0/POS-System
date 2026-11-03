@@ -18,7 +18,7 @@ class ApiException implements Exception {
 class ApiClient {
   final Dio dio;
 
-  ApiClient({Dio? customDio, String? baseUrl, String? authToken})
+  ApiClient({Dio? customDio, String? baseUrl, String? authToken = 'dev-token'})
       : dio = customDio ??
             Dio(
               BaseOptions(
@@ -28,7 +28,7 @@ class ApiClient {
                 headers: {
                   'Content-Type': 'application/json',
                   'Accept': 'application/json',
-                  if (authToken != null) 'Authorization': 'Bearer $authToken',
+                  if (authToken != null && authToken.isNotEmpty) 'Authorization': 'Bearer $authToken',
                 },
               ),
             );
@@ -38,25 +38,24 @@ class ApiClient {
   }
 
   ApiException handleDioError(DioException error) {
-    if (error.response != null && error.response?.data != null) {
+    if (error.response?.data != null) {
       final data = error.response!.data;
-      if (data is Map<String, dynamic>) {
-        if (data['detail'] is Map<String, dynamic>) {
-          final detail = data['detail'] as Map<String, dynamic>;
+      if (data is Map) {
+        final detail = data['detail'];
+        if (detail is Map) {
           return ApiException(
             message: detail['message']?.toString() ?? 'An error occurred',
             code: detail['error_code']?.toString(),
             statusCode: error.response?.statusCode,
           );
-        } else if (data['detail'] is String) {
+        } else if (detail is String) {
           return ApiException(
-            message: data['detail'] as String,
+            message: detail,
             statusCode: error.response?.statusCode,
           );
-        } else if (data['detail'] is List) {
-          final list = data['detail'] as List;
-          final messages = list.map((e) {
-            if (e is Map<String, dynamic>) {
+        } else if (detail is List) {
+          final messages = detail.map((e) {
+            if (e is Map) {
               return e['msg']?.toString() ?? e.toString();
             }
             return e.toString();
@@ -66,8 +65,35 @@ class ApiClient {
             code: 'VALIDATION_ERROR',
             statusCode: error.response?.statusCode,
           );
+        } else if (data['message'] != null) {
+          return ApiException(
+            message: data['message'].toString(),
+            code: data['error_code']?.toString(),
+            statusCode: error.response?.statusCode,
+          );
         }
+      } else if (data is String && data.isNotEmpty) {
+        return ApiException(
+          message: data,
+          statusCode: error.response?.statusCode,
+        );
       }
+    }
+
+    if (error.response?.statusCode == 409) {
+      return ApiException(
+        message: 'A duplicate record already exists (e.g. duplicate SKU or Barcode).',
+        code: 'CONFLICT',
+        statusCode: 409,
+      );
+    }
+
+    if (error.response?.statusCode == 401) {
+      return ApiException(
+        message: 'Authentication token required or expired.',
+        code: 'UNAUTHORIZED',
+        statusCode: 401,
+      );
     }
 
     return ApiException(

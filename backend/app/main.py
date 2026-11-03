@@ -11,13 +11,36 @@ from fastapi.responses import RedirectResponse
 from app.api.v1.health import router as health_router
 from app.api.v1.router import api_v1_router
 from app.config import get_settings
-from app.database import close_db_connection
+from app.database import close_db_connection, get_session_maker
 from app.logging_config import setup_logging
+from app.modules.business.models import Business
+from app.shared.auth import DEV_BUSINESS_ID
 from app.shared.exceptions import (
     AppException,
     app_exception_handler,
     validation_exception_handler,
 )
+
+
+async def _seed_dev_business() -> None:
+    """Ensures default dev business exists in database for local exploration."""
+    try:
+        session_factory = get_session_maker()
+        async with session_factory() as session:
+            existing = await session.get(Business, DEV_BUSINESS_ID)
+            if not existing:
+                dev_biz = Business(
+                    id=DEV_BUSINESS_ID,
+                    name="Retail POS Store (Development)",
+                    timezone="Asia/Dhaka",
+                    currency="BDT",
+                    is_active=True,
+                )
+                session.add(dev_biz)
+                await session.commit()
+    except Exception:
+        # Ignore startup seeding errors if database is not yet migrated/ready
+        pass
 
 
 @asynccontextmanager
@@ -26,6 +49,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     settings = get_settings()
     setup_logging(debug=settings.DEBUG)
+    if settings.ENVIRONMENT == "development":
+        await _seed_dev_business()
     yield
     # Shutdown
     await close_db_connection()

@@ -19,19 +19,19 @@ class CategoryModel {
     this.updatedAt,
   });
 
-  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+  factory CategoryModel.fromJson(Map<dynamic, dynamic> json) {
     return CategoryModel(
-      id: json['id'] as String,
-      businessId: json['business_id'] as String,
-      name: json['name'] as String,
-      code: json['code'] as String?,
-      parentId: json['parent_id'] as String?,
+      id: json['id']?.toString() ?? '',
+      businessId: json['business_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      code: json['code']?.toString(),
+      parentId: json['parent_id']?.toString(),
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'] as String)
+          ? DateTime.tryParse(json['updated_at'].toString())
           : null,
     );
   }
@@ -47,4 +47,3 @@ class CategoryModel {
     };
   }
 }
-

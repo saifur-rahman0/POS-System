@@ -1,7 +1,7 @@
 class ProductVariantModel {
   final String id;
   final String productId;
-  final String sku;
+  final String? sku;
   final String name;
   final String? barcode;
   final double costPrice;
@@ -14,7 +14,7 @@ class ProductVariantModel {
   const ProductVariantModel({
     required this.id,
     required this.productId,
-    required this.sku,
+    this.sku,
     required this.name,
     this.barcode,
     required this.costPrice,
@@ -25,22 +25,22 @@ class ProductVariantModel {
     this.updatedAt,
   });
 
-  factory ProductVariantModel.fromJson(Map<String, dynamic> json) {
+  factory ProductVariantModel.fromJson(Map<dynamic, dynamic> json) {
     return ProductVariantModel(
-      id: json['id'] as String,
-      productId: json['product_id'] as String,
-      sku: json['sku'] as String,
-      name: json['name'] as String,
-      barcode: json['barcode'] as String?,
+      id: json['id']?.toString() ?? '',
+      productId: json['product_id']?.toString() ?? '',
+      sku: json['sku']?.toString(),
+      name: json['name']?.toString() ?? '',
+      barcode: json['barcode']?.toString(),
       costPrice: _toDouble(json['cost_price']),
       sellingPrice: _toDouble(json['selling_price']),
       trackStock: json['track_stock'] as bool? ?? true,
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'] as String)
+          ? DateTime.tryParse(json['updated_at'].toString())
           : null,
     );
   }
@@ -56,7 +56,7 @@ class ProductVariantModel {
     return {
       'id': id,
       'product_id': productId,
-      'sku': sku,
+      if (sku != null) 'sku': sku,
       'name': name,
       if (barcode != null) 'barcode': barcode,
       'cost_price': costPrice,
@@ -66,4 +66,3 @@ class ProductVariantModel {
     };
   }
 }
-

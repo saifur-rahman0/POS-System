@@ -15,17 +15,16 @@ class PaginatedProducts {
     required this.pages,
   });
 
-  factory PaginatedProducts.fromJson(Map<String, dynamic> json) {
+  factory PaginatedProducts.fromJson(Map<dynamic, dynamic> json) {
     return PaginatedProducts(
       items: (json['items'] as List<dynamic>?)
-              ?.map((item) => ProductModel.fromJson(item as Map<String, dynamic>))
+              ?.map((item) => ProductModel.fromJson(item as Map<dynamic, dynamic>))
               .toList() ??
           [],
-      total: json['total'] as int? ?? 0,
-      page: json['page'] as int? ?? 1,
-      limit: json['limit'] as int? ?? 20,
-      pages: json['pages'] as int? ?? 1,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      page: (json['page'] as num?)?.toInt() ?? 1,
+      limit: (json['limit'] as num?)?.toInt() ?? 20,
+      pages: (json['pages'] as num?)?.toInt() ?? 1,
     );
   }
 }
-

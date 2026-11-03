@@ -35,36 +35,44 @@ class ProductModel {
     this.updatedAt,
   });
 
-  factory ProductModel.fromJson(Map<String, dynamic> json) {
-    final variantsList = (json['variants'] as List<dynamic>?)
-            ?.map((v) => ProductVariantModel.fromJson(v as Map<String, dynamic>))
-            .toList() ??
-        [];
+  factory ProductModel.fromJson(Map<dynamic, dynamic> json) {
+    final rawVariants = json['variants'] as List<dynamic>?;
+    final variantsList = rawVariants != null
+        ? rawVariants.map((v) {
+            final map = v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+            map['sku'] ??= json['sku']?.toString();
+            return ProductVariantModel.fromJson(map);
+          }).toList()
+        : <ProductVariantModel>[];
 
-    final primaryVariant = json['primary_variant'] != null
-        ? ProductVariantModel.fromJson(
-            json['primary_variant'] as Map<String, dynamic>)
-        : (variantsList.isNotEmpty ? variantsList.first : null);
+    ProductVariantModel? primaryVariant;
+    if (json['primary_variant'] != null && json['primary_variant'] is Map) {
+      final map = Map<String, dynamic>.from(json['primary_variant'] as Map);
+      map['sku'] ??= json['sku']?.toString();
+      primaryVariant = ProductVariantModel.fromJson(map);
+    } else if (variantsList.isNotEmpty) {
+      primaryVariant = variantsList.first;
+    }
 
     return ProductModel(
-      id: json['id'] as String,
-      businessId: json['business_id'] as String,
-      sku: json['sku'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String?,
-      categoryId: json['category_id'] as String?,
-      categoryName: json['category_name'] as String?,
-      productType: json['product_type'] as String? ?? 'standard',
+      id: json['id']?.toString() ?? '',
+      businessId: json['business_id']?.toString() ?? '',
+      sku: json['sku']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString(),
+      categoryId: json['category_id']?.toString(),
+      categoryName: json['category_name']?.toString(),
+      productType: json['product_type']?.toString() ?? 'standard',
       taxRate: _toDouble(json['tax_rate']),
       hasVariants: json['has_variants'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? true,
       primaryVariant: primaryVariant,
       variants: variantsList,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'] as String)
+          ? DateTime.tryParse(json['updated_at'].toString())
           : null,
     );
   }

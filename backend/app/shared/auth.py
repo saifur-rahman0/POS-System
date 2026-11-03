@@ -12,6 +12,11 @@ from app.config import get_settings
 from app.shared.exceptions import AppException
 
 
+DEV_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+DEV_BUSINESS_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+DEV_PERMISSIONS = {"*", "catalog:read", "catalog:write"}
+
+
 class CurrentUser(BaseModel):
     """Authenticated principal extracted from validated JWT token."""
 
@@ -48,8 +53,21 @@ def create_access_token(
 async def get_current_user(
     authorization: str | None = Header(default=None),
 ) -> CurrentUser:
-    """Extracts and verifies JWT token from Authorization header."""
+    """Extracts and verifies JWT token from Authorization header.
+
+    In development mode, falls back to a default dev user if no header is provided,
+    allowing local frontend and Swagger exploration before the full login flow is implemented.
+    """
+    settings = get_settings()
+
     if not authorization or not authorization.startswith("Bearer "):
+        if settings.ENVIRONMENT == "development":
+            return CurrentUser(
+                user_id=DEV_USER_ID,
+                business_id=DEV_BUSINESS_ID,
+                username="dev_admin",
+                permissions=DEV_PERMISSIONS,
+            )
         raise AppException(
             message="Missing or invalid Authorization header",
             code="UNAUTHORIZED",
@@ -57,6 +75,14 @@ async def get_current_user(
         )
 
     token = authorization.split(" ", 1)[1].strip()
+
+    if settings.ENVIRONMENT == "development" and token == "dev-token":
+        return CurrentUser(
+            user_id=DEV_USER_ID,
+            business_id=DEV_BUSINESS_ID,
+            username="dev_admin",
+            permissions=DEV_PERMISSIONS,
+        )
     settings = get_settings()
 
     try:
