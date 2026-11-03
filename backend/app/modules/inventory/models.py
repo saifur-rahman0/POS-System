@@ -223,4 +223,3 @@ class StockCountLine(Base):
     discrepancy_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     stock_count: Mapped["StockCount"] = relationship("StockCount", back_populates="lines")
-

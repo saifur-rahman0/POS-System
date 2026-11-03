@@ -32,14 +32,24 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_async_engine(
-            settings.get_database_url(),
-            echo=settings.DEBUG,
-            pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20,
-            connect_args={"timeout": 3.0},
-        )
+        if settings.ENVIRONMENT == "testing":
+            from sqlalchemy import pool
+
+            _engine = create_async_engine(
+                settings.get_database_url(),
+                echo=settings.DEBUG,
+                poolclass=pool.NullPool,
+                connect_args={"timeout": 5.0},
+            )
+        else:
+            _engine = create_async_engine(
+                settings.get_database_url(),
+                echo=settings.DEBUG,
+                pool_pre_ping=True,
+                pool_size=10,
+                max_overflow=20,
+                connect_args={"timeout": 3.0},
+            )
     return _engine
 
 

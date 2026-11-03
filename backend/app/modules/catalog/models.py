@@ -145,6 +145,8 @@ class Product(Base):
     variants: Mapped[list["ProductVariant"]] = relationship(
         "ProductVariant", back_populates="product"
     )
+    category: Mapped["Category | None"] = relationship("Category")
+    brand: Mapped["Brand | None"] = relationship("Brand")
 
 
 class ProductVariant(Base):

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../catalog/presentation/views/catalog_screen.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -52,7 +53,7 @@ class _ShellScreenState extends State<ShellScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Row(
@@ -93,30 +94,32 @@ class _ShellScreenState extends State<ShellScreen> {
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _destinations[_selectedIndex].icon is Icon
-                        ? (_destinations[_selectedIndex].icon as Icon).icon
-                        : Icons.dashboard,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            child: _selectedIndex == 1
+                ? const CatalogScreen()
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _destinations[_selectedIndex].icon is Icon
+                              ? (_destinations[_selectedIndex].icon as Icon).icon
+                              : Icons.dashboard,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _destinations[_selectedIndex].label,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Repository Foundation — Shell Initialized',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _destinations[_selectedIndex].label,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Repository Foundation — Shell Initialized',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
