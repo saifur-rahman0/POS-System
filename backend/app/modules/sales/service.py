@@ -308,14 +308,17 @@ class CheckoutService:
             amount = p.amount.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
             if p.method == "CASH":
                 cash_tendered += amount
+            elif p.method == "DUE":
+                # DUE represents deferred debt, not cash or instant electronic funds
+                pass
             else:
                 non_cash_tendered += amount
 
-        total_tendered = cash_tendered + non_cash_tendered
+        actual_paid = cash_tendered + non_cash_tendered
 
         change_amount = Decimal("0.0000")
-        if total_tendered > grand_total:
-            overpayment = total_tendered - grand_total
+        if actual_paid > grand_total:
+            overpayment = actual_paid - grand_total
             if cash_tendered < overpayment:
                 raise AppException(
                     message="Non-cash payments cannot exceed total amount due",
@@ -325,7 +328,7 @@ class CheckoutService:
             change_amount = overpayment
             paid_total = grand_total
         else:
-            paid_total = total_tendered
+            paid_total = actual_paid
 
         due_total = max(Decimal("0.0000"), grand_total - paid_total)
 

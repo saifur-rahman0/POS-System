@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../catalog/domain/models/product.dart';
 import '../../../catalog/presentation/controllers/catalog_providers.dart';
+import '../../../customers/presentation/views/customer_selection_dialog.dart';
 import '../controllers/cart_controller.dart';
 import 'payment_dialog.dart';
 
@@ -511,6 +512,98 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                             ),
                           ),
                       ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+
+                  // Customer Selection Bar
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: cart.customerId != null
+                          ? const Color(0xFF0F766E).withValues(alpha: 0.08)
+                          : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: cart.customerId != null
+                            ? const Color(0xFF0F766E).withValues(alpha: 0.3)
+                            : Colors.grey.shade200,
+                      ),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () async {
+                        final selected = await CustomerSelectionDialog.show(
+                          context,
+                          currentCustomerId: cart.customerId,
+                        );
+                        if (context.mounted) {
+                          if (selected == null) {
+                            ref.read(cartProvider.notifier).setCustomer(null, null);
+                          } else {
+                            ref
+                                .read(cartProvider.notifier)
+                                .setCustomer(selected.id, selected.name);
+                          }
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              cart.customerId != null ? Icons.person : Icons.person_outline,
+                              size: 18,
+                              color: cart.customerId != null
+                                  ? const Color(0xFF0F766E)
+                                  : Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    cart.customerName ?? 'Walk-in Customer',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: cart.customerId != null
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: cart.customerId != null
+                                          ? const Color(0xFF0F766E)
+                                          : Colors.grey.shade700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (cart.customerId != null)
+                                    Text(
+                                      'Linked Account · Credit Enabled',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.teal.shade700,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (cart.customerId != null)
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Remove customer',
+                                onPressed: () {
+                                  ref.read(cartProvider.notifier).setCustomer(null, null);
+                                },
+                              )
+                            else
+                              Icon(Icons.arrow_drop_down,
+                                  size: 20, color: Colors.grey.shade500),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   const Divider(height: 1),

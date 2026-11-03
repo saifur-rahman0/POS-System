@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../catalog/presentation/views/catalog_screen.dart';
 import '../../checkout/presentation/views/pos_register_screen.dart';
+import '../../customers/presentation/views/customers_screen.dart';
 import '../../sales/presentation/views/sales_history_screen.dart';
 
 class ShellScreen extends StatefulWidget {
@@ -28,6 +29,11 @@ class _ShellScreenState extends State<ShellScreen> {
       icon: Icon(Icons.receipt_long_outlined),
       selectedIcon: Icon(Icons.receipt_long),
       label: 'Sales History',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.people_outline),
+      selectedIcon: Icon(Icons.people),
+      label: 'Customers',
     ),
     NavigationDestination(
       icon: Icon(Icons.analytics_outlined),
@@ -102,7 +108,9 @@ class _ShellScreenState extends State<ShellScreen> {
                     ? const CatalogScreen()
                     : _selectedIndex == 2
                         ? const SalesHistoryScreen()
-                        : Center(
+                        : _selectedIndex == 3
+                            ? const CustomersScreen()
+                            : Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
