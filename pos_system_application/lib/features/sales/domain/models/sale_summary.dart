@@ -59,3 +59,4 @@ class SaleSummaryModel {
     return 0.0;
   }
 }
+

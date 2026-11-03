@@ -478,3 +478,4 @@ async def test_tenant_isolation_on_sales_and_returns(
         headers=headers_b,
     )
     assert b_ret.status_code == 404
+

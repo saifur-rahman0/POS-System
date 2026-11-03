@@ -42,3 +42,4 @@ class SaleReturnableItemModel {
     return 0.0;
   }
 }
+

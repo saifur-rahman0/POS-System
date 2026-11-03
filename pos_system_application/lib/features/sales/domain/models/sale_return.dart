@@ -98,3 +98,4 @@ class SaleReturnModel {
     return 0.0;
   }
 }
+

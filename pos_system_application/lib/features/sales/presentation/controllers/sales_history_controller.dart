@@ -119,3 +119,4 @@ final salesListProvider =
     endDate: endDate,
   );
 });
+
