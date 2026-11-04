@@ -3,6 +3,8 @@ from app.modules.inventory.models import (
     StockCount,
     StockCountLine,
     StockMovement,
+    StockTransfer,
+    StockTransferItem,
 )
 
 __all__ = [
@@ -10,4 +12,6 @@ __all__ = [
     "StockBalance",
     "StockCount",
     "StockCountLine",
+    "StockTransfer",
+    "StockTransferItem",
 ]

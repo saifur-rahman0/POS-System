@@ -11,6 +11,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     func,
     text,
 )
@@ -223,3 +224,115 @@ class StockCountLine(Base):
     discrepancy_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     stock_count: Mapped["StockCount"] = relationship("StockCount", back_populates="lines")
+
+
+class StockTransfer(Base):
+    """Inter-branch stock transfer shipment."""
+
+    __tablename__ = "stock_transfers"
+    __table_args__ = (
+        UniqueConstraint("business_id", "transfer_no", name="uq_stock_transfers_business_no"),
+        CheckConstraint(
+            "source_branch_id != destination_branch_id",
+            name="chk_stock_transfer_distinct_branches",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    business_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    transfer_no: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+    )
+    source_branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("branches.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    destination_branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("branches.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="DRAFT",
+        server_default="DRAFT",
+    )  # DRAFT, IN_TRANSIT, RECEIVED, CANCELLED
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    received_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(),
+        nullable=False,
+    )
+    sent_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    received_at: Mapped[datetime | None] = mapped_column(nullable=True)
+
+    items: Mapped[list["StockTransferItem"]] = relationship(
+        "StockTransferItem",
+        back_populates="transfer",
+        cascade="all, delete-orphan",
+    )
+
+
+class StockTransferItem(Base):
+    """Line item within an inter-branch transfer."""
+
+    __tablename__ = "stock_transfer_items"
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="chk_stock_transfer_item_qty_positive"),
+        CheckConstraint("unit_cost >= 0", name="chk_stock_transfer_item_cost_non_negative"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    transfer_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("stock_transfers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_variant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("product_variants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    unit_cost: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
+
+    transfer: Mapped["StockTransfer"] = relationship("StockTransfer", back_populates="items")
