@@ -400,7 +400,9 @@ class CheckoutService:
             for item in payload.items:
                 if variants_map[item.product_variant_id].track_stock:
                     vid = item.product_variant_id
-                    requested_totals[vid] = requested_totals.get(vid, Decimal("0.0000")) + item.quantity
+                    requested_totals[vid] = (
+                        requested_totals.get(vid, Decimal("0.0000")) + item.quantity
+                    )
 
             for vid, required_qty in requested_totals.items():
                 balance = balances.get(vid)
@@ -547,7 +549,9 @@ class CheckoutService:
         # Reload sale with all relations for return mapping
         reloaded = await self.sales_repo.get_by_id(session, business_id, sale_id)
         if not reloaded:
-            raise AppException("Failed to load completed sale", code="INTERNAL_ERROR", status_code=500)
+            raise AppException(
+                "Failed to load completed sale", code="INTERNAL_ERROR", status_code=500
+            )
 
         sale_out = self._map_sale_out(
             reloaded,
@@ -597,9 +601,7 @@ class CheckoutService:
         customer_ids = [s.customer_id for s in sales if s.customer_id is not None]
         customer_map: dict[uuid.UUID, str] = {}
         if customer_ids:
-            c_res = await session.execute(
-                select(Customer).where(Customer.id.in_(customer_ids))
-            )
+            c_res = await session.execute(select(Customer).where(Customer.id.in_(customer_ids)))
             customer_map = {c.id: c.name for c in c_res.scalars().all()}
 
         items_out = [

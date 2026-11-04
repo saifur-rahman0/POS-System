@@ -190,4 +190,3 @@ class ZReportOut(BaseModel):
     tenders_breakdown: list[TenderBreakdown]
     sales_summary: SalesPerformanceSummary
     generated_at: datetime
-

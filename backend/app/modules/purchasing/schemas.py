@@ -10,7 +10,9 @@ from pydantic import BaseModel, ConfigDict, Field
 class SupplierCreate(BaseModel):
     """Schema for registering a vendor/supplier."""
 
-    name: str = Field(..., min_length=2, max_length=255, description="Supplier company or trade name")
+    name: str = Field(
+        ..., min_length=2, max_length=255, description="Supplier company or trade name"
+    )
     contact_person: str | None = Field(default=None, max_length=255)
     phone: str | None = Field(default=None, max_length=50)
     email: str | None = Field(default=None, max_length=255)
@@ -106,9 +108,15 @@ class PurchaseCreate(BaseModel):
     """Create purchase order / vendor invoice."""
 
     supplier_id: uuid.UUID
-    branch_id: uuid.UUID | None = Field(default=None, description="Branch to receive stock; defaults to primary")
-    reference_no: str | None = Field(default=None, max_length=100, description="Invoice/Bill # or auto-generated")
-    items: list[PurchaseItemCreate] = Field(..., min_length=1, description="List of items to purchase")
+    branch_id: uuid.UUID | None = Field(
+        default=None, description="Branch to receive stock; defaults to primary"
+    )
+    reference_no: str | None = Field(
+        default=None, max_length=100, description="Invoice/Bill # or auto-generated"
+    )
+    items: list[PurchaseItemCreate] = Field(
+        ..., min_length=1, description="List of items to purchase"
+    )
     discount: Decimal = Field(default=Decimal("0.0000"), ge=0, description="Invoice level discount")
     notes: str | None = Field(default=None)
 
@@ -145,4 +153,3 @@ class PaginatedPurchases(BaseModel):
     page: int
     page_size: int
     total_pages: int
-

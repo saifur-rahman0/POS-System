@@ -130,7 +130,10 @@ async def collect_due_payment(
         active_branch_id = b_res.scalars().first()
         if not active_branch_id:
             from app.shared.exceptions import AppException
-            raise AppException("No active store branch found", code="BRANCH_NOT_FOUND", status_code=404)
+
+            raise AppException(
+                "No active store branch found", code="BRANCH_NOT_FOUND", status_code=404
+            )
 
     return await customers_service.collect_due_payment(
         session=db,

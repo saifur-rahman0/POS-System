@@ -90,4 +90,3 @@ class SaleReturnableItem(BaseModel):
     quantity_returnable: Decimal
     unit_price: Decimal
     line_total: Decimal
-

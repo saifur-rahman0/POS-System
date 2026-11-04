@@ -150,5 +150,3 @@ class InventoryRepository:
 
         res = await session.execute(stmt)
         return res.scalar_one()
-
-

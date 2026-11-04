@@ -11,7 +11,9 @@ class BranchCreate(BaseModel):
     """Payload to create a new branch or store location."""
 
     name: str = Field(..., min_length=1, max_length=255, description="Branch name")
-    code: str | None = Field(default=None, max_length=50, description="Unique store code (e.g. DHK-01)")
+    code: str | None = Field(
+        default=None, max_length=50, description="Unique store code (e.g. DHK-01)"
+    )
     address: str | None = Field(default=None, description="Physical location address")
     phone: str | None = Field(default=None, max_length=50, description="Branch phone number")
     is_active: bool = Field(default=True, description="Whether the branch is currently active")
@@ -83,4 +85,3 @@ class BranchDetailOut(BranchOut):
     total_variants_in_stock: int = 0
     total_stock_quantity: Decimal = Decimal("0.0000")
     has_active_shift: bool = False
-

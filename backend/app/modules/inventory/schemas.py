@@ -17,7 +17,9 @@ class StockAdjustmentCreate(BaseModel):
         default="STOCKTAKE_CORRECTION",
         description="DAMAGE, SPOILAGE, THEFT, STOCKTAKE_CORRECTION, INTERNAL_USE, EXPIRED, OTHER",
     )
-    branch_id: uuid.UUID | None = Field(default=None, description="Branch to adjust; defaults to primary")
+    branch_id: uuid.UUID | None = Field(
+        default=None, description="Branch to adjust; defaults to primary"
+    )
     notes: str | None = Field(default=None, max_length=500)
 
 
@@ -70,4 +72,3 @@ class PaginatedStockMovements(BaseModel):
     page: int
     page_size: int
     total_pages: int
-

@@ -226,4 +226,3 @@ class BranchService:
         await session.commit()
         await session.refresh(branch)
         return BranchOut.model_validate(branch)
-

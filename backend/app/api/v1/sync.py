@@ -16,9 +16,10 @@ from app.modules.business.schemas import BranchOut
 from app.modules.catalog.models import Category, Product
 from app.modules.catalog.schemas import CategoryOut, ProductOut
 from app.modules.catalog.service import CatalogService
+from app.modules.customers.schemas import CustomerOut
 from app.modules.inventory.models import StockBalance
 from app.modules.sales.models import Customer
-from app.modules.sales.schemas import CheckoutRequest, CustomerOut
+from app.modules.sales.schemas import CheckoutRequest
 from app.modules.sales.service import CheckoutService
 from app.shared.auth import CurrentUser, require_permission
 from app.shared.exceptions import AppException
@@ -78,7 +79,9 @@ class SyncPushResponse(BaseModel):
     summary="Pull incremental deltas for offline client synchronization",
 )
 async def pull_sync_deltas(
-    since: datetime | None = Query(default=None, description="ISO timestamp of last successful sync"),
+    since: datetime | None = Query(
+        default=None, description="ISO timestamp of last successful sync"
+    ),
     branch_id: uuid.UUID | None = Query(default=None, description="Current terminal branch"),
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(require_permission("catalog:read")),
@@ -87,14 +90,16 @@ async def pull_sync_deltas(
     now_utc = datetime.now(UTC)
 
     # Branches
-    b_stmt = select(Branch).where(Branch.business_id == user.business_id, Branch.is_active.is_(True))
+    b_stmt = select(Branch).where(
+        Branch.business_id == user.business_id, Branch.is_active.is_(True)
+    )
     branches = [BranchOut.model_validate(b) for b in (await db.execute(b_stmt)).scalars().all()]
 
     # Categories
     cat_stmt = select(Category).where(Category.business_id == user.business_id)
-    if since:
-        cat_stmt = cat_stmt.where(Category.updated_at >= since)
-    categories = [CategoryOut.model_validate(c) for c in (await db.execute(cat_stmt)).scalars().all()]
+    categories = [
+        CategoryOut.model_validate(c) for c in (await db.execute(cat_stmt)).scalars().all()
+    ]
 
     # Products with variants
     prod_stmt = (
@@ -114,8 +119,10 @@ async def pull_sync_deltas(
     # Customers
     cust_stmt = select(Customer).where(Customer.business_id == user.business_id)
     if since:
-        cust_stmt = cust_stmt.where(Customer.updated_at >= since)
-    customers = [CustomerOut.model_validate(c) for c in (await db.execute(cust_stmt)).scalars().all()]
+        cust_stmt = cust_stmt.where(Customer.created_at >= since)
+    customers = [
+        CustomerOut.model_validate(c) for c in (await db.execute(cust_stmt)).scalars().all()
+    ]
 
     # Stock Balances
     stock_deltas: list[BranchStockDelta] = []
@@ -206,4 +213,3 @@ async def push_offline_transactions(
         total_successful=success_count,
         total_failed=fail_count,
     )
-

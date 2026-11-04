@@ -87,4 +87,3 @@ async def update_branch(
         branch_id=branch_id,
         payload=payload,
     )
-

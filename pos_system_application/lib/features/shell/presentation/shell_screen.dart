@@ -6,6 +6,7 @@ import '../../catalog/presentation/views/catalog_screen.dart';
 import '../../checkout/presentation/views/pos_register_screen.dart';
 import '../../customers/presentation/views/customers_screen.dart';
 import '../../purchasing/presentation/views/purchasing_screen.dart';
+import '../../reports/presentation/views/reports_screen.dart';
 import '../../sales/presentation/views/sales_history_screen.dart';
 import '../../sync/presentation/controllers/sync_controller.dart';
 
@@ -199,7 +200,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                                 ? const CustomersScreen()
                                 : _selectedIndex == 5
                                     ? const BranchesScreen()
-                                    : Center(
+                                    : _selectedIndex == 6
+                                        ? const ReportsScreen()
+                                        : Center(
                                         child: Column(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,

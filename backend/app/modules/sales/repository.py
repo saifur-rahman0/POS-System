@@ -204,4 +204,3 @@ class SalesRepository:
             payment.sale_id = sale.id
             session.add(payment)
         return sale
-

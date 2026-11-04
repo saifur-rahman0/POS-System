@@ -19,7 +19,9 @@ class TransferCreate(BaseModel):
 
     source_branch_id: uuid.UUID = Field(..., description="Branch dispatching the inventory")
     destination_branch_id: uuid.UUID = Field(..., description="Branch receiving the inventory")
-    items: list[TransferItemCreate] = Field(..., min_length=1, description="Variants and quantities to transfer")
+    items: list[TransferItemCreate] = Field(
+        ..., min_length=1, description="Variants and quantities to transfer"
+    )
     notes: str | None = Field(default=None, description="Optional dispatch instructions or notes")
 
     @field_validator("destination_branch_id")
@@ -78,4 +80,3 @@ class CrossBranchStockOut(BaseModel):
     branch_code: str | None = None
     quantity_on_hand: Decimal
     is_active: bool
-

@@ -151,4 +151,3 @@ async def cancel_transfer(
         user_id=user.user_id,
         transfer_id=transfer_id,
     )
-

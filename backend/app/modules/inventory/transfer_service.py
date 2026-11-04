@@ -11,7 +11,12 @@ from sqlalchemy.orm import selectinload
 from app.modules.business.models import Branch
 from app.modules.catalog.models import Product, ProductVariant
 from app.modules.identity.models import User
-from app.modules.inventory.models import StockBalance, StockMovement, StockTransfer, StockTransferItem
+from app.modules.inventory.models import (
+    StockBalance,
+    StockMovement,
+    StockTransfer,
+    StockTransferItem,
+)
 from app.modules.inventory.transfer_schemas import (
     CrossBranchStockOut,
     StockTransferItemOut,
@@ -31,9 +36,7 @@ class StockTransferService:
             return dt.astimezone(UTC).replace(tzinfo=None)
         return dt
 
-    async def _generate_transfer_no(
-        self, session: AsyncSession, business_id: uuid.UUID
-    ) -> str:
+    async def _generate_transfer_no(self, session: AsyncSession, business_id: uuid.UUID) -> str:
         """Generates sequential daily transfer identifier (TRF-YYYYMMDD-0001)."""
         today_str = datetime.now(UTC).strftime("%Y%m%d")
         prefix = f"TRF-{today_str}-"
@@ -122,7 +125,9 @@ class StockTransferService:
             .where(ProductVariant.business_id == business_id)
         )
         variants = (await session.execute(v_stmt)).all()
-        variant_map = {v[0]: (v[1], v[2], v[3]) for v in variants}
+        variant_map: dict[uuid.UUID, tuple[str, str, str | None]] = {
+            v[0]: (v[1], v[2], v[3]) for v in variants
+        }
 
         return branch_map, variant_map
 
@@ -214,7 +219,11 @@ class StockTransferService:
         # Verify user exists for FK constraint
         cashier = await session.get(User, user_id)
         if not cashier:
-            fallback_u = (await session.execute(select(User).where(User.is_active.is_(True)).limit(1))).scalars().first()
+            fallback_u = (
+                (await session.execute(select(User).where(User.is_active.is_(True)).limit(1)))
+                .scalars()
+                .first()
+            )
             if fallback_u:
                 user_id = fallback_u.id
 
@@ -513,4 +522,3 @@ class StockTransferService:
             )
             for r in rows
         ]
-

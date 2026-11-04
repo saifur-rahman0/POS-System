@@ -56,7 +56,9 @@ class ReturnsService:
         if not sale:
             raise AppException("Sale not found", code="SALE_NOT_FOUND", status_code=404)
 
-        returned_map = await self.returns_repo.get_returned_quantities(session, business_id, sale_id)
+        returned_map = await self.returns_repo.get_returned_quantities(
+            session, business_id, sale_id
+        )
 
         # Load product variant information
         variant_ids = [item.product_variant_id for item in sale.items]
@@ -136,7 +138,9 @@ class ReturnsService:
             raise AppException("Branch not found", code="BRANCH_NOT_FOUND", status_code=404)
 
         # 3. Retrieve prior return totals per sale item
-        returned_map = await self.returns_repo.get_returned_quantities(session, business_id, sale_id)
+        returned_map = await self.returns_repo.get_returned_quantities(
+            session, business_id, sale_id
+        )
         sale_items_map = {item.id: item for item in sale.items}
 
         # 4. Validate items to return

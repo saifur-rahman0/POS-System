@@ -198,4 +198,3 @@ class VoidSaleRequest(BaseModel):
     """Payload to void a completed sale and reverse inventory/payment status."""
 
     reason: str = Field(..., min_length=2, max_length=500, description="Audit reason for voiding")
-

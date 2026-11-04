@@ -241,11 +241,17 @@ class PurchasingService:
         # Resolve branch
         branch_id = payload.branch_id
         if not branch_id:
-            b_stmt = select(Branch).where(Branch.business_id == business_id, Branch.is_active.is_(True)).limit(1)
+            b_stmt = (
+                select(Branch)
+                .where(Branch.business_id == business_id, Branch.is_active.is_(True))
+                .limit(1)
+            )
             b_res = await session.execute(b_stmt)
             default_branch = b_res.scalars().first()
             if not default_branch:
-                raise AppException("No active branch found", code="BRANCH_NOT_FOUND", status_code=404)
+                raise AppException(
+                    "No active branch found", code="BRANCH_NOT_FOUND", status_code=404
+                )
             branch_id = default_branch.id
 
         # Validate product variants
@@ -344,7 +350,9 @@ class PurchasingService:
             session, business_id, purchase_id, for_update=True
         )
         if not purchase:
-            raise AppException("Purchase order not found", code="PURCHASE_NOT_FOUND", status_code=404)
+            raise AppException(
+                "Purchase order not found", code="PURCHASE_NOT_FOUND", status_code=404
+            )
 
         if purchase.status == "RECEIVED":
             raise AppException(
@@ -440,10 +448,16 @@ class PurchasingService:
             session, business_id, purchase_id, for_update=True
         )
         if not purchase:
-            raise AppException("Purchase order not found", code="PURCHASE_NOT_FOUND", status_code=404)
+            raise AppException(
+                "Purchase order not found", code="PURCHASE_NOT_FOUND", status_code=404
+            )
 
         if purchase.status == "CANCELLED":
-            raise AppException("Cannot pay for a cancelled purchase order", code="PURCHASE_CANCELLED", status_code=400)
+            raise AppException(
+                "Cannot pay for a cancelled purchase order",
+                code="PURCHASE_CANCELLED",
+                status_code=400,
+            )
 
         unpaid = purchase.total - purchase.paid_total
         if payload.amount > unpaid:
@@ -503,7 +517,9 @@ class PurchasingService:
         """Fetch purchase details."""
         purchase = await self.repo.get_purchase_by_id(session, business_id, purchase_id)
         if not purchase:
-            raise AppException("Purchase order not found", code="PURCHASE_NOT_FOUND", status_code=404)
+            raise AppException(
+                "Purchase order not found", code="PURCHASE_NOT_FOUND", status_code=404
+            )
 
         supplier = await self.repo.get_supplier_by_id(session, business_id, purchase.supplier_id)
         supplier_name = supplier.name if supplier else None
@@ -536,7 +552,15 @@ class PurchasingService:
             session, business_id, branch_id, supplier_id, status, start_date, end_date
         )
         purchases = await self.repo.list_purchases(
-            session, business_id, branch_id, supplier_id, status, start_date, end_date, page, page_size
+            session,
+            business_id,
+            branch_id,
+            supplier_id,
+            status,
+            start_date,
+            end_date,
+            page,
+            page_size,
         )
 
         # Batch load suppliers
@@ -558,8 +582,7 @@ class PurchasingService:
             v_map = {v.id: v for v in v_res.scalars().all()}
 
         items_out = [
-            self._map_purchase_out(p, suppliers_map.get(p.supplier_id), v_map)
-            for p in purchases
+            self._map_purchase_out(p, suppliers_map.get(p.supplier_id), v_map) for p in purchases
         ]
         total_pages = (total + page_size - 1) // page_size if total > 0 else 1
 

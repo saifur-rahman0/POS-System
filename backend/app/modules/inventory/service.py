@@ -36,7 +36,11 @@ class InventoryService:
     ) -> Decimal:
         """Fetch quantity on hand for a specific product variant."""
         if not branch_id:
-            b_stmt = select(Branch).where(Branch.business_id == business_id, Branch.is_active.is_(True)).limit(1)
+            b_stmt = (
+                select(Branch)
+                .where(Branch.business_id == business_id, Branch.is_active.is_(True))
+                .limit(1)
+            )
             b_res = await session.execute(b_stmt)
             default_branch = b_res.scalars().first()
             if not default_branch:
@@ -54,7 +58,11 @@ class InventoryService:
     ) -> list[dict]:
         """Fetch all stock balances for an active branch."""
         if not branch_id:
-            b_stmt = select(Branch).where(Branch.business_id == business_id, Branch.is_active.is_(True)).limit(1)
+            b_stmt = (
+                select(Branch)
+                .where(Branch.business_id == business_id, Branch.is_active.is_(True))
+                .limit(1)
+            )
             b_res = await session.execute(b_stmt)
             default_branch = b_res.scalars().first()
             if not default_branch:
@@ -97,16 +105,24 @@ class InventoryService:
         v_res = await session.execute(v_stmt)
         variant = v_res.scalars().first()
         if not variant:
-            raise AppException("Product variant not found", code="VARIANT_NOT_FOUND", status_code=404)
+            raise AppException(
+                "Product variant not found", code="VARIANT_NOT_FOUND", status_code=404
+            )
 
         # 2. Resolve branch
         branch_id = payload.branch_id
         if not branch_id:
-            b_stmt = select(Branch).where(Branch.business_id == business_id, Branch.is_active.is_(True)).limit(1)
+            b_stmt = (
+                select(Branch)
+                .where(Branch.business_id == business_id, Branch.is_active.is_(True))
+                .limit(1)
+            )
             b_res = await session.execute(b_stmt)
             default_branch = b_res.scalars().first()
             if not default_branch:
-                raise AppException("No active branch found", code="BRANCH_NOT_FOUND", status_code=404)
+                raise AppException(
+                    "No active branch found", code="BRANCH_NOT_FOUND", status_code=404
+                )
             branch_id = default_branch.id
 
         # 3. Lock balance row
@@ -205,7 +221,15 @@ class InventoryService:
             session, business_id, branch_id, product_variant_id, movement_type, start_date, end_date
         )
         movements = await self.repo.list_movements(
-            session, business_id, branch_id, product_variant_id, movement_type, start_date, end_date, page, page_size
+            session,
+            business_id,
+            branch_id,
+            product_variant_id,
+            movement_type,
+            start_date,
+            end_date,
+            page,
+            page_size,
         )
 
         # Batch load variants

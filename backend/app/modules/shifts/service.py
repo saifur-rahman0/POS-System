@@ -59,17 +59,26 @@ class ShiftService:
                 message=f"Cashier already has an active open shift (ID: {existing.id})",
                 code="SHIFT_ALREADY_OPEN",
                 status_code=409,
-                details={"existing_shift_id": str(existing.id), "opened_at": existing.opened_at.isoformat()},
+                details={
+                    "existing_shift_id": str(existing.id),
+                    "opened_at": existing.opened_at.isoformat(),
+                },
             )
 
         # 2. Resolve branch
         branch_id = payload.branch_id
         if not branch_id:
-            b_stmt = select(Branch).where(Branch.business_id == business_id, Branch.is_active.is_(True)).limit(1)
+            b_stmt = (
+                select(Branch)
+                .where(Branch.business_id == business_id, Branch.is_active.is_(True))
+                .limit(1)
+            )
             b_res = await session.execute(b_stmt)
             default_branch = b_res.scalars().first()
             if not default_branch:
-                raise AppException("No active branch found for shift", code="BRANCH_NOT_FOUND", status_code=404)
+                raise AppException(
+                    "No active branch found for shift", code="BRANCH_NOT_FOUND", status_code=404
+                )
             branch_id = default_branch.id
 
         opening_cash = payload.opening_cash.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
@@ -99,7 +108,9 @@ class ShiftService:
                 amount=opening_cash,
                 reference_type="FLOAT_IN",
                 reference_id=shift.id,
-                note=f"Opening cash float: {payload.notes}" if payload.notes else "Opening cash float",
+                note=f"Opening cash float: {payload.notes}"
+                if payload.notes
+                else "Opening cash float",
                 created_by=user_id,
             )
             session.add(float_tx)
@@ -138,7 +149,9 @@ class ShiftService:
         if not shift:
             raise AppException("Shift session not found", code="SHIFT_NOT_FOUND", status_code=404)
         if shift.status != "OPEN":
-            raise AppException("Cannot add cash to a closed shift", code="SHIFT_CLOSED", status_code=400)
+            raise AppException(
+                "Cannot add cash to a closed shift", code="SHIFT_CLOSED", status_code=400
+            )
 
         amount = payload.amount.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         tx = CashTransaction(
@@ -171,7 +184,9 @@ class ShiftService:
         if not shift:
             raise AppException("Shift session not found", code="SHIFT_NOT_FOUND", status_code=404)
         if shift.status != "OPEN":
-            raise AppException("Cannot withdraw cash from a closed shift", code="SHIFT_CLOSED", status_code=400)
+            raise AppException(
+                "Cannot withdraw cash from a closed shift", code="SHIFT_CLOSED", status_code=400
+            )
 
         amount = payload.amount.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
@@ -182,7 +197,10 @@ class ShiftService:
                 f"Cash withdrawal of {amount} exceeds expected cash on hand ({totals.expected_cash})",
                 code="INSUFFICIENT_DRAWER_CASH",
                 status_code=409,
-                details={"expected_cash": str(totals.expected_cash), "requested_withdrawal": str(amount)},
+                details={
+                    "expected_cash": str(totals.expected_cash),
+                    "requested_withdrawal": str(amount),
+                },
             )
 
         tx = CashTransaction(
@@ -215,7 +233,9 @@ class ShiftService:
         if not shift:
             raise AppException("Shift session not found", code="SHIFT_NOT_FOUND", status_code=404)
         if shift.status != "OPEN":
-            raise AppException("Shift is already closed", code="SHIFT_ALREADY_CLOSED", status_code=400)
+            raise AppException(
+                "Shift is already closed", code="SHIFT_ALREADY_CLOSED", status_code=400
+            )
 
         # Calculate authoritative expected cash
         totals = await self._calculate_shift_totals(session, shift)
@@ -302,7 +322,9 @@ class ShiftService:
             if m in tenders_map:
                 all_tenders.append(tenders_map[m])
             else:
-                all_tenders.append(TenderBreakdown(method=m, count=0, total_amount=Decimal("0.0000")))
+                all_tenders.append(
+                    TenderBreakdown(method=m, count=0, total_amount=Decimal("0.0000"))
+                )
 
         # 2. Sales Summary
         sales_stmt = select(Sale).where(
@@ -496,7 +518,9 @@ class ShiftService:
         # Expected cash formula:
         # Expected = Opening Float + Cash Sales + Cash In - Cash Out - Cash Refunds
         expected = shift.opening_cash + cash_sales + cash_in - cash_out - cash_refunds
-        expected = max(Decimal("0.0000"), expected.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
+        expected = max(
+            Decimal("0.0000"), expected.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+        )
 
         diff = shift.cash_difference
         if diff is None and shift.closing_cash_counted is not None:

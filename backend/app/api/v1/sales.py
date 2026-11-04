@@ -211,9 +211,7 @@ async def get_sale_returns(
                     product_name=variant.product.name
                     if variant and variant.product
                     else "Unknown Product",
-                    sku=variant.product.sku
-                    if variant and variant.product
-                    else "UNKNOWN",
+                    sku=variant.product.sku if variant and variant.product else "UNKNOWN",
                     quantity=ri.quantity,
                     refund_amount=ri.refund_amount,
                     restock_status=ri.restock_status,

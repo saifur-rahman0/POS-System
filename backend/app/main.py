@@ -20,6 +20,7 @@ from app.shared.exceptions import (
     AppException,
     app_exception_handler,
     database_timeout_exception_handler,
+    generic_exception_handler,
     validation_exception_handler,
 )
 
@@ -114,6 +115,7 @@ async def _seed_dev_business() -> None:
             await session.commit()
     except Exception as exc:
         import logging
+
         logging.getLogger(__name__).warning("Dev database seeding skipped: %s", exc)
 
 
@@ -156,6 +158,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(AppException, app_exception_handler)  # type: ignore
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
     app.add_exception_handler(TimeoutError, database_timeout_exception_handler)  # type: ignore
+    app.add_exception_handler(Exception, generic_exception_handler)  # type: ignore
 
     # Mount API v1 router
     app.include_router(api_v1_router)

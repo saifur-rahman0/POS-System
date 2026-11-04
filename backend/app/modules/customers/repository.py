@@ -226,4 +226,3 @@ class CustomersRepository:
         """Persist new customer profile."""
         session.add(customer)
         return customer
-

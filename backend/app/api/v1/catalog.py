@@ -187,4 +187,3 @@ async def update_product(
         product_id=product_id,
         payload=payload,
     )
-

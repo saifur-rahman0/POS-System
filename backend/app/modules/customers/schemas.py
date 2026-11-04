@@ -138,4 +138,3 @@ class CustomerLedgerEntry(BaseModel):
     debit: Decimal = Decimal("0.0000")  # increases due
     credit: Decimal = Decimal("0.0000")  # decreases due
     balance: Decimal = Decimal("0.0000")
-

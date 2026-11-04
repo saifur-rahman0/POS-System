@@ -187,9 +187,7 @@ class CustomersService:
 
         items_out: list[CustomerOut] = []
         for c in customers:
-            due, count, spent = metrics.get(
-                c.id, (Decimal("0.0000"), 0, Decimal("0.0000"))
-            )
+            due, count, spent = metrics.get(c.id, (Decimal("0.0000"), 0, Decimal("0.0000")))
             available_credit = max(Decimal("0.0000"), c.credit_limit - due)
             items_out.append(
                 CustomerOut(
@@ -334,25 +332,29 @@ class CustomersService:
         events: list[tuple] = []
         for sale, payments in sales_with_payments:
             # Customer account is debited with the total purchase amount
-            events.append((
-                sale.created_at,
-                "SALE_CHARGE",
-                sale.receipt_no,
-                f"Purchase: {sale.receipt_no}",
-                sale.grand_total,
-                Decimal("0.0000"),
-            ))
+            events.append(
+                (
+                    sale.created_at,
+                    "SALE_CHARGE",
+                    sale.receipt_no,
+                    f"Purchase: {sale.receipt_no}",
+                    sale.grand_total,
+                    Decimal("0.0000"),
+                )
+            )
             # Real monetary payments (CASH, CARD, BKASH, NAGAD, ROCKET) credit the account
             for p in payments:
                 if p.status == "CONFIRMED" and p.method != "DUE":
-                    events.append((
-                        p.received_at,
-                        "PAYMENT",
-                        sale.receipt_no,
-                        f"Payment ({p.method}) against {sale.receipt_no}",
-                        Decimal("0.0000"),
-                        p.amount,
-                    ))
+                    events.append(
+                        (
+                            p.received_at,
+                            "PAYMENT",
+                            sale.receipt_no,
+                            f"Payment ({p.method}) against {sale.receipt_no}",
+                            Decimal("0.0000"),
+                            p.amount,
+                        )
+                    )
 
         # Sort events by timestamp
         events.sort(key=lambda x: x[0])

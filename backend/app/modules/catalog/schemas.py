@@ -195,4 +195,3 @@ class ProductOut(BaseModel):
     brand_name: str | None = None
     primary_variant: ProductVariantOut | None = None
     variants: list[ProductVariantOut] = []
-

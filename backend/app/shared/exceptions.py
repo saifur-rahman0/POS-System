@@ -56,9 +56,7 @@ async def validation_exception_handler(
     )
 
 
-async def database_timeout_exception_handler(
-    request: Request, exc: TimeoutError
-) -> JSONResponse:
+async def database_timeout_exception_handler(request: Request, exc: TimeoutError) -> JSONResponse:
     """Error envelope when database connection times out."""
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -67,6 +65,23 @@ async def database_timeout_exception_handler(
                 "code": "DATABASE_UNAVAILABLE",
                 "message": "Database connection timed out. Please ensure Docker Desktop and PostgreSQL (pos_shop_db) are running.",
                 "details": {},
+            }
+        },
+    )
+
+
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all envelope for unhandled exceptions to return structured JSON instead of plain 500 string."""
+    import logging
+
+    logging.getLogger("app.exceptions").exception("Unhandled exception during request: %s", exc)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": {
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": str(exc) or "An unexpected internal server error occurred",
+                "details": {"type": type(exc).__name__},
             }
         },
     )
