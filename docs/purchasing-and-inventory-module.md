@@ -113,3 +113,4 @@ The **Suppliers, Purchasing & Stock Adjustments** module handles vendor lifecycl
   - `purchasing_and_inventory_widget_test.dart`: 4 comprehensive widget tests covering adjustment calculations, movement tables, supplier forms, and master purchasing dashboard tabs.
   - **Result: All widget tests passed (100%)**.
   - `flutter analyze`: **0 issues found**.
+

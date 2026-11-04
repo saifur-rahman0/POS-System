@@ -98,3 +98,4 @@ async def update_supplier(
         supplier_id=supplier_id,
         payload=payload,
     )
+
