@@ -66,3 +66,4 @@ def downgrade() -> None:
     op.drop_index("ix_shifts_user_status", table_name="register_shifts")
     op.drop_index("ix_shifts_business_branch_status", table_name="register_shifts")
     op.drop_table("register_shifts")
+

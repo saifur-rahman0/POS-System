@@ -173,3 +173,4 @@ async def list_shifts(
         page=page,
         page_size=page_size,
     )
+

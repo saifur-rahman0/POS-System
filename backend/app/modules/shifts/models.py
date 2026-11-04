@@ -114,3 +114,4 @@ class RegisterShift(Base):
     # Relationships
     branch: Mapped["Branch"] = relationship("Branch")  # type: ignore[name-defined] # noqa: F821
     user: Mapped["User"] = relationship("User")  # type: ignore[name-defined] # noqa: F821
+

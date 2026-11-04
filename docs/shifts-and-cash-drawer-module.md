@@ -61,3 +61,4 @@ The Z-Report aggregates all transactions executed during the register shift life
 - **CashInOutDialog**: Segmented toggle for Cash In vs Cash Out with reason presets and expected cash safety validation.
 - **CloseShiftDialog**: Physical cash note denomination counters with live variance computation and color-coded status badges.
 - **ZReportDialog**: Formatted thermal 80mm receipt preview with one-click print simulation and ledger audit details.
+
