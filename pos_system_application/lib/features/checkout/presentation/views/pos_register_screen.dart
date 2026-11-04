@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/hardware/scanner/barcode_scanner_listener.dart';
 import '../../../catalog/domain/models/product.dart';
 import '../../../catalog/presentation/controllers/catalog_providers.dart';
 import '../../../customers/presentation/views/customer_selection_dialog.dart';
@@ -161,7 +162,13 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
     final selectedCategory = ref.watch(posSelectedCategoryProvider);
     final cart = ref.watch(cartProvider);
 
-    return Scaffold(
+    return BarcodeScannerWrapper(
+      onBarcodeScanned: (scanned) {
+        catalogAsync.whenData((catalog) {
+          _handleBarcodeSubmit(scanned, catalog);
+        });
+      },
+      child: Scaffold(
       backgroundColor: Colors.grey.shade100,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -880,6 +887,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 

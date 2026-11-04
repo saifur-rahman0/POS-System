@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/hardware/printer/printer_service.dart';
 import '../../domain/models/sale_receipt.dart';
 
 class ReceiptDialog extends StatelessWidget {
@@ -316,17 +317,37 @@ class ReceiptDialog extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.print_outlined),
                       label: const Text('Print Receipt'),
-                      onPressed: () {
+                      onPressed: () async {
+                        final printer = PrinterService();
+                        final ok = await printer.printReceipt(sale);
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Receipt ${sale.receiptNo} sent to thermal printer.',
+                              ok
+                                  ? 'Receipt ${sale.receiptNo} sent to thermal printer & drawer kicked.'
+                                  : 'Printer spooling completed (Simulator).',
                             ),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    tooltip: 'Kick Cash Drawer',
+                    icon: const Icon(Icons.point_of_sale),
+                    onPressed: () async {
+                      await PrinterService().openCashDrawer();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Cash drawer kick pulse sent.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 12),
                   Expanded(
