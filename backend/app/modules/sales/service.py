@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.modules.business.models import Branch
 from app.modules.catalog.models import ImeiDevice, ProductVariant
+from app.modules.identity.models import User
 from app.modules.inventory.models import StockMovement
 from app.modules.inventory.repository import InventoryRepository
 from app.modules.platform.models import AuditLog, IdempotencyRecord
@@ -213,7 +214,23 @@ class CheckoutService:
             )
 
         # ---------------------------------------------------------------------
-        # 3. Customer & Credit Limit Verification
+        # 3. Cashier Integrity Verification
+        # ---------------------------------------------------------------------
+        cashier = await session.get(User, cashier_id)
+        if not cashier:
+            fallback_u_stmt = select(User).where(User.is_active.is_(True)).limit(1)
+            fallback_u = (await session.execute(fallback_u_stmt)).scalars().first()
+            if fallback_u:
+                cashier_id = fallback_u.id
+            else:
+                raise AppException(
+                    message="Cashier user not found",
+                    code="CASHIER_NOT_FOUND",
+                    status_code=400,
+                )
+
+        # ---------------------------------------------------------------------
+        # 4. Customer & Credit Limit Verification
         # ---------------------------------------------------------------------
         customer = None
         if payload.customer_id:

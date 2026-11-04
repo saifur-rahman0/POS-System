@@ -213,25 +213,25 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<String?>(
-                        initialValue: _categoryId,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _categoryId ?? '',
                         decoration: const InputDecoration(
                           labelText: 'Category',
                           border: OutlineInputBorder(),
                         ),
                         items: [
-                          const DropdownMenuItem<String?>(
-                            value: null,
+                          const DropdownMenuItem<String>(
+                            value: '',
                             child: Text('Uncategorized'),
                           ),
-                          ...categories.map((cat) => DropdownMenuItem<String?>(
+                          ...categories.map((cat) => DropdownMenuItem<String>(
                                 value: cat.id,
                                 child: Text(cat.name),
                               )),
                         ],
                         onChanged: (val) {
                           setState(() {
-                            _categoryId = val;
+                            _categoryId = (val == null || val.isEmpty) ? null : val;
                           });
                         },
                       ),

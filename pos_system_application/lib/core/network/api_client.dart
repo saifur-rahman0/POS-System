@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 
 class ApiException implements Exception {
@@ -39,7 +40,15 @@ class ApiClient {
 
   ApiException handleDioError(DioException error) {
     if (error.response?.data != null) {
-      final data = error.response!.data;
+      dynamic data = error.response!.data;
+      if (data is String && data.trim().isNotEmpty) {
+        try {
+          data = jsonDecode(data);
+        } catch (_) {
+          // Plain text error message
+        }
+      }
+
       if (data is Map) {
         final err = data['error'];
         if (err is Map) {
@@ -86,9 +95,9 @@ class ApiClient {
             statusCode: error.response?.statusCode,
           );
         }
-      } else if (data is String && data.isNotEmpty) {
+      } else if (data is String && data.trim().isNotEmpty) {
         return ApiException(
-          message: data,
+          message: data.trim(),
           statusCode: error.response?.statusCode,
         );
       }
@@ -110,8 +119,18 @@ class ApiClient {
       );
     }
 
+    if (error.response?.statusCode == 500) {
+      return ApiException(
+        message: 'Server error encountered. Please try again or check logs.',
+        code: 'INTERNAL_SERVER_ERROR',
+        statusCode: 500,
+      );
+    }
+
     return ApiException(
-      message: error.message ?? 'Network connection error',
+      message: (error.response?.statusCode != null && error.message != null && error.message!.contains('status code of'))
+          ? 'Request failed with status ${error.response?.statusCode}'
+          : (error.message ?? 'Network connection error'),
       code: 'NETWORK_ERROR',
       statusCode: error.response?.statusCode,
     );

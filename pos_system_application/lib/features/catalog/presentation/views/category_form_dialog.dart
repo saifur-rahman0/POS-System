@@ -139,25 +139,25 @@ class _CategoryFormDialogState extends ConsumerState<CategoryFormDialog> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                DropdownButtonFormField<String?>(
-                  initialValue: _parentId,
+                DropdownButtonFormField<String>(
+                  initialValue: _parentId ?? '',
                   decoration: const InputDecoration(
                     labelText: 'Parent Category (Optional)',
                     border: OutlineInputBorder(),
                   ),
                   items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
+                    const DropdownMenuItem<String>(
+                      value: '',
                       child: Text('None (Top Level)'),
                     ),
-                    ...potentialParents.map((cat) => DropdownMenuItem<String?>(
+                    ...potentialParents.map((cat) => DropdownMenuItem<String>(
                           value: cat.id,
                           child: Text(cat.name),
                         )),
                   ],
                   onChanged: (val) {
                     setState(() {
-                      _parentId = val;
+                      _parentId = (val == null || val.isEmpty) ? null : val;
                     });
                   },
                 ),

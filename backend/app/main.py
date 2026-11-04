@@ -112,9 +112,9 @@ async def _seed_dev_business() -> None:
                     )
 
             await session.commit()
-    except Exception:
-        # Ignore startup seeding errors if database is not yet migrated/ready
-        pass
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Dev database seeding skipped: %s", exc)
 
 
 @asynccontextmanager

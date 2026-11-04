@@ -101,9 +101,9 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                   // Category Dropdown
                   Expanded(
                     flex: 2,
-                    child: DropdownButtonFormField<String?>(
-                      key: ValueKey(filter.categoryId),
-                      initialValue: filter.categoryId,
+                    child: DropdownButtonFormField<String>(
+                      key: ValueKey(filter.categoryId ?? ''),
+                      initialValue: filter.categoryId ?? '',
                       isExpanded: true,
                       isDense: true,
                       decoration: InputDecoration(
@@ -114,17 +114,17 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                         ),
                       ),
                       items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
+                        const DropdownMenuItem<String>(
+                          value: '',
                           child: Text('All Categories', overflow: TextOverflow.ellipsis),
                         ),
-                        ...categories.map((c) => DropdownMenuItem<String?>(
+                        ...categories.map((c) => DropdownMenuItem<String>(
                               value: c.id,
                               child: Text(c.name, overflow: TextOverflow.ellipsis),
                             )),
                       ],
                       onChanged: (val) {
-                        filterNotifier.setCategory(val);
+                        filterNotifier.setCategory((val == null || val.isEmpty) ? null : val);
                       },
                     ),
                   ),

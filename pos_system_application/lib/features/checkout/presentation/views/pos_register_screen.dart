@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../catalog/domain/models/product.dart';
 import '../../../catalog/presentation/controllers/catalog_providers.dart';
 import '../../../customers/presentation/views/customer_selection_dialog.dart';
+import '../../../shifts/presentation/controllers/shift_controller.dart';
+import '../../../shifts/presentation/widgets/shift_status_bar.dart';
 import '../controllers/cart_controller.dart';
 import 'payment_dialog.dart';
 
@@ -173,6 +175,9 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Register Shift Status & Drawer Quick Actions
+                  const ShiftStatusBar(),
+
                   // Search & Barcode Bar
                   Row(
                     children: [
@@ -847,7 +852,9 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                           onPressed: cart.isEmpty
                               ? null
                               : () {
-                                  PaymentDialog.show(context);
+                                  PaymentDialog.show(context).then((_) {
+                                    ref.read(currentShiftProvider.notifier).loadCurrentShift();
+                                  });
                                 },
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF0F766E),

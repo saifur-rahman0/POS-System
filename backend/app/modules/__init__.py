@@ -44,6 +44,7 @@ from app.modules.sales.models import (
     Sale,
     SaleItem,
 )
+from app.modules.shifts.models import RegisterShift
 
 __all__ = [
     # Business
@@ -81,6 +82,8 @@ __all__ = [
     # Returns
     "Return",
     "ReturnItem",
+    # Shifts
+    "RegisterShift",
     # Expenses
     "Expense",
     "CashTransaction",
