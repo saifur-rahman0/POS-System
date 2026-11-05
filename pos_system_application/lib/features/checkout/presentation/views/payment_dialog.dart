@@ -344,7 +344,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                         children: [
                           // Tender Method Dropdown
                           SizedBox(
-                            width: 120,
+                            width: 135,
                             child: DropdownButtonFormField<String>(
                               initialValue: t.method,
                               isExpanded: true,
@@ -365,6 +365,12 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                                     value: 'NAGAD', child: Text('Nagad')),
                                 DropdownMenuItem(
                                     value: 'ROCKET', child: Text('Rocket')),
+                                DropdownMenuItem(
+                                    value: 'LOYALTY_POINTS', child: Text('Points')),
+                                DropdownMenuItem(
+                                    value: 'GIFT_CARD', child: Text('Gift Card')),
+                                DropdownMenuItem(
+                                    value: 'STORE_CREDIT', child: Text('Store Credit')),
                                 DropdownMenuItem(
                                     value: 'DUE', child: Text('Due / Credit')),
                               ],
@@ -403,10 +409,15 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                               flex: 3,
                               child: TextFormField(
                                 controller: t.refController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Txn / Card Ref',
+                                decoration: InputDecoration(
+                                  labelText: t.method == 'GIFT_CARD'
+                                      ? 'Card:PIN'
+                                      : t.method == 'LOYALTY_POINTS'
+                                          ? 'Points Note'
+                                          : 'Txn / Card Ref',
+                                  hintText: t.method == 'GIFT_CARD' ? 'GC-...:1234' : null,
                                   isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
+                                  contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 10),
                                 ),
                               ),

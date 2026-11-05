@@ -9,6 +9,7 @@ from sqlalchemy import (
     CheckConstraint,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -28,6 +29,9 @@ class Customer(Base):
     __tablename__ = "customers"
     __table_args__ = (
         CheckConstraint("credit_limit >= 0", name="chk_customer_credit_limit_non_negative"),
+        CheckConstraint("loyalty_points_balance >= 0", name="chk_customer_points_non_negative"),
+        CheckConstraint("store_credit_balance >= 0", name="chk_customer_store_credit_non_negative"),
+        CheckConstraint("lifetime_spend >= 0", name="chk_customer_lifetime_spend_non_negative"),
         Index(
             "uq_customers_business_phone",
             "business_id",
@@ -70,6 +74,24 @@ class Customer(Base):
         ForeignKey("customer_groups.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
+    )
+    loyalty_points_balance: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    membership_tier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("membership_tiers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    store_credit_balance: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4), nullable=False, default=Decimal("0.0000"), server_default=text("0.0000")
+    )
+    lifetime_spend: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4), nullable=False, default=Decimal("0.0000"), server_default=text("0.0000")
+    )
+    rfm_segment: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, default="NEW_CUSTOMER", server_default=text("'NEW_CUSTOMER'")
     )
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
@@ -200,6 +222,30 @@ class Sale(Base):
         ForeignKey("price_lists.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
+    )
+    loyalty_points_earned: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    loyalty_points_redeemed: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    loyalty_discount: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
+    gift_card_discount: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
+    store_credit_discount: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
     )
     idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

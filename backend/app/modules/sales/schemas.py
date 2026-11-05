@@ -199,6 +199,11 @@ class SaleOut(BaseModel):
     promotion_code: str | None = None
     promotion_discount: Decimal = Decimal("0.0000")
     price_list_id: uuid.UUID | None = None
+    loyalty_points_earned: int = 0
+    loyalty_points_redeemed: int = 0
+    loyalty_discount: Decimal = Decimal("0.0000")
+    gift_card_discount: Decimal = Decimal("0.0000")
+    store_credit_discount: Decimal = Decimal("0.0000")
     cashier_id: uuid.UUID
     customer_id: uuid.UUID | None
     customer_name: str | None = None

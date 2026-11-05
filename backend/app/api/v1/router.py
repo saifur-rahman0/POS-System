@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.v1.backups import router as backups_router
 from app.api.v1.branches import router as branches_router
 from app.api.v1.catalog import router as catalog_router
+from app.api.v1.crm import router as crm_router
 from app.api.v1.customers import router as customers_router
 from app.api.v1.expenses import router as expenses_router
 from app.api.v1.financial_accounts import router as financial_accounts_router
@@ -47,8 +48,9 @@ api_v1_router.include_router(reports_router)
 # Cash Drawer & Shifts
 api_v1_router.include_router(shifts_router)
 
-# Customers & Due Ledger
+# Customers, CRM & Loyalty
 api_v1_router.include_router(customers_router)
+api_v1_router.include_router(crm_router)
 
 # Suppliers & Purchasing
 api_v1_router.include_router(suppliers_router)

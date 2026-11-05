@@ -232,50 +232,37 @@ Establish comprehensive store expense tracking, recurring bills, multi-account c
 
 ### Track 13: Customer Loyalty and CRM
 
-#### 1. Objective
-Drive customer retention and lifetime value through loyalty points, tiered membership levels, store credit accounts, gift cards, and RFM segmentation.
+> **STATUS: COMPLETED & VERIFIED (100% Passed)**
 
-#### 2. Existing Verified Assets & Reusable Components
-- `Customer` model with `phone`, `credit_limit`, `due_balance`, and spend tracking.
-- `CustomersService` with unique phone indexing and debt collection.
-- `CustomerSelectionDialog` in Flutter POS checkout.
-
-#### 3. Missing / Gap Features
-- **Loyalty Points Engine:** No points calculation on sales (e.g. 1 point per ৳ 100 spent) or redemption rules during checkout.
-- **Membership Tiers:** No Silver, Gold, Platinum tiers with automatic upgrade rules based on annual spending.
-- **Gift Cards:** No gift card creation, barcode activation, balance checking, or `GIFT_CARD` tender method.
-- **Store Credit (Prepaid Balance):** System currently only tracks negative debt (`due_total`), not positive prepaid store credits.
-- **RFM Customer Segmentation:** No analytics classifying customers into Champions, Loyal, At-Risk, or Dormant segments.
-
-#### 4. Database Changes Required
-- **New Table `loyalty_programs` & `loyalty_transactions`:**
-  - `loyalty_programs`: `id`, `business_id`, `points_per_currency` (Numeric 12,4), `redemption_rate` (Numeric 12,4), `is_active` (Boolean).
-  - `loyalty_transactions`: `id`, `business_id`, `customer_id`, `sale_id` (nullable), `points_delta` (Integer), `transaction_type` (`EARN`, `REDEEM`, `EXPIRE`, `ADJUST`), `created_at`.
-- **New Table `customer_groups` / `membership_tiers`:**
-  - `id`, `business_id`, `tier_name` (String 50), `min_spend_threshold` (Numeric 19,4), `points_multiplier` (Numeric 5,2), `discount_percentage` (Numeric 5,2).
-- **New Table `gift_cards`:**
-  - `id`, `business_id`, `card_number` (String 50, unique), `pin_hash` (String 255), `initial_balance` (Numeric 19,4), `current_balance` (Numeric 19,4), `expires_at` (DateTime), `status` (`ACTIVE`, `REDEEMED`, `CANCELLED`).
-- **Alter Table `customers`:**
-  - Add `loyalty_points` (Integer default 0).
-  - Add `store_credit_balance` (Numeric 19,4 default 0.0000).
-  - Add `tier_id` (UUID foreign key `membership_tiers.id` nullable).
-
-#### 5. API Endpoints Required
-- `GET/POST /api/v1/loyalty/program` & `GET /api/v1/customers/{id}/loyalty-history`
-- `POST /api/v1/loyalty/redeem` (Redeem points for cart discount)
-- `GET/POST /api/v1/gift-cards` & `POST /api/v1/gift-cards/verify-balance`
-- `GET/POST /api/v1/customers/tiers`
-- `GET /api/v1/customers/analytics/rfm-segments`
-
-#### 6. Flutter Screens & UI Required
-- `LoyaltySettingsScreen`: Admin configuration for points earning/redemption ratios and tier perks.
-- `GiftCardManagementScreen`: Table to issue, search, check balances, and deactivate gift cards.
-- POS Checkout Integration: Points balance display on customer selection card with "Redeem Points" slider and "Gift Card" payment tender modal.
-- `CustomerSegmentationTab`: Interactive RFM chart inside Customers screen.
-
-#### 7. Complexity & Risk
-- **Estimated Complexity:** Medium-High (2.5 weeks)
-- **Technical Risk:** Low. Independent transactional tables; requires clean integration into checkout tender allocation.
+#### 1. Implementation Summary
+- **Database & Migrations:**
+  - Alembic migration `a72h53c3d6f5_add_loyalty_and_crm.py`:
+    - Created `loyalty_settings` table (`points_per_currency`, `currency_per_point`, `min_redeem_points`, `max_redeem_percentage`, `is_active`).
+    - Created `membership_tiers` table (`tier_name`, `min_annual_spend`, `points_multiplier`, `discount_percentage`, `perk_description`).
+    - Created `loyalty_transactions` table (immutable ledger with `EARN`, `REDEEM`, `MANUAL_CREDIT`, `MANUAL_DEBIT`, `EXPIRY`).
+    - Created `gift_cards` and `gift_card_transactions` tables with salted SHA-256 PIN hashing and masked numbers.
+    - Created `credit_notes` table for customer store credits.
+    - Created `promotional_campaigns` table for SMS/Email/In-App marketing campaigns.
+    - Altered `customers`: added `loyalty_points_balance`, `membership_tier_id`, `store_credit_balance`, `lifetime_spend`, and `rfm_segment`.
+    - Altered `sales`: added `loyalty_points_earned`, `loyalty_points_redeemed`, `loyalty_discount`, `gift_card_discount`, `store_credit_discount`.
+- **Backend Architecture & Domain Logic:**
+  - `LoyaltyEngine`: pure mathematical engine for calculating earn/redeem points, discount amounts, and tier qualification.
+  - `GiftCardService`: salted SHA-256 PIN hashing, verification, balance operations, and unique code generation.
+  - `RfmEngine`: rank-based quintile RFM segmentation (Recency, Frequency, Monetary) and cohort retention matrix.
+  - `CrmRepository` & `CrmService`: full CRUD, pessimistic locking, atomic transactions, CSV exports.
+  - Router `/api/v1/crm` with 18 REST endpoints.
+  - Integration with `CheckoutService`: atomic point redemptions, gift card debits, store credit payouts, points accrual, and tier progression.
+- **Frontend Flutter Application:**
+  - Domain models & serialization in `features/crm/domain/models/`.
+  - `CrmApiService` and `CrmController`.
+  - 5-tab master view in `CustomersScreen`: `Customer Directory & Dues Ledger`, `Loyalty & Tiers`, `Gift Cards`, `RFM Segments & Retention`, `Promotional Campaigns`.
+  - Dialogs: `LoyaltySettingsDialog`, `MembershipTierDialog`, `AdjustPointsDialog`, `IssueGiftCardDialog`, `ReloadGiftCardDialog`, `CampaignDialog`.
+  - Expanded POS `PaymentDialog` with `LOYALTY_POINTS`, `GIFT_CARD`, and `STORE_CREDIT` split tenders.
+- **Verification Results:**
+  - Python Static Analysis: `ruff check backend`: 0 errors ✅ | `mypy`: 0 errors across 15 files ✅
+  - Python Unit Tests: `pytest backend/tests/test_crm_unit.py`: 15/15 passed (100%) ✅
+  - Flutter Static Analysis: `flutter analyze`: 0 errors / No issues found ✅
+  - Flutter Test Suite: **73/73 tests passed (100%)** ✅ (including 7 comprehensive widget tests in `crm_widget_test.dart` and 5 in `customers_widget_test.dart`)
 
 ---
 

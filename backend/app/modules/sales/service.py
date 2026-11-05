@@ -12,6 +12,15 @@ from sqlalchemy.orm import selectinload
 
 from app.modules.business.models import Branch
 from app.modules.catalog.models import ImeiDevice, ProductVariant
+from app.modules.crm.gift_card_service import GiftCardService
+from app.modules.crm.loyalty_engine import LoyaltyEngine
+from app.modules.crm.models import (
+    GiftCard,
+    GiftCardTransaction,
+    LoyaltySettings,
+    LoyaltyTransaction,
+    MembershipTier,
+)
 from app.modules.identity.models import User
 from app.modules.inventory.models import StockBalance, StockMovement
 from app.modules.inventory.repository import InventoryRepository
@@ -147,6 +156,11 @@ class CheckoutService:
             promotion_code=getattr(sale, "promotion_code", None),
             promotion_discount=getattr(sale, "promotion_discount", Decimal("0.0000")),
             price_list_id=getattr(sale, "price_list_id", None),
+            loyalty_points_earned=getattr(sale, "loyalty_points_earned", 0),
+            loyalty_points_redeemed=getattr(sale, "loyalty_points_redeemed", 0),
+            loyalty_discount=getattr(sale, "loyalty_discount", Decimal("0.0000")),
+            gift_card_discount=getattr(sale, "gift_card_discount", Decimal("0.0000")),
+            store_credit_discount=getattr(sale, "store_credit_discount", Decimal("0.0000")),
             cashier_id=sale.cashier_id,
             customer_id=sale.customer_id,
             customer_name=customer_name,
@@ -532,6 +546,11 @@ class CheckoutService:
             promotion_code=getattr(payload, "promotion_code", None),
             promotion_discount=promotion_discount,
             price_list_id=getattr(payload, "price_list_id", None),
+            loyalty_points_earned=0,
+            loyalty_points_redeemed=0,
+            loyalty_discount=Decimal("0.0000"),
+            gift_card_discount=Decimal("0.0000"),
+            store_credit_discount=Decimal("0.0000"),
             subtotal=subtotal,
             discount_total=discount_total,
             tax_total=tax_total,
@@ -626,8 +645,96 @@ class CheckoutService:
                 )
                 session.add(movement)
 
+        # ---------------------------------------------------------------------
+        # 8b. CRM, Loyalty, Gift Card & Store Credit Tender Processing
+        # ---------------------------------------------------------------------
+        loyalty_discount_total = Decimal("0.0000")
+        gift_card_discount_total = Decimal("0.0000")
+        store_credit_discount_total = Decimal("0.0000")
+        points_redeemed_total = 0
+
+        l_settings_stmt = select(LoyaltySettings).where(LoyaltySettings.business_id == business_id)
+        l_settings_res = await session.execute(l_settings_stmt)
+        loyalty_settings = l_settings_res.scalar_one_or_none()
+
         payment_tenders: list[PaymentTender] = []
         for p in payload.payments:
+            if p.method == "LOYALTY_POINTS":
+                if not customer:
+                    raise AppException("Customer required for loyalty points tender", code="CUSTOMER_REQUIRED", status_code=400)
+                redeem_rate = loyalty_settings.redeem_rate if loyalty_settings else Decimal("0.1000")
+                pts_needed = int(p.amount / redeem_rate) if redeem_rate > 0 else 0
+                if customer.loyalty_points_balance < pts_needed:
+                    raise AppException(
+                        f"Insufficient loyalty points: has {customer.loyalty_points_balance}, requires {pts_needed}",
+                        code="INSUFFICIENT_POINTS",
+                        status_code=400,
+                    )
+                customer.loyalty_points_balance -= pts_needed
+                points_redeemed_total += pts_needed
+                loyalty_discount_total += p.amount
+                l_tx = LoyaltyTransaction(
+                    id=uuid.uuid4(),
+                    business_id=business_id,
+                    customer_id=customer.id,
+                    sale_id=sale_id,
+                    transaction_type="REDEEM",
+                    points=-pts_needed,
+                    points_balance_after=customer.loyalty_points_balance,
+                    reason=f"Redeemed at checkout {receipt_no}",
+                )
+                session.add(l_tx)
+
+            elif p.method == "GIFT_CARD":
+                card_num = (p.reference or "").strip()
+                pin_val: str | None = None
+                if ":" in card_num:
+                    card_num, pin_val = card_num.split(":", 1)
+                gc_stmt = (
+                    select(GiftCard)
+                    .where(
+                        GiftCard.business_id == business_id,
+                        func.lower(GiftCard.card_number) == card_num.lower(),
+                    )
+                    .with_for_update()
+                )
+                gc_res = await session.execute(gc_stmt)
+                gift_card = gc_res.scalar_one_or_none()
+                if not gift_card or gift_card.status != "ACTIVE":
+                    raise AppException("Invalid or inactive gift card", code="INVALID_GIFT_CARD", status_code=400)
+                if pin_val and not GiftCardService.verify_pin(gift_card.pin_hash, pin_val):
+                    raise AppException("Invalid gift card PIN", code="INVALID_PIN", status_code=400)
+                if gift_card.current_balance < p.amount:
+                    raise AppException("Insufficient gift card balance", code="INSUFFICIENT_CARD_BALANCE", status_code=400)
+                gift_card.current_balance -= p.amount
+                if gift_card.current_balance == Decimal("0.0000"):
+                    gift_card.status = "DEPLETED"
+                gift_card_discount_total += p.amount
+                gc_tx = GiftCardTransaction(
+                    id=uuid.uuid4(),
+                    business_id=business_id,
+                    gift_card_id=gift_card.id,
+                    sale_id=sale_id,
+                    transaction_type="REDEEM",
+                    amount=-p.amount,
+                    balance_after=gift_card.current_balance,
+                    reference=receipt_no,
+                    notes="POS Checkout payment",
+                )
+                session.add(gc_tx)
+
+            elif p.method == "STORE_CREDIT":
+                if not customer:
+                    raise AppException("Customer required for store credit payment", code="CUSTOMER_REQUIRED", status_code=400)
+                if customer.store_credit_balance < p.amount:
+                    raise AppException(
+                        f"Insufficient store credit: has {customer.store_credit_balance}, requires {p.amount}",
+                        code="INSUFFICIENT_STORE_CREDIT",
+                        status_code=400,
+                    )
+                customer.store_credit_balance -= p.amount
+                store_credit_discount_total += p.amount
+
             tender = PaymentTender(
                 id=uuid.uuid4(),
                 business_id=business_id,
@@ -638,6 +745,62 @@ class CheckoutService:
                 status="CONFIRMED",
             )
             payment_tenders.append(tender)
+
+        sale.loyalty_points_redeemed = points_redeemed_total
+        sale.loyalty_discount = loyalty_discount_total
+        sale.gift_card_discount = gift_card_discount_total
+        sale.store_credit_discount = store_credit_discount_total
+
+        # ---------------------------------------------------------------------
+        # 8c. Post-Checkout Loyalty Earning & Tier Progression
+        # ---------------------------------------------------------------------
+        if customer:
+            earn_rate = (
+                loyalty_settings.earn_rate
+                if (loyalty_settings and loyalty_settings.is_enabled)
+                else Decimal("1.0000")
+            )
+            multiplier = Decimal("1.00")
+            if customer.membership_tier_id:
+                tier_stmt = select(MembershipTier).where(MembershipTier.id == customer.membership_tier_id)
+                tier_res = await session.execute(tier_stmt)
+                active_tier = tier_res.scalar_one_or_none()
+                if active_tier:
+                    multiplier = active_tier.points_multiplier
+
+            earned_pts = LoyaltyEngine.calculate_points_earned(
+                sale_grand_total=grand_total,
+                earn_rate=earn_rate,
+                points_multiplier=multiplier,
+                is_enabled=loyalty_settings.is_enabled if loyalty_settings else True,
+            )
+            if earned_pts > 0:
+                customer.loyalty_points_balance += earned_pts
+                sale.loyalty_points_earned = earned_pts
+                earn_tx = LoyaltyTransaction(
+                    id=uuid.uuid4(),
+                    business_id=business_id,
+                    customer_id=customer.id,
+                    sale_id=sale_id,
+                    transaction_type="EARN",
+                    points=earned_pts,
+                    points_balance_after=customer.loyalty_points_balance,
+                    reason=f"Earned on purchase {receipt_no}",
+                )
+                session.add(earn_tx)
+
+            # Update lifetime spend
+            customer.lifetime_spend += grand_total
+
+            # Evaluate membership tier upgrade
+            tiers_stmt = select(MembershipTier).where(
+                MembershipTier.business_id == business_id,
+                MembershipTier.is_active == True,  # noqa: E712
+            )
+            all_tiers = list((await session.execute(tiers_stmt)).scalars().all())
+            qualifying_tier = LoyaltyEngine.determine_membership_tier(customer.lifetime_spend, all_tiers)
+            if qualifying_tier:
+                customer.membership_tier_id = qualifying_tier.id
 
         await self.sales_repo.create(session, sale, sale_items, payment_tenders)
 
