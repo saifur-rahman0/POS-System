@@ -19,7 +19,16 @@ from app.modules.returns.schemas import (
 from app.modules.returns.service import ReturnsService
 from app.modules.sales.schemas import (
     CheckoutRequest,
+    ExchangeOut,
+    ExchangeRequest,
+    HeldCartCreate,
+    HeldCartOut,
+    ManagerOverrideOut,
+    ManagerOverrideRequest,
     PaginatedSales,
+    QuotationConvertRequest,
+    QuotationCreate,
+    QuotationOut,
     SaleOut,
     VoidSaleRequest,
 )
@@ -97,6 +106,254 @@ async def checkout(
         response.headers["X-Idempotent-Replay"] = "true"
 
     return sale_out
+
+
+# -----------------------------------------------------------------------------
+# HELD CARTS (PARKED BASKETS)
+# -----------------------------------------------------------------------------
+@router.post(
+    "/held-carts",
+    response_model=HeldCartOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Park / hold an active shopping cart",
+)
+async def create_held_cart(
+    payload: HeldCartCreate,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:create")),
+) -> HeldCartOut:
+    """Stores a temporary cart for later resumption."""
+    branch_id = payload.branch_id
+    if not branch_id:
+        from app.modules.business.models import Branch
+
+        b_res = await db.execute(
+            select(Branch.id)
+            .where(Branch.business_id == user.business_id, Branch.is_active.is_(True))
+            .limit(1)
+        )
+        branch_id = b_res.scalars().first()
+        if not branch_id:
+            raise AppException("Active branch not found", code="BRANCH_NOT_FOUND", status_code=404)
+
+    return await checkout_service.create_held_cart(
+        session=db,
+        business_id=user.business_id,
+        branch_id=branch_id,
+        cashier_id=user.user_id,
+        payload=payload,
+    )
+
+
+@router.get(
+    "/held-carts",
+    response_model=list[HeldCartOut],
+    summary="List active held carts",
+)
+async def list_held_carts(
+    branch_id: uuid.UUID | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:read")),
+) -> list[HeldCartOut]:
+    """Retrieve all held carts for the current business."""
+    return await checkout_service.list_held_carts(
+        session=db,
+        business_id=user.business_id,
+        branch_id=branch_id,
+    )
+
+
+@router.get(
+    "/held-carts/{held_cart_id}",
+    response_model=HeldCartOut,
+    summary="Get held cart by ID",
+)
+async def get_held_cart(
+    held_cart_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:read")),
+) -> HeldCartOut:
+    """Retrieve a single held cart for resumption."""
+    return await checkout_service.get_held_cart(
+        session=db,
+        business_id=user.business_id,
+        held_cart_id=held_cart_id,
+    )
+
+
+@router.delete(
+    "/held-carts/{held_cart_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete / discard a held cart",
+)
+async def delete_held_cart(
+    held_cart_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:create")),
+) -> None:
+    """Purge a held cart without checkout."""
+    await checkout_service.delete_held_cart(
+        session=db,
+        business_id=user.business_id,
+        held_cart_id=held_cart_id,
+    )
+
+
+# -----------------------------------------------------------------------------
+# QUOTATIONS / PRO-FORMA INVOICES
+# -----------------------------------------------------------------------------
+@router.post(
+    "/quotations",
+    response_model=QuotationOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a pro-forma price quotation",
+)
+async def create_quotation(
+    payload: QuotationCreate,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:create")),
+) -> QuotationOut:
+    """Generates a quotation without deducting stock."""
+    branch_id = payload.branch_id
+    if not branch_id:
+        from app.modules.business.models import Branch
+
+        b_res = await db.execute(
+            select(Branch.id)
+            .where(Branch.business_id == user.business_id, Branch.is_active.is_(True))
+            .limit(1)
+        )
+        branch_id = b_res.scalars().first()
+        if not branch_id:
+            raise AppException("Active branch not found", code="BRANCH_NOT_FOUND", status_code=404)
+
+    return await checkout_service.create_quotation(
+        session=db,
+        business_id=user.business_id,
+        branch_id=branch_id,
+        user_id=user.user_id,
+        payload=payload,
+    )
+
+
+@router.get(
+    "/quotations",
+    response_model=list[QuotationOut],
+    summary="List price quotations",
+)
+async def list_quotations(
+    branch_id: uuid.UUID | None = Query(default=None),
+    status: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:read")),
+) -> list[QuotationOut]:
+    """List quotations matching search and status criteria."""
+    return await checkout_service.list_quotations(
+        session=db,
+        business_id=user.business_id,
+        branch_id=branch_id,
+        status=status,
+        search=search,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get(
+    "/quotations/{quotation_id}",
+    response_model=QuotationOut,
+    summary="Get quotation details",
+)
+async def get_quotation(
+    quotation_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:read")),
+) -> QuotationOut:
+    """Retrieve quotation and line items."""
+    return await checkout_service.get_quotation(
+        session=db,
+        business_id=user.business_id,
+        quotation_id=quotation_id,
+    )
+
+
+@router.post(
+    "/quotations/{quotation_id}/convert",
+    response_model=SaleOut,
+    summary="Convert quotation into a completed sale",
+)
+async def convert_quotation(
+    quotation_id: uuid.UUID,
+    payload: QuotationConvertRequest,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:create")),
+) -> SaleOut:
+    """Executes atomic checkout conversion from an approved quotation."""
+    return await checkout_service.convert_quotation_to_sale(
+        session=db,
+        business_id=user.business_id,
+        cashier_id=user.user_id,
+        quotation_id=quotation_id,
+        payload=payload,
+    )
+
+
+# -----------------------------------------------------------------------------
+# PRODUCT EXCHANGES & MANAGER OVERRIDES
+# -----------------------------------------------------------------------------
+@router.post(
+    "/exchange",
+    response_model=ExchangeOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Atomic product exchange (return + new sale)",
+)
+async def exchange_products(
+    payload: ExchangeRequest,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:create")),
+) -> ExchangeOut:
+    """Processes product return and replacement checkout in a single atomic transaction."""
+    branch_id = payload.branch_id
+    if not branch_id:
+        from app.modules.business.models import Branch
+
+        b_res = await db.execute(
+            select(Branch.id)
+            .where(Branch.business_id == user.business_id, Branch.is_active.is_(True))
+            .limit(1)
+        )
+        branch_id = b_res.scalars().first()
+        if not branch_id:
+            raise AppException("Active branch not found", code="BRANCH_NOT_FOUND", status_code=404)
+
+    return await checkout_service.exchange(
+        session=db,
+        business_id=user.business_id,
+        branch_id=branch_id,
+        cashier_id=user.user_id,
+        payload=payload,
+    )
+
+
+@router.post(
+    "/manager-override",
+    response_model=ManagerOverrideOut,
+    summary="Supervisor authorization for price override, high discount, or void",
+)
+async def verify_manager_override(
+    payload: ManagerOverrideRequest,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(require_permission("sales:read")),
+) -> ManagerOverrideOut:
+    """Validates manager PIN and credentials for privileged operations."""
+    return await checkout_service.verify_manager_override(
+        session=db,
+        business_id=user.business_id,
+        payload=payload,
+    )
 
 
 @router.get(

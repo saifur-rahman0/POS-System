@@ -20,24 +20,28 @@ class CartState {
   final List<CartItemModel> items;
   final double cartDiscount;
   final double taxRate;
+  final double deliveryCharge;
   final String? notes;
   final String? customerId;
   final String? customerName;
+  final String? heldCartId;
 
   const CartState({
     this.items = const [],
     this.cartDiscount = 0.0,
     this.taxRate = 5.0, // Default 5% VAT
+    this.deliveryCharge = 0.0,
     this.notes,
     this.customerId,
     this.customerName,
+    this.heldCartId,
   });
 
   double get subtotal =>
       items.fold(0.0, (acc, item) => acc + (item.quantity * item.unitPrice));
 
   double get itemDiscounts =>
-      items.fold(0.0, (acc, item) => acc + item.discount);
+      items.fold(0.0, (acc, item) => acc + item.lineDiscount);
 
   double get discountTotal => itemDiscounts + cartDiscount;
 
@@ -53,7 +57,7 @@ class CartState {
   }
 
   double get grandTotal {
-    final total = discountedSubtotal + taxTotal;
+    final total = discountedSubtotal + taxTotal + deliveryCharge;
     return double.parse(total.toStringAsFixed(4));
   }
 
@@ -66,18 +70,23 @@ class CartState {
     List<CartItemModel>? items,
     double? cartDiscount,
     double? taxRate,
+    double? deliveryCharge,
     String? notes,
     String? customerId,
     String? customerName,
+    String? heldCartId,
     bool clearCustomer = false,
+    bool clearHeldCart = false,
   }) {
     return CartState(
       items: items ?? this.items,
       cartDiscount: cartDiscount ?? this.cartDiscount,
       taxRate: taxRate ?? this.taxRate,
+      deliveryCharge: deliveryCharge ?? this.deliveryCharge,
       notes: notes ?? this.notes,
       customerId: clearCustomer ? null : (customerId ?? this.customerId),
       customerName: clearCustomer ? null : (customerName ?? this.customerName),
+      heldCartId: clearHeldCart ? null : (heldCartId ?? this.heldCartId),
     );
   }
 }
@@ -115,6 +124,7 @@ class CartNotifier extends StateNotifier<CartState> {
         unitCost: targetVariant.costPrice,
         quantity: 1.0,
         discount: 0.0,
+        discountType: 'FIXED',
         trackStock: targetVariant.trackStock,
       );
       state = state.copyWith(items: [...state.items, newItem]);
@@ -126,7 +136,6 @@ class CartNotifier extends StateNotifier<CartState> {
     if (cleanQuery.isEmpty) return false;
 
     for (final product in catalog) {
-      // 1. Check variants barcode
       for (final v in product.variants) {
         if (v.barcode?.toLowerCase() == cleanQuery ||
             v.sku?.toLowerCase() == cleanQuery) {
@@ -134,7 +143,6 @@ class CartNotifier extends StateNotifier<CartState> {
           return true;
         }
       }
-      // 2. Check product SKU or primary variant
       if (product.sku.toLowerCase() == cleanQuery) {
         addItem(product);
         return true;
@@ -175,10 +183,19 @@ class CartNotifier extends StateNotifier<CartState> {
     );
   }
 
-  void updateItemDiscount(String variantId, double discount) {
+  void updateItemDiscount(
+    String variantId,
+    double discount, {
+    String discountType = 'FIXED',
+    String? discountReason,
+  }) {
     final updated = state.items.map((item) {
       if (item.variantId == variantId) {
-        return item.copyWith(discount: max(0.0, discount));
+        return item.copyWith(
+          discount: max(0.0, discount),
+          discountType: discountType,
+          discountReason: discountReason,
+        );
       }
       return item;
     }).toList();
@@ -194,6 +211,10 @@ class CartNotifier extends StateNotifier<CartState> {
     state = state.copyWith(taxRate: max(0.0, rate));
   }
 
+  void setDeliveryCharge(double charge) {
+    state = state.copyWith(deliveryCharge: max(0.0, charge));
+  }
+
   void setCustomer(String? id, String? name) {
     if (id == null) {
       state = state.copyWith(clearCustomer: true);
@@ -204,6 +225,36 @@ class CartNotifier extends StateNotifier<CartState> {
 
   void setNotes(String? notes) {
     state = state.copyWith(notes: notes);
+  }
+
+  void setHeldCartId(String? id) {
+    if (id == null) {
+      state = state.copyWith(clearHeldCart: true);
+    } else {
+      state = state.copyWith(heldCartId: id);
+    }
+  }
+
+  void restoreCart({
+    required List<CartItemModel> items,
+    double cartDiscount = 0.0,
+    double taxRate = 5.0,
+    double deliveryCharge = 0.0,
+    String? customerId,
+    String? customerName,
+    String? notes,
+    String? heldCartId,
+  }) {
+    state = CartState(
+      items: items,
+      cartDiscount: cartDiscount,
+      taxRate: taxRate,
+      deliveryCharge: deliveryCharge,
+      customerId: customerId,
+      customerName: customerName,
+      notes: notes,
+      heldCartId: heldCartId,
+    );
   }
 
   void clearCart() {
@@ -238,6 +289,7 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
     required List<PaymentTenderInput> payments,
     String? branchId,
     String? idempotencyKey,
+    String? managerApprovedBy,
   }) async {
     final cart = _ref.read(cartProvider);
     if (cart.isEmpty) {
@@ -259,10 +311,15 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             discount: item.discount,
+            discountType: item.discountType,
+            discountReason: item.discountReason,
           );
         }).toList(),
         cartDiscount: cart.cartDiscount,
         taxRate: cart.taxRate,
+        deliveryCharge: cart.deliveryCharge,
+        heldCartId: cart.heldCartId,
+        managerApprovedBy: managerApprovedBy,
         payments: payments,
         notes: cart.notes,
       );
@@ -289,4 +346,3 @@ final checkoutControllerProvider =
   final apiService = ref.watch(checkoutApiServiceProvider);
   return CheckoutNotifier(apiService, ref);
 });
-

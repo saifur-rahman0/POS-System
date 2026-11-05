@@ -46,9 +46,9 @@ void main() {
     outOfStockCount: 1,
   );
 
-  final mockTimeSeries = SalesTimeSeriesModel(
+  const mockTimeSeries = SalesTimeSeriesModel(
     interval: 'hourly',
-    points: const [
+    points: [
       SalesTimeSeriesPointModel(
         periodLabel: '2026-11-04 10:00',
         salesCount: 2,
@@ -59,8 +59,8 @@ void main() {
     ],
   );
 
-  final mockTopProducts = TopProductsModel(
-    items: const [
+  const mockTopProducts = TopProductsModel(
+    items: [
       TopProductModel(
         productVariantId: 'v1',
         productName: 'Energy Drink 250ml',
@@ -75,7 +75,7 @@ void main() {
     ],
   );
 
-  final mockStock = StockValuationModel(
+  const mockStock = StockValuationModel(
     totalVariantsStocked: 5,
     totalUnitsOnHand: 54,
     totalCostValue: 2048.0,
@@ -83,7 +83,7 @@ void main() {
     potentialGrossProfit: 1532.0,
     lowStockCount: 2,
     outOfStockCount: 1,
-    lowStockItems: const [
+    lowStockItems: [
       StockValuationItemModel(
         variantId: 'v2',
         productName: 'Mineral Water 500ml',
@@ -101,9 +101,9 @@ void main() {
     ],
   );
 
-  final mockPayments = PaymentMethodBreakdownModel(
+  const mockPayments = PaymentMethodBreakdownModel(
     totalCollected: 241.50,
-    methods: const [
+    methods: [
       PaymentMethodBreakdownItemModel(
         method: 'CASH',
         totalAmount: 147.0,
@@ -119,12 +119,12 @@ void main() {
     ],
   );
 
-  final mockDues = CustomerDuesReportModel(
+  const mockDues = CustomerDuesReportModel(
     totalCustomersWithDue: 1,
     totalOutstandingDue: 50.0,
     totalCreditLimit: 5000.0,
     overallCreditUtilizationPct: 1.0,
-    topDebtors: const [
+    topDebtors: [
       TopDebtorModel(
         customerId: 'c1',
         name: 'Tanvir Ahmed',

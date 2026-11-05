@@ -10,6 +10,11 @@ import '../../../shifts/presentation/controllers/shift_controller.dart';
 import '../../../shifts/presentation/widgets/shift_status_bar.dart';
 import '../controllers/cart_controller.dart';
 import 'payment_dialog.dart';
+import '../controllers/held_carts_controller.dart';
+import 'delivery_charge_dialog.dart';
+import 'held_carts_dialog.dart';
+import 'line_discount_dialog.dart';
+import 'save_quotation_dialog.dart';
 
 final posCatalogSearchProvider = StateProvider<String>((ref) => '');
 final posSelectedCategoryProvider = StateProvider<String?>((ref) => null);
@@ -38,6 +43,84 @@ class PosRegisterScreen extends ConsumerStatefulWidget {
 
 class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
   final TextEditingController _barcodeSearchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(heldCartsProvider.notifier).loadHeldCarts();
+    });
+  }
+
+  void _holdCurrentCart() {
+    final cart = ref.read(cartProvider);
+    if (cart.isEmpty) return;
+
+    final noteController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.pause_circle_outline, color: Color(0xFF0F766E)),
+            SizedBox(width: 8),
+            Text('Park / Hold Order'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Save this active cart temporarily to serve another customer.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Note / Identifier (Optional)',
+                hintText: 'e.g. Red shirt customer, waiting for payment',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final note = noteController.text.trim();
+              final res = await ref.read(heldCartsProvider.notifier).holdCart(
+                    cart,
+                    notes: note.isNotEmpty ? note : null,
+                  );
+              if (res != null && mounted) {
+                ref.read(cartProvider.notifier).clearCart();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Order parked successfully. You can restore it anytime.'),
+                    backgroundColor: Color(0xFF0F766E),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF0F766E),
+            ),
+            child: const Text('Park Order'),
+          ),
+        ],
+      ),
+    );
+  }
   final FocusNode _barcodeFocusNode = FocusNode();
   final currencyFmt = NumberFormat.currency(symbol: '৳ ', decimalDigits: 2);
 
@@ -161,6 +244,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
     final categoriesAsync = ref.watch(categoryListProvider);
     final selectedCategory = ref.watch(posSelectedCategoryProvider);
     final cart = ref.watch(cartProvider);
+    final heldCarts = ref.watch(heldCartsProvider).heldCarts;
 
     return BarcodeScannerWrapper(
       onBarcodeScanned: (scanned) {
@@ -471,7 +555,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                 children: [
                   // Cart Header
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -508,24 +592,112 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                               ),
                           ],
                         ),
-                        if (!cart.isEmpty)
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Parked Carts Button with badge
+                            Badge(
+                              label: Text('${heldCarts.length}'),
+                              isLabelVisible: heldCarts.isNotEmpty,
+                              child: InkWell(
+                                onTap: () => HeldCartsDialog.show(context),
+                                borderRadius: BorderRadius.circular(4),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(
+                                    Icons.pause_circle_outline,
+                                    size: 18,
+                                    color: Color(0xFF0F766E),
+                                  ),
+                                ),
+                              ),
                             ),
-                            onPressed: () {
-                              ref.read(cartProvider.notifier).clearCart();
-                            },
-                            child: const Text(
-                              'Clear',
-                              style: TextStyle(color: Colors.red, fontSize: 12),
+                            const SizedBox(width: 4),
+
+                            // More order options: Hold Cart, Save as Quotation
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, size: 18),
+                              padding: EdgeInsets.zero,
+                              tooltip: 'Order options',
+                              onSelected: (val) {
+                                if (val == 'hold') _holdCurrentCart();
+                                if (val == 'quote') SaveQuotationDialog.show(context);
+                              },
+                              itemBuilder: (ctx) => [
+                                PopupMenuItem(
+                                  value: 'hold',
+                                  enabled: !cart.isEmpty,
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.pause, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Hold / Park Order'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'quote',
+                                  enabled: !cart.isEmpty,
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.request_quote_outlined, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Save as Quotation'),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+
+                            // Clear Cart
+                            if (!cart.isEmpty) ...[
+                              const SizedBox(width: 2),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () {
+                                  ref.read(cartProvider.notifier).clearCart();
+                                },
+                                child: const Text(
+                                  'Clear',
+                                  style: TextStyle(color: Colors.red, fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),
+                  if (cart.heldCartId != null)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.amber.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: Colors.amber.shade900),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Restored from Parked Cart (auto-clears on checkout)',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   const Divider(height: 1),
 
                   // Customer Selection Bar
@@ -689,6 +861,38 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                               color: Colors.grey.shade600,
                                             ),
                                           ),
+                                          if (item.discount > 0)
+                                            InkWell(
+                                              onTap: () => LineDiscountDialog.show(context, item),
+                                              child: Container(
+                                                margin: const EdgeInsets.only(top: 2),
+                                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.shade50,
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  border: Border.all(color: Colors.red.shade200),
+                                                ),
+                                                child: Text(
+                                                  '-${item.discountType == "PERCENTAGE" ? "${item.discount.toStringAsFixed(0)}%" : currencyFmt.format(item.discount)}',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.red.shade700,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          else
+                                            InkWell(
+                                              onTap: () => LineDiscountDialog.show(context, item),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(top: 1.0),
+                                                child: Text(
+                                                  '+ Discount',
+                                                  style: TextStyle(fontSize: 10, color: Colors.teal.shade700),
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),
@@ -823,6 +1027,41 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                         _summaryRow(
                           'VAT / Tax (${cart.taxRate.toStringAsFixed(0)}%)',
                           '+ ${currencyFmt.format(cart.taxTotal)}',
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Delivery Fee',
+                                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  InkWell(
+                                    onTap: () => DeliveryChargeDialog.show(context),
+                                    child: Icon(
+                                      Icons.edit_outlined,
+                                      size: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '+ ${currencyFmt.format(cart.deliveryCharge)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: cart.deliveryCharge > 0
+                                    ? const Color(0xFF0F766E)
+                                    : Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
                         const Divider(thickness: 1.5),

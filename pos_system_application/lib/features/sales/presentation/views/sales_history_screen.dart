@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../controllers/sales_history_controller.dart';
+import 'product_exchange_dialog.dart';
+import 'quotations_view.dart';
 import 'return_dialog.dart';
 import 'sale_detail_drawer.dart';
 
@@ -14,6 +16,7 @@ class SalesHistoryScreen extends ConsumerStatefulWidget {
 
 class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
+  int _selectedTab = 0; // 0 = Sales Receipts, 1 = Quotations
 
   @override
   void dispose() {
@@ -50,36 +53,78 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header title
+            // Header title & Tabs
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sales History & Receipts',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _selectedTab == 0
+                            ? 'Sales History & Receipts'
+                            : 'Pro-Forma Quotations',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedTab == 0
+                            ? 'Audit customer transactions, reprint thermal receipts, and issue returns / exchanges'
+                            : 'Manage price quotations, pro-forma estimates, and convert them to live sales',
+                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    SegmentedButton<int>(
+                      segments: const [
+                        ButtonSegment(
+                          value: 0,
+                          label: Text('Sales Receipts'),
+                          icon: Icon(Icons.receipt_long, size: 16),
+                        ),
+                        ButtonSegment(
+                          value: 1,
+                          label: Text('Quotations'),
+                          icon: Icon(Icons.request_quote_outlined, size: 16),
+                        ),
+                      ],
+                      selected: {_selectedTab},
+                      onSelectionChanged: (val) {
+                        setState(() {
+                          _selectedTab = val.first;
+                        });
+                      },
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Audit customer transactions, reprint thermal receipts, and issue returns',
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    const SizedBox(width: 12),
+                    IconButton.filledTonal(
+                      tooltip: _selectedTab == 0 ? 'Refresh Sales' : 'Refresh Quotations',
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        if (_selectedTab == 0) {
+                          ref.invalidate(salesListProvider);
+                        } else {
+                          // Handled inside QuotationsView
+                        }
+                      },
                     ),
                   ],
-                ),
-                IconButton.filledTonal(
-                  tooltip: 'Refresh Sales',
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () => ref.invalidate(salesListProvider),
                 ),
               ],
             ),
             const SizedBox(height: 16),
+
+            if (_selectedTab == 1)
+              const Expanded(child: QuotationsView())
+            else ...[
 
             // Filter Bar
             Card(
@@ -417,7 +462,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                               },
                                             ),
                                             if (sale.status != 'VOIDED' &&
-                                                sale.status != 'REFUNDED')
+                                                sale.status != 'REFUNDED') ...[
                                               IconButton(
                                                 tooltip: 'Process Return',
                                                 icon: const Icon(
@@ -442,6 +487,30 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                                   );
                                                 },
                                               ),
+                                              IconButton(
+                                                tooltip: 'Product Exchange',
+                                                icon: const Icon(
+                                                  Icons.swap_horiz,
+                                                  size: 20,
+                                                  color: Color(0xFF0F766E),
+                                                ),
+                                                onPressed: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (ctx) =>
+                                                        ProductExchangeDialog(
+                                                      saleId: sale.id,
+                                                      receiptNo: sale.receiptNo,
+                                                      onExchangeSuccess: () {
+                                                        ref.invalidate(
+                                                          salesListProvider,
+                                                        );
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ],
                                           ],
                                         ),
                                       ),
@@ -522,6 +591,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                 ),
               ),
             ),
+            ],
           ],
         ),
       ),

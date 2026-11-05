@@ -7,6 +7,11 @@ class CheckoutRequestModel {
   final List<CheckoutRequestItemModel> items;
   final double cartDiscount;
   final double taxRate;
+  final double deliveryCharge;
+  final String saleType;
+  final String? managerApprovedBy;
+  final String? exchangeReturnId;
+  final String? heldCartId;
   final List<PaymentTenderInput> payments;
   final String? notes;
 
@@ -17,6 +22,11 @@ class CheckoutRequestModel {
     required this.items,
     this.cartDiscount = 0.0,
     this.taxRate = 0.0,
+    this.deliveryCharge = 0.0,
+    this.saleType = 'RETAIL',
+    this.managerApprovedBy,
+    this.exchangeReturnId,
+    this.heldCartId,
     required this.payments,
     this.notes,
   });
@@ -29,6 +39,11 @@ class CheckoutRequestModel {
       'items': items.map((i) => i.toJson()).toList(),
       'cart_discount': cartDiscount.toStringAsFixed(4),
       'tax_rate': taxRate.toStringAsFixed(4),
+      'delivery_charge': deliveryCharge.toStringAsFixed(4),
+      'sale_type': saleType,
+      if (managerApprovedBy != null) 'manager_approved_by': managerApprovedBy,
+      if (exchangeReturnId != null) 'exchange_return_id': exchangeReturnId,
+      if (heldCartId != null) 'held_cart_id': heldCartId,
       'payments': payments.map((p) => p.toJson()).toList(),
       if (notes != null && notes!.trim().isNotEmpty) 'notes': notes!.trim(),
     };
@@ -40,12 +55,16 @@ class CheckoutRequestItemModel {
   final double quantity;
   final double? unitPrice;
   final double discount;
+  final String discountType;
+  final String? discountReason;
 
   const CheckoutRequestItemModel({
     required this.productVariantId,
     required this.quantity,
     this.unitPrice,
     this.discount = 0.0,
+    this.discountType = 'FIXED',
+    this.discountReason,
   });
 
   Map<String, dynamic> toJson() {
@@ -54,7 +73,8 @@ class CheckoutRequestItemModel {
       'quantity': quantity.toStringAsFixed(4),
       if (unitPrice != null) 'unit_price': unitPrice!.toStringAsFixed(4),
       'discount': discount.toStringAsFixed(4),
+      'discount_type': discountType,
+      if (discountReason != null) 'discount_reason': discountReason,
     };
   }
 }
-

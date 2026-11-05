@@ -23,11 +23,11 @@ from decimal import Decimal
 # Ensure backend directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from alembic import command
 from app.config import get_settings
 from app.database import get_session_maker
 from app.modules.business.models import Branch, Business

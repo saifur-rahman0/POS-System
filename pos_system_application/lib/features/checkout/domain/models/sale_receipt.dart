@@ -11,6 +11,9 @@ class SaleReceiptModel {
   final String? notes;
   final DateTime createdAt;
 
+  double get grandTotal => financials.grandTotal;
+  double get subtotal => financials.subtotal;
+
   const SaleReceiptModel({
     required this.id,
     required this.receiptNo,
