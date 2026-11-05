@@ -26,10 +26,15 @@ from app.modules.identity.models import (
     User,
 )
 from app.modules.inventory.models import (
+    DamagedStockRecord,
+    InventoryBatch,
     StockBalance,
     StockCount,
     StockCountLine,
     StockMovement,
+    StockReservation,
+    StockTransfer,
+    StockTransferItem,
 )
 from app.modules.platform.models import (
     AuditLog,
@@ -79,6 +84,11 @@ __all__ = [
     "StockBalance",
     "StockCount",
     "StockCountLine",
+    "StockTransfer",
+    "StockTransferItem",
+    "InventoryBatch",
+    "DamagedStockRecord",
+    "StockReservation",
     # Purchasing
     "Supplier",
     "Purchase",

@@ -199,6 +199,24 @@ class ProductVariant(Base):
         default=True,
         server_default=text("true"),
     )
+    has_batch_tracking: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
+    min_stock_level: Mapped[Decimal] = mapped_column(
+        Numeric(12, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
+    reorder_quantity: Mapped[Decimal] = mapped_column(
+        Numeric(12, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

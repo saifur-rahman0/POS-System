@@ -76,6 +76,12 @@ class Branch(Base):
     code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
     phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    branch_type: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="RETAIL_STORE",
+        server_default=text("'RETAIL_STORE'"),
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

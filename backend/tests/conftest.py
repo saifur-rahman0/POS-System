@@ -11,7 +11,11 @@ os.environ["ENVIRONMENT"] = "testing"
 os.environ["DEBUG"] = "true"
 os.environ["JWT_SECRET_KEY"] = "test_secret_key_minimum_32_characters_for_pytest"
 
-from app.main import app
+from app.config import get_settings
+
+get_settings.cache_clear()
+
+from app.main import app  # noqa: E402
 
 
 @pytest_asyncio.fixture

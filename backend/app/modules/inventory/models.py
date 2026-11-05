@@ -1,11 +1,13 @@
 """Inventory ledger (stock movements), physical balances, and stock count models."""
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
+    Date,
     ForeignKey,
     Index,
     Numeric,
@@ -67,6 +69,12 @@ class StockMovement(Base):
     imei_device_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("imei_devices.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("inventory_batches.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -336,3 +344,233 @@ class StockTransferItem(Base):
     )
 
     transfer: Mapped["StockTransfer"] = relationship("StockTransfer", back_populates="items")
+
+
+class InventoryBatch(Base):
+    """Specific stock lot/batch tracking with manufacturing and expiration timestamps."""
+
+    __tablename__ = "inventory_batches"
+    __table_args__ = (
+        CheckConstraint("quantity_received > 0", name="chk_batch_qty_received_positive"),
+        CheckConstraint("quantity_on_hand >= 0", name="chk_batch_qty_on_hand_non_negative"),
+        CheckConstraint("cost_price >= 0", name="chk_batch_cost_price_non_negative"),
+        UniqueConstraint(
+            "business_id",
+            "branch_id",
+            "product_variant_id",
+            "batch_number",
+            name="uq_batches_biz_branch_variant_batch",
+        ),
+        Index("ix_inventory_batches_expiry", "business_id", "branch_id", "expiry_date"),
+        Index("ix_inventory_batches_variant", "product_variant_id", "is_active"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    business_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("branches.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    product_variant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("product_variants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    batch_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    manufacturing_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expiry_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    quantity_received: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    quantity_on_hand: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    cost_price: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
+    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("suppliers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("true"),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
+class DamagedStockRecord(Base):
+    """Audit record and financial loss deduction for damaged, broken, or expired items."""
+
+    __tablename__ = "damaged_stock_records"
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="chk_damaged_qty_positive"),
+        CheckConstraint("unit_cost >= 0", name="chk_damaged_cost_non_negative"),
+        CheckConstraint("total_loss >= 0", name="chk_damaged_loss_non_negative"),
+        CheckConstraint(
+            "reason IN ('EXPIRED', 'BROKEN', 'TRANSIT_DAMAGE', 'WATER_DAMAGE', 'THEFT', 'OTHER')",
+            name="chk_damaged_reason",
+        ),
+        CheckConstraint(
+            "disposal_method IN ('DESTROYED', 'RETURNED_TO_VENDOR', 'SOLD_AT_DISCOUNT', 'WRITTEN_OFF')",
+            name="chk_damaged_disposal_method",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    business_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("branches.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    product_variant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("product_variants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("inventory_batches.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    voucher_no: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+    )
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    unit_cost: Mapped[Decimal] = mapped_column(Numeric(19, 4), nullable=False)
+    total_loss: Mapped[Decimal] = mapped_column(Numeric(19, 4), nullable=False)
+    reason: Mapped[str] = mapped_column(String(50), nullable=False)
+    disposal_method: Mapped[str] = mapped_column(String(50), nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reported_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+
+
+class StockReservation(Base):
+    """Allocated inventory hold for quotations, layaways, or pending sales orders."""
+
+    __tablename__ = "stock_reservations"
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="chk_reservation_qty_positive"),
+        CheckConstraint(
+            "reference_type IN ('QUOTATION', 'LAYAWAY', 'SALES_ORDER')",
+            name="chk_reservation_ref_type",
+        ),
+        CheckConstraint(
+            "status IN ('ACTIVE', 'FULFILLED', 'RELEASED', 'EXPIRED')",
+            name="chk_reservation_status",
+        ),
+        Index(
+            "ix_stock_reservations_lookup",
+            "business_id",
+            "branch_id",
+            "product_variant_id",
+            "status",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    business_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("branches.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    product_variant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("product_variants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("inventory_batches.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    reference_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    reference_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="ACTIVE",
+        server_default=text("'ACTIVE'"),
+    )
+    reserved_until: Mapped[datetime] = mapped_column(nullable=False)
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+
