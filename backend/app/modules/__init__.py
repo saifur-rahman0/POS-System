@@ -8,7 +8,14 @@ from app.modules.catalog.models import (
     Product,
     ProductVariant,
 )
-from app.modules.expenses.models import CashTransaction, Expense
+from app.modules.expenses.models import (
+    AccountTransfer,
+    CashTransaction,
+    Expense,
+    ExpenseCategory,
+    FinancialAccount,
+    RecurringExpense,
+)
 from app.modules.identity.models import (
     Device,
     Membership,
@@ -40,7 +47,10 @@ from app.modules.purchasing.models import (
 from app.modules.returns.models import Return, ReturnItem
 from app.modules.sales.models import (
     Customer,
+    HeldCart,
     PaymentTender,
+    Quotation,
+    QuotationItem,
     Sale,
     SaleItem,
 )
@@ -79,12 +89,19 @@ __all__ = [
     "Sale",
     "SaleItem",
     "PaymentTender",
+    "HeldCart",
+    "Quotation",
+    "QuotationItem",
     # Returns
     "Return",
     "ReturnItem",
     # Shifts
     "RegisterShift",
-    # Expenses
+    # Expenses & Finance
+    "ExpenseCategory",
+    "FinancialAccount",
+    "AccountTransfer",
+    "RecurringExpense",
     "Expense",
     "CashTransaction",
     # Platform

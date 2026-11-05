@@ -5,6 +5,8 @@ import '../../branches/presentation/views/branches_screen.dart';
 import '../../catalog/presentation/views/catalog_screen.dart';
 import '../../checkout/presentation/views/pos_register_screen.dart';
 import '../../customers/presentation/views/customers_screen.dart';
+import '../../expenses/presentation/views/expenses_screen.dart';
+import '../../expenses/presentation/views/financial_accounts_screen.dart';
 import '../../purchasing/presentation/views/purchasing_screen.dart';
 import '../../reports/presentation/views/reports_screen.dart';
 import '../../sales/presentation/views/sales_history_screen.dart';
@@ -40,6 +42,16 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
       icon: Icon(Icons.receipt_long_outlined),
       selectedIcon: Icon(Icons.receipt_long),
       label: 'Sales History',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.request_quote_outlined),
+      selectedIcon: Icon(Icons.request_quote),
+      label: 'Expenses',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.account_balance_outlined),
+      selectedIcon: Icon(Icons.account_balance),
+      label: 'Accounts',
     ),
     NavigationDestination(
       icon: Icon(Icons.people_outline),
@@ -166,25 +178,32 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
       ),
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            labelType: NavigationRailLabelType.all,
-            leading: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Icon(Icons.storefront, size: 32, color: Color(0xFF0F766E)),
+          SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - kToolbarHeight),
+              child: IntrinsicHeight(
+                child: NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (int index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                  labelType: NavigationRailLabelType.all,
+                  leading: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Icon(Icons.storefront, size: 32, color: Color(0xFF0F766E)),
+                  ),
+                  destinations: _destinations.map((d) {
+                    return NavigationRailDestination(
+                      icon: d.icon,
+                      selectedIcon: d.selectedIcon,
+                      label: Text(d.label),
+                    );
+                  }).toList(),
+                ),
+              ),
             ),
-            destinations: _destinations.map((d) {
-              return NavigationRailDestination(
-                icon: d.icon,
-                selectedIcon: d.selectedIcon,
-                label: Text(d.label),
-              );
-            }).toList(),
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
@@ -197,47 +216,39 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                         : _selectedIndex == 3
                             ? const SalesHistoryScreen()
                             : _selectedIndex == 4
-                                ? const CustomersScreen()
+                                ? const ExpensesScreen()
                                 : _selectedIndex == 5
-                                    ? const BranchesScreen()
+                                    ? const FinancialAccountsScreen()
                                     : _selectedIndex == 6
-                                        ? const ReportsScreen()
-                                        : Center(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              _destinations[_selectedIndex]
-                                                      .icon is Icon
-                                                  ? (_destinations[
-                                                              _selectedIndex]
-                                                          .icon as Icon)
-                                                      .icon
-                                                  : Icons.dashboard,
-                                              size: 64,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                                  .withValues(alpha: 0.5),
-                                            ),
-                                            const SizedBox(height: 16),
-                                            Text(
-                                              _destinations[_selectedIndex]
-                                                  .label,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .headlineSmall,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            const Text(
-                                              'Coming Soon',
-                                              style: TextStyle(
-                                                  color: Colors.grey),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                        ? const CustomersScreen()
+                                        : _selectedIndex == 7
+                                            ? const BranchesScreen()
+                                            : _selectedIndex == 8
+                                                ? const ReportsScreen()
+                                                : Center(
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Icon(
+                                                          _destinations[_selectedIndex].icon is Icon
+                                                              ? (_destinations[_selectedIndex].icon as Icon).icon
+                                                              : Icons.dashboard,
+                                                          size: 64,
+                                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                                                        ),
+                                                        const SizedBox(height: 16),
+                                                        Text(
+                                                          _destinations[_selectedIndex].label,
+                                                          style: Theme.of(context).textTheme.headlineSmall,
+                                                        ),
+                                                        const SizedBox(height: 8),
+                                                        const Text(
+                                                          'Coming Soon',
+                                                          style: TextStyle(color: Colors.grey),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
           ),
         ],
       ),

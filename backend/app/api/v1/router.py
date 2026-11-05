@@ -6,6 +6,8 @@ from app.api.v1.backups import router as backups_router
 from app.api.v1.branches import router as branches_router
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.customers import router as customers_router
+from app.api.v1.expenses import router as expenses_router
+from app.api.v1.financial_accounts import router as financial_accounts_router
 from app.api.v1.health import router as health_router
 from app.api.v1.inventory import router as inventory_router
 from app.api.v1.license import router as license_router
@@ -30,6 +32,12 @@ api_v1_router.include_router(catalog_router)
 
 # Sales & Checkout
 api_v1_router.include_router(sales_router)
+
+# Expenses & Operating Vouchers
+api_v1_router.include_router(expenses_router)
+
+# Financial Accounts & Cash Flow
+api_v1_router.include_router(financial_accounts_router)
 
 # Reports & Analytics
 api_v1_router.include_router(reports_router)

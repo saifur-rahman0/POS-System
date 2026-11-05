@@ -86,52 +86,45 @@ Transform standard checkout into an enterprise POS sales engine supporting held 
 
 ---
 
-### Track 10: Expense and Financial Management
+### Track 10: Expense and Financial Management [COMPLETED & VERIFIED]
 
 #### 1. Objective
 Establish comprehensive store expense tracking, recurring bills, multi-account cash/bank liquidity management, accounts payable aging, and daily financial reconciliation.
 
-#### 2. Existing Verified Assets & Reusable Components
-- `Expense` model in `app/modules/expenses/models.py` (`id`, `business_id`, `branch_id`, `category`, `amount`, `note`, `created_by`, `created_at`).
-- `CashTransaction` model in `app/modules/expenses/models.py` (`direction`, `amount`, `account_id`, `reference_type`, `reference_id`).
-- `ShiftService` records `CashTransaction` for petty cash in/out.
-
-#### 3. Missing / Gap Features
-- **No Dedicated Expense API / UI:** The `Expense` model has no REST controller in `app/api/v1/` and no Flutter management screen.
-- **Categorization:** `category` is an unconstrained string, lacking structured taxonomy, budgets, or tax deductibility flags.
-- **Recurring Expenses:** No scheduler for recurring store expenses (rent, internet, utility bills).
-- **Expense Approval:** No approval workflow for store expenses exceeding cashier float limits.
-- **Cash & Bank Liquidity Accounts:** No ledger tracking distinct financial accounts (Main Safe, Drawer Float, Bank Al-Falah, bKash Merchant Wallet, Petty Cash).
-- **Accounts Payable (AP) Aging:** Current supplier purchases track total unpaid balance, but lack 0–30, 31–60, 60–90+ day aging buckets.
-
-#### 4. Database Changes Required
-- **New Table `expense_categories`:**
-  - `id` (UUID), `business_id` (UUID), `name` (String 100), `code` (String 50), `is_active` (Boolean), `monthly_budget` (Numeric 19,4).
-- **New Table `financial_accounts`:**
-  - `id` (UUID), `business_id` (UUID), `branch_id` (UUID nullable), `account_name` (String 100), `account_type` (`CASH_DRAWER`, `SAFE`, `BANK`, `MOBILE_WALLET`), `account_number` (String 100 nullable), `opening_balance` (Numeric 19,4), `current_balance` (Numeric 19,4), `is_active` (Boolean).
-- **New Table `recurring_expenses`:**
-  - `id` (UUID), `business_id` (UUID), `category_id` (UUID), `amount` (Numeric 19,4), `frequency` (`DAILY`, `WEEKLY`, `MONTHLY`), `next_due_date` (DateTime), `is_active` (Boolean).
-- **Alter Table `expenses`:**
-  - Add `category_id` (UUID foreign key `expense_categories.id`).
-  - Add `payment_account_id` (UUID foreign key `financial_accounts.id`).
-  - Add `approval_status` (`APPROVED`, `PENDING_APPROVAL`, `REJECTED`).
-  - Add `approved_by` (UUID foreign key `users.id` nullable).
-
-#### 5. API Endpoints Required
-- `GET/POST/PUT /api/v1/expenses/categories`
-- `GET/POST /api/v1/expenses` & `POST /api/v1/expenses/{id}/approve`
-- `GET/POST /api/v1/expenses/recurring`
-- `GET/POST /api/v1/financial-accounts` & `POST /api/v1/financial-accounts/transfer` (Inter-account transfer)
-- `GET /api/v1/reports/cash-flow` & `GET /api/v1/reports/accounts-payable-aging`
-
-#### 6. Flutter Screens & UI Required
-- `ExpensesScreen`: Tabbed view in Shell navigation displaying Expense Records list, Monthly Spend vs Budget KPI, and Category Breakdown.
-- `ExpenseFormDialog`: Record quick petty cash or operational expense with account and category pickers.
-- `FinancialAccountsScreen`: Account cards showing balances across Safe, Bank, and bKash Merchant Wallet with funds transfer action.
-
-#### 7. Complexity & Risk
-- **Estimated Complexity:** Medium-High (2.5 weeks)
-- **Technical Risk:** Low-Medium. Balances must update atomically with `with_for_update()` during transfers.
+#### 2. Implemented & Verified Capabilities (Track 10 Completed)
+- **Database Schema (Alembic Migration `d49e20f5b3c2`):**
+  - Table `expense_categories` (id, business_id, name, code, description, monthly_budget, is_active, created_at).
+  - Table `financial_accounts` (id, business_id, branch_id, account_name, account_type, account_number, bank_name, opening_balance, current_balance, is_active, created_at).
+  - Table `account_transfers` (id, business_id, from_account_id, to_account_id, amount, reference_no, note, transfer_date, created_by, created_at).
+  - Table `recurring_expenses` (id, business_id, branch_id, category_id, payment_account_id, title, amount, frequency, next_due_date, last_generated_at, auto_post, is_active, created_at).
+  - Enhanced `expenses` table with `voucher_no`, `category_id`, `payment_account_id`, `payment_method`, `payee`, `receipt_reference`, `tax_deductible`, `approval_status`, `approved_by`, `approved_at`.
+- **Domain Services & Backend Logic (`backend/app/modules/expenses/`):**
+  - Deadlock-free inter-account transfers with lexicographically ordered `with_for_update()` row locks (`get_accounts_for_transfer`).
+  - Strict non-negative liquidity constraints on accounts.
+  - Automatic manager authorization threshold (> ৳ 5,000 holds voucher as `PENDING_APPROVAL`, balances decremented only upon sign-off).
+  - Recurring schedule runner with automatic date advancement (`advance_due_date` across DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUAL).
+  - 30-day net cash flow statement (sales cash inflows vs expense/supplier outflows).
+  - Accounts Payable (AP) aging engine (0–30, 31–60, 61–90, 90+ days).
+- **REST Endpoints (`backend/app/api/v1/`):**
+  - `/api/v1/expenses`: `GET`, `POST`, `POST /{id}/approve`.
+  - `/api/v1/expenses/categories`: `GET`, `POST`, `PUT /{id}`.
+  - `/api/v1/expenses/recurring`: `GET`, `POST`, `PUT /{id}`, `POST /process`.
+  - `/api/v1/financial-accounts`: `GET`, `POST`, `PUT /{id}`.
+  - `/api/v1/financial-accounts/transfers`: `POST`, `GET`.
+  - `/api/v1/financial-accounts/reports/cash-flow` & `/reports/ap-aging`.
+- **Flutter UI & State Management (`pos_system_application/`):**
+  - Domain models & serialization (`ExpenseModel`, `ExpenseCategoryModel`, `FinancialAccountModel`, `AccountTransferModel`, `RecurringExpenseModel`, `CashFlowReportModel`, `APAgeingReportModel`).
+  - Riverpod controllers (`expenses_controller.dart`, `financial_accounts_controller.dart`).
+  - `ExpensesScreen` with 3 tabs: Vouchers (with supervisor approve/reject actions), Category Budgets (visual progress bars), Recurring Schedules.
+  - `ExpenseFormDialog` with dynamic manager approval warning when amount > ৳ 5,000.
+  - `FinancialAccountsScreen` displaying Total Liquid Capital banner, Account cards, AP aging breakdown, 30-day Cash Flow summary, and audit ledger.
+  - `AccountTransferDialog` with real-time balance checks.
+  - Integrated into `ShellScreen` NavigationRail.
+- **Verification:**
+  - `ruff check backend`: 100% clean (0 errors).
+  - `mypy backend`: 100% clean (0 errors across 8 source files).
+  - `flutter analyze`: 100% clean (0 errors, 0 warnings).
+  - `flutter test`: **52 / 52 tests passed (100%)** including 8 dedicated tests in `expenses_widget_test.dart`.
 
 ---
 

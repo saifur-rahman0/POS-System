@@ -1,3 +1,18 @@
-from app.modules.expenses.models import CashTransaction, Expense
+from app.modules.expenses.models import (
+    AccountTransfer,
+    CashTransaction,
+    Expense,
+    ExpenseCategory,
+    FinancialAccount,
+    RecurringExpense,
+)
 
-__all__ = ["Expense", "CashTransaction"]
+__all__ = [
+    "Expense",
+    "ExpenseCategory",
+    "FinancialAccount",
+    "AccountTransfer",
+    "RecurringExpense",
+    "CashTransaction",
+]
+
