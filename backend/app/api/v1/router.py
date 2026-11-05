@@ -11,6 +11,7 @@ from app.api.v1.financial_accounts import router as financial_accounts_router
 from app.api.v1.health import router as health_router
 from app.api.v1.inventory import router as inventory_router
 from app.api.v1.license import router as license_router
+from app.api.v1.pricing import router as pricing_router
 from app.api.v1.purchases import router as purchases_router
 from app.api.v1.reports import router as reports_router
 from app.api.v1.sales import router as sales_router
@@ -27,8 +28,9 @@ api_v1_router.include_router(health_router)
 # Branches & Multi-Store
 api_v1_router.include_router(branches_router)
 
-# Catalog
+# Catalog & Advanced Pricing
 api_v1_router.include_router(catalog_router)
+api_v1_router.include_router(pricing_router)
 
 # Sales & Checkout
 api_v1_router.include_router(sales_router)

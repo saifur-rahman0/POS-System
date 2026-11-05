@@ -168,21 +168,35 @@ Establish comprehensive store expense tracking, recurring bills, multi-account c
 
 ### Track 12: Advanced Product and Pricing
 
-#### 1. Objective
-Support multi-tier pricing, wholesale price breaks, branch-specific price overrides, product combos/bundles, promotional coupons, and bulk Excel catalog importing.
+> **STATUS: COMPLETED & VERIFIED (100% Passed)**
 
-#### 2. Existing Verified Assets & Reusable Components
-- `ProductVariant` stores standard `cost_price` and `selling_price`.
-- `CatalogService` and `catalog_router` support product and variant CRUD.
-- Flutter `CatalogScreen` has search, category filtering, and product form dialogs.
-
-#### 3. Missing / Gap Features
-- **Price Lists & Wholesale:** Only one fixed selling price per variant exists. No customer-tier pricing (Wholesale vs Retail) or volume quantity breaks.
-- **Branch-Specific Overrides:** All branches currently inherit the exact same selling price from `ProductVariant.selling_price`.
-- **Bundles & Combo Packs:** No composite products where selling 1 Combo SKU automatically decrements multiple sub-component variant balances.
-- **Coupons & Promo Codes:** Cart discount is manual entry only; no discount code engine validating redemption count, date ranges, or minimum spend.
-- **Scheduled Price Changes:** No mechanism to schedule price adjustments taking effect at midnight or a specified date.
-- **Bulk Excel/CSV Import:** No bulk spreadsheet upload parser to create or update thousands of products in one operation.
+#### 1. Implementation Summary
+- **Database & Migrations:**
+  - Alembic migration `f61g42b2c5e4_add_advanced_pricing.py`:
+    - Created `customer_groups` table with unique constraint on `(business_id, name)`.
+    - Created `customer_group_members` table with unique constraint on `(customer_group_id, customer_id)`.
+    - Created `price_lists` table with unique default partial index on `business_id` where `is_default = true`.
+    - Created `price_list_items` table with quantity breaks (`min_quantity`), prices, and scheduling windows (`start_date`, `end_date`).
+    - Created `branch_price_overrides` table with unique constraint on `(branch_id, product_variant_id)`.
+    - Created `product_bundles` and `product_bundle_items` tables for composite product modeling.
+    - Created `promotions` table with unique partial code index, percentage/fixed discounts, caps, limits, and scope.
+    - Created `promotion_usages` table for immutable redemption audit logs.
+    - Altered `customers`: added `primary_group_id` foreign key.
+    - Altered `sales`: added `promotion_id`, `promotion_code`, `promotion_discount`, and `price_list_id`.
+- **Backend Architecture & Domain Logic:**
+  - Dynamic `PriceResolver` priority chain: `Branch Override` → `Price List (Customer Group + Volume Break + Date Filter)` → `Variant Base Price`.
+  - Atomic bundle expansion during checkout in `CheckoutService` with pessimistic stock deduction across all component variants.
+  - Race-condition-safe coupon validation and redemption using `SELECT FOR UPDATE` on `promotions` row.
+  - Streaming and transactional `BulkImportProcessor` for CSV catalog uploads with row-by-row error auditing.
+  - Router `/api/v1/pricing` with 18 endpoints covering customer groups, price lists, branch overrides, bundles, promotions, and bulk import.
+- **Frontend Flutter Application:**
+  - Integrated 4th tab `Pricing & Promotions` into `CatalogScreen`.
+  - Created 5-tab master view `PricingScreen`: Price Lists, Customer Groups, Branch Overrides, Bundles & Kits, Promotions.
+  - Created interactive dialogs: `CustomerGroupDialog`, `PriceListDialog`, `AddPriceListItemDialog`, `BranchOverrideDialog`, `ProductBundleDialog`, `PromotionDialog`, and `BulkImportDialog`.
+- **Verification Results:**
+  - Python Static Analysis: `ruff check backend`: 0 errors ✅ | `mypy`: 0 errors across 15 files ✅
+  - Flutter Static Analysis: `flutter analyze`: 0 errors / No issues found ✅
+  - Flutter Test Suite: **66/66 tests passed (100%)** ✅ (including 7 new comprehensive widget tests in `pricing_widget_test.dart`)
 
 #### 4. Database Changes Required
 - **New Table `price_lists` & `price_list_items`:**

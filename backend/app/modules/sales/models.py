@@ -65,6 +65,12 @@ class Customer(Base):
         default=True,
         server_default=text("true"),
     )
+    primary_group_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("customer_groups.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
         nullable=False,
@@ -173,6 +179,25 @@ class Sale(Base):
     exchange_return_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("returns.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    promotion_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("promotions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    promotion_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    promotion_discount: Mapped[Decimal] = mapped_column(
+        Numeric(19, 4),
+        nullable=False,
+        default=Decimal("0.0000"),
+        server_default=text("0.0000"),
+    )
+    price_list_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("price_lists.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

@@ -119,6 +119,15 @@ class CheckoutRequest(BaseModel):
         default=None,
         description="Held cart ID to purge upon successful checkout completion",
     )
+    promotion_code: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Optional coupon / promotional code applied",
+    )
+    price_list_id: uuid.UUID | None = Field(
+        default=None,
+        description="Applied price list tier ID",
+    )
     payments: list[PaymentTenderCreate] = Field(
         ...,
         min_length=1,
@@ -186,6 +195,10 @@ class SaleOut(BaseModel):
     sale_type: str = "RETAIL"
     manager_approved_by: uuid.UUID | None = None
     exchange_return_id: uuid.UUID | None = None
+    promotion_id: uuid.UUID | None = None
+    promotion_code: str | None = None
+    promotion_discount: Decimal = Decimal("0.0000")
+    price_list_id: uuid.UUID | None = None
     cashier_id: uuid.UUID
     customer_id: uuid.UUID | None
     customer_name: str | None = None

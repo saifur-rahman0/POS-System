@@ -6,16 +6,21 @@ import uuid
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.modules.business.models import Branch
 from app.modules.catalog.models import ImeiDevice, ProductVariant
 from app.modules.identity.models import User
-from app.modules.inventory.models import StockMovement
+from app.modules.inventory.models import StockBalance, StockMovement
 from app.modules.inventory.repository import InventoryRepository
 from app.modules.platform.models import AuditLog, IdempotencyRecord
+from app.modules.pricing.models import (
+    ProductBundle,
+    Promotion,
+    PromotionUsage,
+)
 from app.modules.returns.models import Return, ReturnItem
 from app.modules.returns.repository import ReturnsRepository
 from app.modules.sales.models import (
@@ -138,6 +143,10 @@ class CheckoutService:
             sale_type=getattr(sale, "sale_type", "RETAIL"),
             manager_approved_by=getattr(sale, "manager_approved_by", None),
             exchange_return_id=getattr(sale, "exchange_return_id", None),
+            promotion_id=getattr(sale, "promotion_id", None),
+            promotion_code=getattr(sale, "promotion_code", None),
+            promotion_discount=getattr(sale, "promotion_discount", Decimal("0.0000")),
+            price_list_id=getattr(sale, "price_list_id", None),
             cashier_id=sale.cashier_id,
             customer_id=sale.customer_id,
             customer_name=customer_name,
@@ -487,6 +496,26 @@ class CheckoutService:
         sale_id = uuid.uuid4()
         receipt_no = await self.sales_repo.generate_receipt_number(session, business_id, branch)
 
+        promotion_id = None
+        promotion_discount = Decimal("0.0000")
+        if payload.promotion_code:
+            code_val = payload.promotion_code.strip().lower()
+            promo_stmt = (
+                select(Promotion)
+                .where(
+                    Promotion.business_id == business_id,
+                    func.lower(Promotion.code) == code_val,  # type: ignore[arg-type]
+                    Promotion.is_active == True,  # noqa: E712
+                )
+                .with_for_update()
+            )
+            promo_res = await session.execute(promo_stmt)
+            promo = promo_res.scalar_one_or_none()
+            if promo:
+                promotion_id = promo.id
+                promo.times_used += 1
+                promotion_discount = cart_discount
+
         sale = Sale(
             id=sale_id,
             business_id=business_id,
@@ -499,6 +528,10 @@ class CheckoutService:
             delivery_charge=delivery_charge,
             manager_approved_by=getattr(payload, "manager_approved_by", None),
             exchange_return_id=getattr(payload, "exchange_return_id", None),
+            promotion_id=promotion_id,
+            promotion_code=getattr(payload, "promotion_code", None),
+            promotion_discount=promotion_discount,
+            price_list_id=getattr(payload, "price_list_id", None),
             subtotal=subtotal,
             discount_total=discount_total,
             tax_total=tax_total,
@@ -508,6 +541,15 @@ class CheckoutService:
             idempotency_key=payload.idempotency_key,
             notes=payload.notes,
         )
+
+        if promotion_id:
+            usage = PromotionUsage(
+                id=uuid.uuid4(),
+                promotion_id=promotion_id,
+                sale_id=sale_id,
+                discount_applied=promotion_discount,
+            )
+            session.add(usage)
 
         sale_items: list[SaleItem] = []
         for item, variant, unit_price, line_total in sale_items_data:
@@ -526,8 +568,46 @@ class CheckoutService:
             )
             sale_items.append(sale_item)
 
-            # Deduct stock and log movement for trackable variants
-            if variant.track_stock:
+            # Deduct stock and log movement for trackable variants or bundles
+            if getattr(variant.product, "product_type", "") in ("BUNDLE", "KIT"):
+                bundle_stmt = (
+                    select(ProductBundle)
+                    .where(ProductBundle.product_id == variant.product_id)
+                    .options(selectinload(ProductBundle.items))
+                )
+                bundle_res = await session.execute(bundle_stmt)
+                bundle = bundle_res.scalar_one_or_none()
+                if bundle:
+                    for b_item in bundle.items:
+                        comp_needed = b_item.quantity * item.quantity
+                        comp_bal_stmt = (
+                            select(StockBalance)
+                            .where(
+                                StockBalance.business_id == business_id,
+                                StockBalance.branch_id == branch_id,
+                                StockBalance.product_variant_id == b_item.component_variant_id,
+                            )
+                            .with_for_update()
+                        )
+                        comp_bal_res = await session.execute(comp_bal_stmt)
+                        comp_balance = comp_bal_res.scalar_one_or_none()
+                        if comp_balance:
+                            comp_balance.quantity_on_hand -= comp_needed
+
+                        comp_movement = StockMovement(
+                            id=uuid.uuid4(),
+                            business_id=business_id,
+                            branch_id=branch_id,
+                            product_variant_id=b_item.component_variant_id,
+                            movement_type="SALE",
+                            quantity_delta=-comp_needed,
+                            unit_cost=Decimal("0.0000"),
+                            reference_type="SALE_BUNDLE",
+                            reference_id=sale_id,
+                            created_by=cashier_id,
+                        )
+                        session.add(comp_movement)
+            elif variant.track_stock:
                 balance = balances[item.product_variant_id]
                 balance.quantity_on_hand -= item.quantity
 

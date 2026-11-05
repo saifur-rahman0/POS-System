@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../inventory/presentation/views/advanced_inventory_screen.dart';
+import '../../../pricing/presentation/views/pricing_screen.dart';
 import 'category_list_view.dart';
 import 'product_list_view.dart';
 
@@ -11,7 +12,7 @@ class CatalogScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Column(
@@ -40,6 +41,10 @@ class CatalogScreen extends StatelessWidget {
                     icon: Icon(Icons.warehouse, size: 20),
                     text: 'Advanced Inventory',
                   ),
+                  Tab(
+                    icon: Icon(Icons.price_change, size: 20),
+                    text: 'Pricing & Promotions',
+                  ),
                 ],
               ),
             ),
@@ -50,6 +55,7 @@ class CatalogScreen extends StatelessWidget {
                   ProductListView(),
                   CategoryListView(),
                   AdvancedInventoryScreen(),
+                  PricingScreen(),
                 ],
               ),
             ),
