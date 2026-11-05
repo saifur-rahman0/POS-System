@@ -318,3 +318,4 @@ class BulkImportResult(BaseModel):
     updated_count: int
     error_count: int
     errors: list[BulkImportError] = []
+

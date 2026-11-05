@@ -491,3 +491,4 @@ class PromotionUsage(Base):
     )
 
     promotion: Mapped["Promotion"] = relationship("Promotion", back_populates="usages")
+

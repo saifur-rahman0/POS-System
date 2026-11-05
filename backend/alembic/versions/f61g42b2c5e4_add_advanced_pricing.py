@@ -229,3 +229,4 @@ def downgrade() -> None:
     op.drop_table('price_lists')
     op.drop_table('customer_group_members')
     op.drop_table('customer_groups')
+
