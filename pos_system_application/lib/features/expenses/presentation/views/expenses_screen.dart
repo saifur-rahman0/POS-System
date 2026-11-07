@@ -239,6 +239,16 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 ),
                 Row(
                   children: [
+                    IconButton.outlined(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh Expenses Data',
+                      onPressed: () {
+                        ref.read(expensesListProvider.notifier).loadExpenses();
+                        ref.read(expenseCategoriesProvider.notifier).loadCategories();
+                        ref.read(recurringExpensesProvider.notifier).loadRecurringExpenses();
+                      },
+                    ),
+                    const SizedBox(width: 8),
                     if (_selectedTab == 0)
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
@@ -513,7 +523,26 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error loading expenses: $e')),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Error loading expenses: $e',
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () => ref.read(expensesListProvider.notifier).loadExpenses(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ]
@@ -641,7 +670,26 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error loading categories: $e')),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Error loading categories: $e',
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () => ref.read(expenseCategoriesProvider.notifier).loadCategories(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ]
@@ -691,7 +739,26 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error loading recurring schedules: $e')),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Error loading recurring schedules: $e',
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () => ref.read(recurringExpensesProvider.notifier).loadRecurringExpenses(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -63,7 +63,7 @@ class FinancialAccountsNotifier extends StateNotifier<AsyncValue<List<FinancialA
       note: note,
     );
     await loadAccounts();
-    _ref.invalidate(transfersListProvider);
+    _ref.invalidate(accountTransfersProvider);
     _ref.invalidate(cashFlowReportProvider);
     return trf;
   }
@@ -77,7 +77,7 @@ final financialAccountsProvider =
 // ============================================================================
 // Account Transfers List Provider
 // ============================================================================
-final transfersListProvider = FutureProvider<List<AccountTransferModel>>((ref) async {
+final accountTransfersProvider = FutureProvider<List<AccountTransferModel>>((ref) async {
   final api = ref.watch(expensesApiServiceProvider);
   return api.getTransfers();
 });

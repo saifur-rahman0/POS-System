@@ -66,7 +66,7 @@ class _BranchOverrideDialogState extends ConsumerState<BranchOverrideDialog> {
                   labelText: 'Target Branch *',
                   border: OutlineInputBorder(),
                 ),
-                value: _selectedBranchId,
+                initialValue: _selectedBranchId,
                 items: branchesState.branches.map((b) {
                   return DropdownMenuItem(value: b.id, child: Text('${b.name} (${b.code})'));
                 }).toList(),
@@ -82,7 +82,7 @@ class _BranchOverrideDialogState extends ConsumerState<BranchOverrideDialog> {
                       labelText: 'Select Product Variant *',
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedVariantId,
+                    initialValue: _selectedVariantId,
                     items: variants.map((v) {
                       return DropdownMenuItem(
                         value: v.id,

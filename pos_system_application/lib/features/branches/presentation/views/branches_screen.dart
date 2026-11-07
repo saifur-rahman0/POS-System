@@ -35,6 +35,17 @@ class _BranchesScreenState extends ConsumerState<BranchesScreen>
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text('Store Branches & Transfers'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Branches & Transfers',
+            onPressed: () {
+              ref.read(branchesListProvider.notifier).loadBranches();
+              ref.read(transfersListProvider.notifier).loadTransfers();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -91,15 +102,25 @@ class _BranchesTab extends ConsumerWidget {
                     ),
                   ],
                 ),
-                FilledButton.icon(
-                  onPressed: () => BranchFormDialog.show(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Branch'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F766E),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 12),
-                  ),
+                Row(
+                  children: [
+                    IconButton.outlined(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh Branches',
+                      onPressed: () => ref.read(branchesListProvider.notifier).loadBranches(),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: () => BranchFormDialog.show(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Branch'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F766E),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -110,9 +131,23 @@ class _BranchesTab extends ConsumerWidget {
             else if (state.errorMessage != null)
               Expanded(
                 child: Center(
-                  child: Text(
-                    'Error: ${state.errorMessage}',
-                    style: const TextStyle(color: Colors.red),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Error: ${state.errorMessage}',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => ref.read(branchesListProvider.notifier).loadBranches(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 ),
               )
@@ -302,6 +337,14 @@ class _TransfersTabState extends ConsumerState<_TransfersTab> {
   String? _statusFilter;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(transfersListProvider.notifier).loadTransfers();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(transfersListProvider);
     final branches = ref.watch(branchesListProvider).branches;
@@ -334,19 +377,29 @@ class _TransfersTabState extends ConsumerState<_TransfersTab> {
                     ),
                   ],
                 ),
-                FilledButton.icon(
-                  onPressed: () => CreateTransferDialog.show(
-                    context,
-                    branches: branches,
-                    initialSourceBranchId: activeBranch?.id,
-                  ),
-                  icon: const Icon(Icons.add),
-                  label: const Text('New Transfer'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F766E),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 12),
-                  ),
+                Row(
+                  children: [
+                    IconButton.outlined(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh Transfers',
+                      onPressed: () => ref.read(transfersListProvider.notifier).loadTransfers(),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: () => CreateTransferDialog.show(
+                        context,
+                        branches: branches,
+                        initialSourceBranchId: activeBranch?.id,
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('New Transfer'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F766E),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -376,9 +429,23 @@ class _TransfersTabState extends ConsumerState<_TransfersTab> {
             else if (state.errorMessage != null)
               Expanded(
                 child: Center(
-                  child: Text(
-                    'Error: ${state.errorMessage}',
-                    style: const TextStyle(color: Colors.red),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Error: ${state.errorMessage}',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => ref.read(transfersListProvider.notifier).loadTransfers(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 ),
               )

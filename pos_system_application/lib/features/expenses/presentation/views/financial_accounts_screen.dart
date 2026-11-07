@@ -104,7 +104,7 @@ class FinancialAccountsScreen extends ConsumerWidget {
     final accountsAsync = ref.watch(financialAccountsProvider);
     final apAgingAsync = ref.watch(apAgingReportProvider);
     final cashFlowAsync = ref.watch(cashFlowReportProvider);
-    final transfersAsync = ref.watch(transfersListProvider);
+    final transfersAsync = ref.watch(accountTransfersProvider);
 
     final currencyFmt = NumberFormat.currency(symbol: '৳ ', decimalDigits: 2);
     final dateFmt = DateFormat('dd MMM yyyy, hh:mm a');
@@ -138,6 +138,17 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 ),
                 Row(
                   children: [
+                    IconButton.outlined(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh Treasury Data',
+                      onPressed: () {
+                        ref.read(financialAccountsProvider.notifier).loadAccounts();
+                        ref.invalidate(cashFlowReportProvider);
+                        ref.invalidate(apAgingReportProvider);
+                        ref.invalidate(accountTransfersProvider);
+                      },
+                    ),
+                    const SizedBox(width: 8),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF0F766E),
@@ -310,7 +321,22 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error loading accounts: $e')),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                    const SizedBox(height: 8),
+                    Text('Error loading accounts: $e', style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => ref.read(financialAccountsProvider.notifier).loadAccounts(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -369,7 +395,16 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Error loading AP Aging: $e', style: const TextStyle(color: Colors.red)),
+              error: (e, _) => Row(
+                children: [
+                  Expanded(child: Text('Error loading AP Aging: $e', style: const TextStyle(color: Colors.red))),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(apAgingReportProvider),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -426,7 +461,16 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Error loading cash flow: $e', style: const TextStyle(color: Colors.red)),
+              error: (e, _) => Row(
+                children: [
+                  Expanded(child: Text('Error loading cash flow: $e', style: const TextStyle(color: Colors.red))),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(cashFlowReportProvider),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -486,7 +530,16 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Error loading transfers: $e', style: const TextStyle(color: Colors.red)),
+              error: (e, _) => Row(
+                children: [
+                  Expanded(child: Text('Error loading transfers: $e', style: const TextStyle(color: Colors.red))),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(accountTransfersProvider),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

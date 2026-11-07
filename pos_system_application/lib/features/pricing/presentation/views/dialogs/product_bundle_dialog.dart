@@ -103,7 +103,7 @@ class _ProductBundleDialogState extends ConsumerState<ProductBundleDialog> {
                     labelText: 'Parent Bundle Product *',
                     border: OutlineInputBorder(),
                   ),
-                  value: _selectedProductId,
+                  initialValue: _selectedProductId,
                   items: paginated.items.map((p) {
                     return DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.sku})'));
                   }).toList(),

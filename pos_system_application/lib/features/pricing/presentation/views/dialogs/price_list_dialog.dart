@@ -81,7 +81,7 @@ class _PriceListDialogState extends ConsumerState<PriceListDialog> {
                     labelText: 'Target Customer Group (Optional)',
                     border: OutlineInputBorder(),
                   ),
-                  value: _selectedGroupId,
+                  initialValue: _selectedGroupId,
                   items: [
                     const DropdownMenuItem<String?>(
                       value: null,
@@ -108,7 +108,7 @@ class _PriceListDialogState extends ConsumerState<PriceListDialog> {
                         labelText: 'Currency',
                         border: OutlineInputBorder(),
                       ),
-                      value: _currency,
+                      initialValue: _currency,
                       items: const [
                         DropdownMenuItem(value: 'BDT', child: Text('BDT (৳)')),
                         DropdownMenuItem(value: 'USD', child: Text('USD (\$)')),

@@ -49,6 +49,22 @@ class _AdvancedInventoryScreenState extends ConsumerState<AdvancedInventoryScree
     return Scaffold(
       appBar: AppBar(
         title: const Text('Advanced Inventory Management'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh All Inventory Data',
+            onPressed: () {
+              ref.invalidate(batchesListProvider);
+              ref.invalidate(expiryAlertsProvider);
+              ref.invalidate(stockCountsListProvider);
+              ref.invalidate(damagedStockListProvider);
+              ref.invalidate(stockReservationsListProvider);
+              ref.invalidate(reorderSuggestionsProvider);
+              ref.invalidate(inventoryValuationProvider);
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -497,7 +513,18 @@ class _AdvancedInventoryScreenState extends ConsumerState<AdvancedInventoryScree
               );
             },
             loading: () => const LinearProgressIndicator(),
-            error: (err, _) => Text('Error loading valuation: $err', style: const TextStyle(color: Colors.red)),
+            error: (err, _) => Row(
+              children: [
+                Expanded(
+                  child: Text('Error loading valuation: $err', style: const TextStyle(color: Colors.red)),
+                ),
+                TextButton.icon(
+                  onPressed: () => ref.invalidate(inventoryValuationProvider),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -572,7 +599,18 @@ class _AdvancedInventoryScreenState extends ConsumerState<AdvancedInventoryScree
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Text('Error loading suggestions: $err', style: const TextStyle(color: Colors.red)),
+            error: (err, _) => Row(
+              children: [
+                Expanded(
+                  child: Text('Error loading suggestions: $err', style: const TextStyle(color: Colors.red)),
+                ),
+                TextButton.icon(
+                  onPressed: () => ref.invalidate(reorderSuggestionsProvider),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ],
       ),

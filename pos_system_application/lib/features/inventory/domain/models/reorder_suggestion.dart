@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class ReorderSuggestionModel {
   final String productVariantId;
   final String productName;
@@ -44,13 +46,13 @@ class ReorderSuggestionModel {
       barcode: json['barcode'] as String?,
       branchId: json['branch_id'] as String,
       branchName: json['branch_name'] as String?,
-      quantityOnHand: (json['quantity_on_hand'] as num?)?.toDouble() ?? 0.0,
-      activeReservations: (json['active_reservations'] as num?)?.toDouble() ?? 0.0,
-      availableQuantity: (json['available_quantity'] as num?)?.toDouble() ?? 0.0,
-      minStockLevel: (json['min_stock_level'] as num?)?.toDouble() ?? 0.0,
-      suggestedReorderQty: (json['suggested_reorder_qty'] as num?)?.toDouble() ?? 0.0,
-      estimatedUnitCost: (json['estimated_unit_cost'] as num?)?.toDouble() ?? 0.0,
-      estimatedTotalCost: (json['estimated_total_cost'] as num?)?.toDouble() ?? 0.0,
+      quantityOnHand: parseDouble(json['quantity_on_hand']),
+      activeReservations: parseDouble(json['active_reservations']),
+      availableQuantity: parseDouble(json['available_quantity']),
+      minStockLevel: parseDouble(json['min_stock_level']),
+      suggestedReorderQty: parseDouble(json['suggested_reorder_qty']),
+      estimatedUnitCost: parseDouble(json['estimated_unit_cost']),
+      estimatedTotalCost: parseDouble(json['estimated_total_cost']),
       primarySupplierId: json['primary_supplier_id'] as String?,
       primarySupplierName: json['primary_supplier_name'] as String?,
     );

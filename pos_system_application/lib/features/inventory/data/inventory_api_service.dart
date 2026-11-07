@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/parsers.dart';
 import '../domain/models/stock_adjustment.dart';
 import '../domain/models/stock_movement.dart';
 
@@ -43,7 +44,7 @@ class InventoryApiService {
         },
       );
       final data = response.data as Map<String, dynamic>;
-      return (data['quantity_on_hand'] as num?)?.toDouble() ?? 0.0;
+      return parseDouble(data['quantity_on_hand']);
     } on DioException catch (e) {
       throw _apiClient.handleDioError(e);
     }
@@ -62,7 +63,7 @@ class InventoryApiService {
       for (final item in list) {
         if (item is Map) {
           final vId = item['product_variant_id']?.toString();
-          final qty = (item['quantity_on_hand'] as num?)?.toDouble() ?? 0.0;
+          final qty = parseDouble(item['quantity_on_hand']);
           if (vId != null) {
             map[vId] = qty;
           }

@@ -118,7 +118,7 @@ class _PromotionDialogState extends ConsumerState<PromotionDialog> {
                           labelText: 'Discount Type *',
                           border: OutlineInputBorder(),
                         ),
-                        value: _discountType,
+                        initialValue: _discountType,
                         items: const [
                           DropdownMenuItem(value: 'PERCENTAGE', child: Text('Percentage (%)')),
                           DropdownMenuItem(value: 'FIXED_AMOUNT', child: Text('Fixed Amount (৳)')),

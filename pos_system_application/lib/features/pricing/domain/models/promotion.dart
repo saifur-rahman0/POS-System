@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class PromotionModel {
   final String id;
   final String businessId;
@@ -118,10 +120,10 @@ class PromotionValidationResult {
       promotionId: json['promotion_id']?.toString(),
       discountType: json['discount_type']?.toString(),
       discountValue: json['discount_value'] != null
-          ? (json['discount_value'] as num).toDouble()
+          ? parseDouble(json['discount_value'])
           : null,
       calculatedDiscount: json['calculated_discount'] != null
-          ? (json['calculated_discount'] as num).toDouble()
+          ? parseDouble(json['calculated_discount'])
           : 0.0,
       message: json['message']?.toString() ?? '',
     );

@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class DamagedStockModel {
   final String id;
   final String businessId;
@@ -50,9 +52,9 @@ class DamagedStockModel {
       batchId: json['batch_id'] as String?,
       batchNumber: json['batch_number'] as String?,
       voucherNo: json['voucher_no'] as String,
-      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
-      unitCost: (json['unit_cost'] as num?)?.toDouble() ?? 0.0,
-      totalLoss: (json['total_loss'] as num?)?.toDouble() ?? 0.0,
+      quantity: parseDouble(json['quantity']),
+      unitCost: parseDouble(json['unit_cost']),
+      totalLoss: parseDouble(json['total_loss']),
       reason: json['reason'] as String? ?? 'OTHER',
       disposalMethod: json['disposal_method'] as String? ?? 'WRITTEN_OFF',
       notes: json['notes'] as String?,

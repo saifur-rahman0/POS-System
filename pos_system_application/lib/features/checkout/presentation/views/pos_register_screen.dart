@@ -522,9 +522,26 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                       },
                       loading: () => const Center(child: CircularProgressIndicator()),
                       error: (err, _) => Center(
-                        child: Text(
-                          'Failed to load products: $err',
-                          style: const TextStyle(color: Colors.red),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Failed to load products: $err',
+                                style: const TextStyle(color: Colors.red),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: () => ref.invalidate(posProductsProvider),
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

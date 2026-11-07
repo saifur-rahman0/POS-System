@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class StockReservationModel {
   final String id;
   final String businessId;
@@ -40,7 +42,7 @@ class StockReservationModel {
       productName: json['product_name'] as String?,
       variantName: json['variant_name'] as String?,
       batchId: json['batch_id'] as String?,
-      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
+      quantity: parseDouble(json['quantity']),
       referenceType: json['reference_type'] as String? ?? 'QUOTATION',
       referenceId: json['reference_id'] as String,
       status: json['status'] as String? ?? 'ACTIVE',
@@ -70,9 +72,9 @@ class AvailableStockModel {
     return AvailableStockModel(
       productVariantId: json['product_variant_id'] as String,
       branchId: json['branch_id'] as String,
-      quantityOnHand: (json['quantity_on_hand'] as num?)?.toDouble() ?? 0.0,
-      quantityReserved: (json['quantity_reserved'] as num?)?.toDouble() ?? 0.0,
-      availableQuantity: (json['available_quantity'] as num?)?.toDouble() ?? 0.0,
+      quantityOnHand: parseDouble(json['quantity_on_hand']),
+      quantityReserved: parseDouble(json['quantity_reserved']),
+      availableQuantity: parseDouble(json['available_quantity']),
     );
   }
 }

@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class InventoryBatchModel {
   final String id;
   final String businessId;
@@ -57,9 +59,9 @@ class InventoryBatchModel {
       expiryDate: json['expiry_date'] != null
           ? DateTime.parse(json['expiry_date'] as String)
           : null,
-      quantityReceived: (json['quantity_received'] as num?)?.toDouble() ?? 0.0,
-      quantityOnHand: (json['quantity_on_hand'] as num?)?.toDouble() ?? 0.0,
-      costPrice: (json['cost_price'] as num?)?.toDouble() ?? 0.0,
+      quantityReceived: parseDouble(json['quantity_received']),
+      quantityOnHand: parseDouble(json['quantity_on_hand']),
+      costPrice: parseDouble(json['cost_price']),
       supplierId: json['supplier_id'] as String?,
       supplierName: json['supplier_name'] as String?,
       isActive: json['is_active'] as bool? ?? true,
@@ -106,9 +108,9 @@ class ExpiryAlertModel {
       variantName: json['variant_name'] as String? ?? 'Standard',
       branchId: json['branch_id'] as String,
       branchName: json['branch_name'] as String?,
-      quantityOnHand: (json['quantity_on_hand'] as num?)?.toDouble() ?? 0.0,
+      quantityOnHand: parseDouble(json['quantity_on_hand']),
       expiryDate: DateTime.parse(json['expiry_date'] as String),
-      daysRemaining: json['days_remaining'] as int? ?? 0,
+      daysRemaining: parseInt(json['days_remaining']),
       urgency: json['urgency'] as String? ?? 'LOW_60_DAYS',
     );
   }

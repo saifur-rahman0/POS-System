@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class StockTransferItemModel {
   final String id;
   final String transferId;
@@ -27,8 +29,8 @@ class StockTransferItemModel {
       productName: json['product_name'] as String?,
       variantName: json['variant_name'] as String?,
       sku: json['sku'] as String?,
-      quantity: (json['quantity'] as num).toDouble(),
-      unitCost: (json['unit_cost'] as num?)?.toDouble() ?? 0.0,
+      quantity: parseDouble(json['quantity']),
+      unitCost: parseDouble(json['unit_cost']),
     );
   }
 
@@ -101,8 +103,8 @@ class StockTransferModel {
       receivedAt: json['received_at'] != null
           ? DateTime.parse(json['received_at'] as String)
           : null,
-      totalItemsCount: (json['total_items_count'] as num?)?.toInt() ?? 0,
-      totalQuantity: (json['total_quantity'] as num?)?.toDouble() ?? 0.0,
+      totalItemsCount: parseInt(json['total_items_count']),
+      totalQuantity: parseDouble(json['total_quantity']),
       items: json['items'] != null
           ? (json['items'] as List)
               .map((i) =>
@@ -133,7 +135,7 @@ class CrossBranchStockItemModel {
       branchId: json['branch_id'] as String,
       branchName: json['branch_name'] as String,
       branchCode: json['branch_code'] as String?,
-      quantityOnHand: (json['quantity_on_hand'] as num).toDouble(),
+      quantityOnHand: parseDouble(json['quantity_on_hand']),
       isActive: json['is_active'] as bool? ?? true,
     );
   }

@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class StockCountLineModel {
   final String id;
   final String stockCountId;
@@ -31,9 +33,9 @@ class StockCountLineModel {
       productName: json['product_name'] as String?,
       variantName: json['variant_name'] as String?,
       barcode: json['barcode'] as String?,
-      expectedQty: (json['expected_qty'] as num?)?.toDouble() ?? 0.0,
-      countedQty: (json['counted_qty'] as num?)?.toDouble() ?? 0.0,
-      variance: (json['variance'] as num?)?.toDouble() ?? 0.0,
+      expectedQty: parseDouble(json['expected_qty']),
+      countedQty: parseDouble(json['counted_qty']),
+      variance: parseDouble(json['variance']),
       discrepancyReason: json['discrepancy_reason'] as String?,
     );
   }

@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class BranchModel {
   final String id;
   final String businessId;
@@ -42,8 +44,8 @@ class BranchModel {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
-      totalVariantsInStock: (json['total_variants_in_stock'] as num?)?.toInt() ?? 0,
-      totalStockQuantity: (json['total_stock_quantity'] as num?)?.toDouble() ?? 0.0,
+      totalVariantsInStock: parseInt(json['total_variants_in_stock']),
+      totalStockQuantity: parseDouble(json['total_stock_quantity']),
       hasActiveShift: json['has_active_shift'] as bool? ?? false,
     );
   }

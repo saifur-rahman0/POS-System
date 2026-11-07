@@ -1,15 +1,27 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../branches/presentation/controllers/branches_controller.dart';
 import '../../branches/presentation/views/branches_screen.dart';
+import '../../catalog/presentation/controllers/catalog_providers.dart';
 import '../../catalog/presentation/views/catalog_screen.dart';
 import '../../checkout/presentation/views/pos_register_screen.dart';
+import '../../customers/presentation/controllers/customer_controller.dart';
 import '../../customers/presentation/views/customers_screen.dart';
+import '../../expenses/presentation/controllers/expenses_controller.dart';
+import '../../expenses/presentation/controllers/financial_accounts_controller.dart';
 import '../../expenses/presentation/views/expenses_screen.dart';
 import '../../expenses/presentation/views/financial_accounts_screen.dart';
+import '../../inventory/presentation/controllers/advanced_inventory_controller.dart';
+import '../../inventory/presentation/controllers/inventory_controller.dart';
+import '../../inventory/presentation/controllers/transfers_controller.dart';
+import '../../purchasing/presentation/controllers/purchasing_controller.dart';
 import '../../purchasing/presentation/views/purchasing_screen.dart';
+import '../../reports/presentation/controllers/reports_controller.dart';
 import '../../reports/presentation/views/reports_screen.dart';
+import '../../sales/presentation/controllers/sales_history_controller.dart';
 import '../../sales/presentation/views/sales_history_screen.dart';
+import '../../shifts/presentation/controllers/shift_controller.dart';
 import '../../sync/presentation/controllers/sync_controller.dart';
 
 class ShellScreen extends ConsumerStatefulWidget {
@@ -21,6 +33,98 @@ class ShellScreen extends ConsumerStatefulWidget {
 
 class _ShellScreenState extends ConsumerState<ShellScreen> {
   int _selectedIndex = 0;
+  Timer? _autoRefreshTimer;
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-refresh the currently active view every 30 seconds
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        _refreshScreen(_selectedIndex);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshScreen(int index, {bool showFeedback = false}) async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+
+    try {
+      switch (index) {
+        case 0: // POS Register
+          ref.invalidate(posProductsProvider);
+          ref.read(currentShiftProvider.notifier).loadCurrentShift();
+          ref.read(branchesListProvider.notifier).loadBranches();
+          break;
+        case 1: // Catalog & Stock
+          ref.invalidate(paginatedProductsProvider);
+          ref.invalidate(categoryListProvider);
+          ref.invalidate(stockBalancesProvider);
+          ref.invalidate(inventoryValuationProvider);
+          ref.invalidate(batchesListProvider);
+          ref.invalidate(expiryAlertsProvider);
+          ref.invalidate(reorderSuggestionsProvider);
+          break;
+        case 2: // Purchasing
+          ref.read(purchasesControllerProvider.notifier).refresh();
+          ref.read(suppliersControllerProvider.notifier).refresh();
+          break;
+        case 3: // Sales History
+          ref.invalidate(salesListProvider);
+          break;
+        case 4: // Expenses
+          ref.read(expensesListProvider.notifier).loadExpenses();
+          ref.read(expenseCategoriesProvider.notifier).loadCategories();
+          ref.read(recurringExpensesProvider.notifier).loadRecurringExpenses();
+          break;
+        case 5: // Accounts
+          ref.read(financialAccountsProvider.notifier).loadAccounts();
+          ref.invalidate(cashFlowReportProvider);
+          ref.invalidate(apAgingReportProvider);
+          ref.invalidate(accountTransfersProvider);
+          break;
+        case 6: // Customers
+          ref.read(customersControllerProvider.notifier).refresh();
+          break;
+        case 7: // Stores & Transfers
+          ref.read(branchesListProvider.notifier).loadBranches();
+          ref.read(transfersListProvider.notifier).loadTransfers();
+          break;
+        case 8: // Reports
+          ref.invalidate(dashboardMetricsProvider);
+          ref.invalidate(salesTimeSeriesProvider);
+          ref.invalidate(stockValuationProvider);
+          ref.invalidate(paymentBreakdownProvider);
+          ref.invalidate(topProductsProvider);
+          ref.invalidate(customerDuesReportProvider);
+          break;
+      }
+      if (showFeedback && mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_destinations[index].label} refreshed'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignored: screen state notifier or future captures failure
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
 
   static const List<NavigationDestination> _destinations = [
     NavigationDestination(
@@ -126,6 +230,40 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
               ),
             ),
 
+          // Screen Auto/Manual Refresh trigger button & indicator
+          InkWell(
+            onTap: _isRefreshing ? null : () => _refreshScreen(_selectedIndex, showFeedback: true),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isRefreshing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.refresh, size: 16, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(
+                    _isRefreshing ? 'Refreshing...' : 'Refresh',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // Offline Delta Sync trigger button & indicator
           InkWell(
             onTap: syncState.isSyncing
@@ -188,6 +326,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     setState(() {
                       _selectedIndex = index;
                     });
+                    _refreshScreen(index);
                   },
                   labelType: NavigationRailLabelType.all,
                   leading: const Padding(

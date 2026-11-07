@@ -77,7 +77,7 @@ class _AddPriceListItemDialogState extends ConsumerState<AddPriceListItemDialog>
                       labelText: 'Select Variant *',
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedVariantId,
+                    initialValue: _selectedVariantId,
                     items: variants.map((v) {
                       return DropdownMenuItem(
                         value: v.id,
