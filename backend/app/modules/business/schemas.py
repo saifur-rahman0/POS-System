@@ -85,3 +85,28 @@ class BranchDetailOut(BranchOut):
     total_variants_in_stock: int = 0
     total_stock_quantity: Decimal = Decimal("0.0000")
     has_active_shift: bool = False
+
+
+class BusinessOut(BaseModel):
+    """Authoritative tenant business info."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    legal_name: str | None = None
+    timezone: str
+    currency: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class BusinessUpdate(BaseModel):
+    """Payload to update tenant business info."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    legal_name: str | None = Field(default=None, max_length=255)
+    timezone: str | None = Field(default=None, max_length=64)
+    currency: str | None = Field(default=None, max_length=10)
+

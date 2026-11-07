@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.v1.backups import router as backups_router
 from app.api.v1.branches import router as branches_router
+from app.api.v1.business import router as business_router
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.crm import router as crm_router
 from app.api.v1.customers import router as customers_router
@@ -28,6 +29,7 @@ api_v1_router.include_router(health_router)
 
 # Branches & Multi-Store
 api_v1_router.include_router(branches_router)
+api_v1_router.include_router(business_router)
 
 # Catalog & Advanced Pricing
 api_v1_router.include_router(catalog_router)

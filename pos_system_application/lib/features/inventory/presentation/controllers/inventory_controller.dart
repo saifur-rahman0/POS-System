@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_provider.dart';
+import '../../../branches/presentation/controllers/branches_controller.dart';
 import '../../data/inventory_api_service.dart';
 import '../../domain/models/stock_adjustment.dart';
 import '../../domain/models/stock_movement.dart';
@@ -17,7 +18,8 @@ final stockMovementsProvider =
 
 final stockBalancesProvider = FutureProvider<Map<String, double>>((ref) async {
   final api = ref.watch(inventoryApiServiceProvider);
-  return api.getAllStockBalances();
+  final activeBranch = ref.watch(activeBranchProvider);
+  return api.getAllStockBalances(branchId: activeBranch?.id);
 });
 
 class InventoryNotifier {

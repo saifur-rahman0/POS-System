@@ -100,7 +100,7 @@ class _DeliveryChargeDialogState extends ConsumerState<DeliveryChargeDialog> {
               spacing: 8,
               runSpacing: 8,
               children: _presets.map((p) {
-                final double amt = p['amount'] as double;
+                final double amt = (p['amount'] as num).toDouble();
                 final String label = p['label'] as String;
                 return ActionChip(
                   avatar: amt == 0

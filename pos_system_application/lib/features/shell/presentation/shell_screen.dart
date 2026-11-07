@@ -21,6 +21,9 @@ import '../../reports/presentation/controllers/reports_controller.dart';
 import '../../reports/presentation/views/reports_screen.dart';
 import '../../sales/presentation/controllers/sales_history_controller.dart';
 import '../../sales/presentation/views/sales_history_screen.dart';
+import '../../settings/domain/models/terminal_preferences.dart';
+import '../../settings/presentation/controllers/settings_controller.dart';
+import '../../settings/presentation/views/settings_screen.dart';
 import '../../shifts/presentation/controllers/shift_controller.dart';
 import '../../sync/presentation/controllers/sync_controller.dart';
 
@@ -39,12 +42,19 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-refresh the currently active view every 30 seconds
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted) {
-        _refreshScreen(_selectedIndex);
-      }
-    });
+    final prefs = ref.read(terminalPreferencesProvider);
+    _setupAutoRefresh(prefs.autoRefreshIntervalSeconds);
+  }
+
+  void _setupAutoRefresh(int seconds) {
+    _autoRefreshTimer?.cancel();
+    if (seconds > 0) {
+      _autoRefreshTimer = Timer.periodic(Duration(seconds: seconds), (_) {
+        if (mounted) {
+          _refreshScreen(_selectedIndex);
+        }
+      });
+    }
   }
 
   @override
@@ -105,6 +115,11 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           ref.invalidate(paymentBreakdownProvider);
           ref.invalidate(topProductsProvider);
           ref.invalidate(customerDuesReportProvider);
+          break;
+        case 9: // Settings
+          ref.read(businessSettingsProvider.notifier).loadSettings();
+          ref.read(licenseStatusProvider.notifier).loadLicense();
+          ref.read(backupsListProvider.notifier).loadBackups();
           break;
       }
       if (showFeedback && mounted) {
@@ -181,6 +196,12 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<TerminalPreferencesModel>(terminalPreferencesProvider, (prev, next) {
+      if (prev?.autoRefreshIntervalSeconds != next.autoRefreshIntervalSeconds) {
+        _setupAutoRefresh(next.autoRefreshIntervalSeconds);
+      }
+    });
+
     final activeBranch = ref.watch(activeBranchProvider);
     final branches = ref.watch(branchesListProvider).branches;
     final syncState = ref.watch(syncControllerProvider);
@@ -364,7 +385,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                                             ? const BranchesScreen()
                                             : _selectedIndex == 8
                                                 ? const ReportsScreen()
-                                                : Center(
+                                                : _selectedIndex == 9
+                                                    ? const SettingsScreen()
+                                                    : Center(
                                                     child: Column(
                                                       mainAxisAlignment: MainAxisAlignment.center,
                                                       children: [

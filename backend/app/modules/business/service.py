@@ -7,7 +7,14 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.business.models import Branch, Business
-from app.modules.business.schemas import BranchCreate, BranchDetailOut, BranchOut, BranchUpdate
+from app.modules.business.schemas import (
+    BranchCreate,
+    BranchDetailOut,
+    BranchOut,
+    BranchUpdate,
+    BusinessOut,
+    BusinessUpdate,
+)
 from app.modules.inventory.models import StockBalance
 from app.modules.shifts.models import RegisterShift
 from app.shared.exceptions import AppException
@@ -226,3 +233,51 @@ class BranchService:
         await session.commit()
         await session.refresh(branch)
         return BranchOut.model_validate(branch)
+
+    async def get_business(
+        self,
+        session: AsyncSession,
+        business_id: uuid.UUID,
+    ) -> BusinessOut:
+        """Fetch tenant business profile and settings."""
+        stmt = select(Business).where(Business.id == business_id)
+        res = await session.execute(stmt)
+        biz = res.scalars().first()
+        if not biz:
+            raise AppException(
+                message="Business not found",
+                code="BUSINESS_NOT_FOUND",
+                status_code=404,
+            )
+        return BusinessOut.model_validate(biz)
+
+    async def update_business(
+        self,
+        session: AsyncSession,
+        business_id: uuid.UUID,
+        payload: BusinessUpdate,
+    ) -> BusinessOut:
+        """Update tenant business profile and settings."""
+        stmt = select(Business).where(Business.id == business_id)
+        res = await session.execute(stmt)
+        biz = res.scalars().first()
+        if not biz:
+            raise AppException(
+                message="Business not found",
+                code="BUSINESS_NOT_FOUND",
+                status_code=404,
+            )
+
+        if payload.name is not None and payload.name.strip():
+            biz.name = payload.name.strip()
+        if payload.legal_name is not None:
+            biz.legal_name = payload.legal_name.strip() or None
+        if payload.timezone is not None and payload.timezone.strip():
+            biz.timezone = payload.timezone.strip()
+        if payload.currency is not None and payload.currency.strip():
+            biz.currency = payload.currency.strip().upper()
+
+        await session.commit()
+        await session.refresh(biz)
+        return BusinessOut.model_validate(biz)
+

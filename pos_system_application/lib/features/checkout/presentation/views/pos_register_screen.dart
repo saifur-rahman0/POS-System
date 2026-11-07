@@ -15,6 +15,8 @@ import 'delivery_charge_dialog.dart';
 import 'held_carts_dialog.dart';
 import 'line_discount_dialog.dart';
 import 'save_quotation_dialog.dart';
+import '../../../branches/presentation/controllers/branches_controller.dart';
+import '../../../inventory/presentation/controllers/inventory_controller.dart';
 
 final posCatalogSearchProvider = StateProvider<String>((ref) => '');
 final posSelectedCategoryProvider = StateProvider<String?>((ref) => null);
@@ -23,6 +25,8 @@ final posProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
   final apiService = ref.watch(catalogApiServiceProvider);
   final search = ref.watch(posCatalogSearchProvider);
   final categoryId = ref.watch(posSelectedCategoryProvider);
+  // Re-fetch catalog when active store branch changes
+  ref.watch(activeBranchProvider);
 
   final res = await apiService.getProducts(
     search: search.isNotEmpty ? search : null,
@@ -245,6 +249,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
     final selectedCategory = ref.watch(posSelectedCategoryProvider);
     final cart = ref.watch(cartProvider);
     final heldCarts = ref.watch(heldCartsProvider).heldCarts;
+    final stockBalancesAsync = ref.watch(stockBalancesProvider);
 
     return BarcodeScannerWrapper(
       onBarcodeScanned: (scanned) {
@@ -476,6 +481,47 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                           fontSize: 11,
                                           color: Colors.grey.shade500,
                                         ),
+                                      ),
+                                      // Real-time Branch Stock Badge
+                                      Builder(
+                                        builder: (context) {
+                                          final variantId = prod.primaryVariant?.id;
+                                          final stockQty = variantId != null && stockBalancesAsync.hasValue
+                                              ? stockBalancesAsync.value![variantId]
+                                              : null;
+                                          if (stockQty == null) return const SizedBox.shrink();
+                                          final isHealthy = stockQty > 5;
+                                          final isLow = stockQty > 0 && stockQty <= 5;
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 2),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  isHealthy
+                                                      ? Icons.check_circle_outline
+                                                      : (isLow ? Icons.warning_amber_rounded : Icons.cancel_outlined),
+                                                  size: 11,
+                                                  color: isHealthy
+                                                      ? const Color(0xFF10B981)
+                                                      : (isLow ? const Color(0xFFF59E0B) : const Color(0xFFEF4444)),
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Text(
+                                                  stockQty > 0
+                                                      ? 'Stock: ${stockQty.toStringAsFixed(0)}'
+                                                      : 'Out of stock',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isHealthy
+                                                      ? const Color(0xFF047857)
+                                                      : (isLow ? const Color(0xFFB45309) : const Color(0xFFB91C1C)),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
                                       ),
                                       const Spacer(),
 
