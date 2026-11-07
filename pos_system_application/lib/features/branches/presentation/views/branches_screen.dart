@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import 'package:pos_client/features/inventory/presentation/controllers/transfers_controller.dart';
 import 'package:pos_client/features/inventory/presentation/views/create_transfer_dialog.dart';
 import '../controllers/branches_controller.dart';
@@ -130,25 +131,11 @@ class _BranchesTab extends ConsumerWidget {
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (state.errorMessage != null)
               Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Error: ${state.errorMessage}',
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () => ref.read(branchesListProvider.notifier).loadBranches(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                child: PosErrorCard(
+                  error: state.errorMessage,
+                  title: 'Unable to Load Store Branches',
+                  icon: Icons.store_outlined,
+                  onRetry: () => ref.read(branchesListProvider.notifier).loadBranches(),
                 ),
               )
             else if (state.branches.isEmpty)
@@ -428,25 +415,11 @@ class _TransfersTabState extends ConsumerState<_TransfersTab> {
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (state.errorMessage != null)
               Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Error: ${state.errorMessage}',
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () => ref.read(transfersListProvider.notifier).loadTransfers(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                child: PosErrorCard(
+                  error: state.errorMessage,
+                  title: 'Unable to Load Stock Transfers',
+                  icon: Icons.local_shipping_outlined,
+                  onRetry: () => ref.read(transfersListProvider.notifier).loadTransfers(),
                 ),
               )
             else if (state.transfers.isEmpty)

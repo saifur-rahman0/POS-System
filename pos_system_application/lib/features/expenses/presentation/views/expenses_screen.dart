@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../controllers/expenses_controller.dart';
 import '../controllers/financial_accounts_controller.dart';
 import 'expense_form_dialog.dart';
@@ -523,25 +524,11 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Error loading expenses: $e',
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () => ref.read(expensesListProvider.notifier).loadExpenses(),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+                  error: (e, _) => PosErrorCard(
+                    error: e,
+                    title: 'Unable to Load Expenses',
+                    icon: Icons.receipt_outlined,
+                    onRetry: () => ref.read(expensesListProvider.notifier).loadExpenses(),
                   ),
                 ),
               ),
@@ -670,25 +657,11 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Error loading categories: $e',
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () => ref.read(expenseCategoriesProvider.notifier).loadCategories(),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+                  error: (e, _) => PosErrorCard(
+                    error: e,
+                    title: 'Unable to Load Expense Categories',
+                    icon: Icons.category_outlined,
+                    onRetry: () => ref.read(expenseCategoriesProvider.notifier).loadCategories(),
                   ),
                 ),
               ),
@@ -739,25 +712,11 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Error loading recurring schedules: $e',
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () => ref.read(recurringExpensesProvider.notifier).loadRecurringExpenses(),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+                  error: (e, _) => PosErrorCard(
+                    error: e,
+                    title: 'Unable to Load Recurring Schedules',
+                    icon: Icons.calendar_today_outlined,
+                    onRetry: () => ref.read(recurringExpensesProvider.notifier).loadRecurringExpenses(),
                   ),
                 ),
               ),

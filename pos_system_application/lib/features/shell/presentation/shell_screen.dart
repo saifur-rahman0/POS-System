@@ -26,6 +26,7 @@ import '../../settings/presentation/controllers/settings_controller.dart';
 import '../../settings/presentation/views/settings_screen.dart';
 import '../../shifts/presentation/controllers/shift_controller.dart';
 import '../../sync/presentation/controllers/sync_controller.dart';
+import '../../../core/widgets/keyboard_shortcuts_dialog.dart';
 
 class ShellScreen extends ConsumerStatefulWidget {
   const ShellScreen({super.key});
@@ -205,6 +206,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     final activeBranch = ref.watch(activeBranchProvider);
     final branches = ref.watch(branchesListProvider).branches;
     final syncState = ref.watch(syncControllerProvider);
+    final shiftState = ref.watch(currentShiftProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -213,6 +215,46 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         actions: [
+          // Shift Status Pill
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: (shiftState?.isOpen ?? false)
+                  ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                  : Colors.amber.shade700.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: (shiftState?.isOpen ?? false)
+                    ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                    : Colors.amber.shade300.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  (shiftState?.isOpen ?? false)
+                      ? Icons.check_circle
+                      : Icons.pause_circle_outline,
+                  size: 13,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  (shiftState?.isOpen ?? false)
+                      ? 'Shift Active${shiftState?.cashierName != null ? " · ${shiftState!.cashierName}" : ""}'
+                      : 'Shift Inactive',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Active Branch Selector
           if (branches.isNotEmpty)
             Container(
@@ -250,6 +292,13 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                 ),
               ),
             ),
+
+          // Keyboard Shortcuts Trigger
+          IconButton(
+            tooltip: 'Keyboard Shortcuts (F1)',
+            icon: const Icon(Icons.keyboard_outlined, color: Colors.white, size: 20),
+            onPressed: () => KeyboardShortcutsDialog.show(context),
+          ),
 
           // Screen Auto/Manual Refresh trigger button & indicator
           InkWell(

@@ -1,3 +1,5 @@
+import '../../../../core/utils/parsers.dart';
+
 class StockValuationItemModel {
   final String variantId;
   final String productName;
@@ -29,16 +31,16 @@ class StockValuationItemModel {
 
   factory StockValuationItemModel.fromJson(Map<String, dynamic> json) {
     return StockValuationItemModel(
-      variantId: json['variant_id'] as String,
+      variantId: json['variant_id'] as String? ?? '',
       productName: json['product_name'] as String? ?? '',
       variantName: json['variant_name'] as String? ?? '',
       sku: json['sku'] as String? ?? '',
       barcode: json['barcode'] as String?,
-      quantityOnHand: (num.parse(json['quantity_on_hand'].toString())).toDouble(),
-      costPrice: (num.parse(json['cost_price'].toString())).toDouble(),
-      sellingPrice: (num.parse(json['selling_price'].toString())).toDouble(),
-      stockCostValue: (num.parse(json['stock_cost_value'].toString())).toDouble(),
-      stockRetailValue: (num.parse(json['stock_retail_value'].toString())).toDouble(),
+      quantityOnHand: parseDouble(json['quantity_on_hand']),
+      costPrice: parseDouble(json['cost_price']),
+      sellingPrice: parseDouble(json['selling_price']),
+      stockCostValue: parseDouble(json['stock_cost_value']),
+      stockRetailValue: parseDouble(json['stock_retail_value']),
       isLowStock: json['is_low_stock'] as bool? ?? false,
       isOutOfStock: json['is_out_of_stock'] as bool? ?? false,
     );
@@ -69,17 +71,16 @@ class StockValuationModel {
   factory StockValuationModel.fromJson(Map<String, dynamic> json) {
     final rawList = json['low_stock_items'] as List<dynamic>? ?? [];
     return StockValuationModel(
-      totalVariantsStocked: (json['total_variants_stocked'] as num?)?.toInt() ?? 0,
-      totalUnitsOnHand: (num.parse(json['total_units_on_hand'].toString())).toDouble(),
-      totalCostValue: (num.parse(json['total_cost_value'].toString())).toDouble(),
-      totalRetailValue: (num.parse(json['total_retail_value'].toString())).toDouble(),
-      potentialGrossProfit: (num.parse(json['potential_gross_profit'].toString())).toDouble(),
-      lowStockCount: (json['low_stock_count'] as num?)?.toInt() ?? 0,
-      outOfStockCount: (json['out_of_stock_count'] as num?)?.toInt() ?? 0,
+      totalVariantsStocked: parseInt(json['total_variants_stocked']),
+      totalUnitsOnHand: parseDouble(json['total_units_on_hand']),
+      totalCostValue: parseDouble(json['total_cost_value']),
+      totalRetailValue: parseDouble(json['total_retail_value']),
+      potentialGrossProfit: parseDouble(json['potential_gross_profit']),
+      lowStockCount: parseInt(json['low_stock_count']),
+      outOfStockCount: parseInt(json['out_of_stock_count']),
       lowStockItems: rawList
           .map((i) => StockValuationItemModel.fromJson(i as Map<String, dynamic>))
           .toList(),
     );
   }
 }
-

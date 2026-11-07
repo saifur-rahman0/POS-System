@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../controllers/financial_accounts_controller.dart';
 import 'account_transfer_dialog.dart';
 
@@ -321,21 +322,11 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                    const SizedBox(height: 8),
-                    Text('Error loading accounts: $e', style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => ref.read(financialAccountsProvider.notifier).loadAccounts(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              error: (e, _) => PosErrorCard(
+                error: e,
+                title: 'Unable to Load Accounts',
+                icon: Icons.account_balance_outlined,
+                onRetry: () => ref.read(financialAccountsProvider.notifier).loadAccounts(),
               ),
             ),
             const SizedBox(height: 32),
@@ -395,15 +386,30 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Row(
-                children: [
-                  Expanded(child: Text('Error loading AP Aging: $e', style: const TextStyle(color: Colors.red))),
-                  TextButton.icon(
-                    onPressed: () => ref.invalidate(apAgingReportProvider),
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Retry'),
-                  ),
-                ],
+              error: (e, _) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'AP Aging: ${cleanErrorMessage(e)}',
+                        style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(apAgingReportProvider),
+                      icon: const Icon(Icons.refresh, size: 14),
+                      label: const Text('Retry', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -461,15 +467,30 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Row(
-                children: [
-                  Expanded(child: Text('Error loading cash flow: $e', style: const TextStyle(color: Colors.red))),
-                  TextButton.icon(
-                    onPressed: () => ref.invalidate(cashFlowReportProvider),
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Retry'),
-                  ),
-                ],
+              error: (e, _) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Cash Flow: ${cleanErrorMessage(e)}',
+                        style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(cashFlowReportProvider),
+                      icon: const Icon(Icons.refresh, size: 14),
+                      label: const Text('Retry', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -530,15 +551,30 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Row(
-                children: [
-                  Expanded(child: Text('Error loading transfers: $e', style: const TextStyle(color: Colors.red))),
-                  TextButton.icon(
-                    onPressed: () => ref.invalidate(accountTransfersProvider),
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Retry'),
-                  ),
-                ],
+              error: (e, _) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Transfers: ${cleanErrorMessage(e)}',
+                        style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(accountTransfersProvider),
+                      icon: const Icon(Icons.refresh, size: 14),
+                      label: const Text('Retry', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

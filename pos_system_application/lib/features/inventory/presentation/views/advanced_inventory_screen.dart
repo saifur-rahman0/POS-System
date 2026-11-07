@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../controllers/advanced_inventory_controller.dart';
 import 'batch_inward_dialog.dart';
 import 'damaged_stock_dialog.dart';
@@ -513,17 +514,30 @@ class _AdvancedInventoryScreenState extends ConsumerState<AdvancedInventoryScree
               );
             },
             loading: () => const LinearProgressIndicator(),
-            error: (err, _) => Row(
-              children: [
-                Expanded(
-                  child: Text('Error loading valuation: $err', style: const TextStyle(color: Colors.red)),
-                ),
-                TextButton.icon(
-                  onPressed: () => ref.invalidate(inventoryValuationProvider),
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Retry'),
-                ),
-              ],
+            error: (err, _) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Valuation: ${cleanErrorMessage(err)}',
+                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(inventoryValuationProvider),
+                    icon: const Icon(Icons.refresh, size: 14),
+                    label: const Text('Retry', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -599,17 +613,30 @@ class _AdvancedInventoryScreenState extends ConsumerState<AdvancedInventoryScree
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Row(
-              children: [
-                Expanded(
-                  child: Text('Error loading suggestions: $err', style: const TextStyle(color: Colors.red)),
-                ),
-                TextButton.icon(
-                  onPressed: () => ref.invalidate(reorderSuggestionsProvider),
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Retry'),
-                ),
-              ],
+            error: (err, _) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Replenishment: ${cleanErrorMessage(err)}',
+                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(reorderSuggestionsProvider),
+                    icon: const Icon(Icons.refresh, size: 14),
+                    label: const Text('Retry', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

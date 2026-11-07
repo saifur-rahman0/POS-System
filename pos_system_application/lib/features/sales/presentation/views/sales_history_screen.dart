@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../controllers/sales_history_controller.dart';
 import 'product_exchange_dialog.dart';
 import 'quotations_view.dart';
@@ -261,24 +262,11 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                 child: salesAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.red),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Failed to load sales: $err',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () => ref.invalidate(salesListProvider),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+                  error: (err, _) => PosErrorCard(
+                    error: err,
+                    title: 'Unable to Load Sales History',
+                    icon: Icons.receipt_long_outlined,
+                    onRetry: () => ref.invalidate(salesListProvider),
                   ),
                   data: (pageData) {
                     if (pageData.items.isEmpty) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../../../inventory/presentation/controllers/inventory_controller.dart';
 import '../../../inventory/presentation/views/stock_adjustment_dialog.dart';
 import '../../../inventory/presentation/views/stock_movements_dialog.dart';
@@ -173,20 +174,11 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
           Expanded(
             child: productsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 12),
-                    Text('Failed to load products: $err'),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(paginatedProductsProvider),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              error: (err, _) => PosErrorCard(
+                error: err,
+                title: 'Unable to Load Products',
+                icon: Icons.inventory_2_outlined,
+                onRetry: () => ref.invalidate(paginatedProductsProvider),
               ),
               data: (paginated) {
                 if (paginated.items.isEmpty) {

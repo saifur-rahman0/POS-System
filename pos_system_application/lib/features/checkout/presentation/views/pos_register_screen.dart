@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/hardware/scanner/barcode_scanner_listener.dart';
+import '../../../../core/widgets/keyboard_shortcuts_dialog.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../../../catalog/domain/models/product.dart';
 import '../../../catalog/presentation/controllers/catalog_providers.dart';
 import '../../../customers/presentation/views/customer_selection_dialog.dart';
@@ -127,6 +129,59 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
   }
   final FocusNode _barcodeFocusNode = FocusNode();
   final currencyFmt = NumberFormat.currency(symbol: '৳ ', decimalDigits: 2);
+
+  List<double> _getQuickCashAmounts(double total) {
+    if (total <= 0) return [];
+    final set = <double>{total};
+
+    final next50 = (total / 50).ceil() * 50.0;
+    if (next50 > total) set.add(next50);
+
+    final next100 = (total / 100).ceil() * 100.0;
+    if (next100 > total) set.add(next100);
+
+    final next500 = (total / 500).ceil() * 500.0;
+    if (next500 > total) set.add(next500);
+
+    for (final bill in [500.0, 1000.0, 2000.0, 5000.0]) {
+      if (bill > total) set.add(bill);
+    }
+
+    final list = set.toList()..sort();
+    return list.take(5).toList();
+  }
+
+  Widget _buildShortcutChip(String key, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            key,
+            style: const TextStyle(
+              fontSize: 10,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -567,29 +622,53 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (err, _) => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Failed to load products: $err',
-                                style: const TextStyle(color: Colors.red),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton.icon(
-                                onPressed: () => ref.invalidate(posProductsProvider),
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Retry'),
-                              ),
-                            ],
+                      error: (err, _) => PosErrorCard(
+                        error: err,
+                        title: 'Unable to Load Products',
+                        icon: Icons.inventory_2_outlined,
+                        onRetry: () => ref.invalidate(posProductsProvider),
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Shortcut Hints Bar
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildShortcutChip('F2', 'Search'),
+                        const SizedBox(width: 6),
+                        _buildShortcutChip('F4', 'Pay'),
+                        const SizedBox(width: 6),
+                        _buildShortcutChip('F6', 'Park Order'),
+                        const SizedBox(width: 6),
+                        _buildShortcutChip('F8', 'Clear'),
+                        const SizedBox(width: 12),
+                        InkWell(
+                          onTap: () => KeyboardShortcutsDialog.show(context),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.keyboard_outlined, size: 14, color: Colors.teal.shade700),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Shortcuts (F1)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.teal.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -859,32 +938,44 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                   Expanded(
                     child: cart.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_shopping_cart_outlined,
-                                  size: 64,
-                                  color: Colors.grey.shade300,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Cart is empty',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade400,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(18),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0F766E).withValues(alpha: 0.08),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.shopping_bag_outlined,
+                                      size: 44,
+                                      color: Color(0xFF0F766E),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Scan a barcode or click products to begin sale',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade400,
+                                  const SizedBox(height: 14),
+                                  const Text(
+                                    'Cart is empty',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Register ready · Scan barcode or click product tiles to begin sale',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade500,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           )
                         : ListView.separated(
@@ -1154,7 +1245,42 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        // Quick Cash Tender Suggestions
+                        if (!cart.isEmpty) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: _getQuickCashAmounts(cart.grandTotal).map((amt) {
+                              final isExact = (amt - cart.grandTotal).abs() < 0.01;
+                              return ActionChip(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                label: Text(
+                                  isExact ? 'Exact (${currencyFmt.format(amt)})' : currencyFmt.format(amt),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isExact ? const Color(0xFF0F766E) : const Color(0xFF334155),
+                                  ),
+                                ),
+                                backgroundColor: isExact
+                                    ? const Color(0xFF0F766E).withValues(alpha: 0.1)
+                                    : Colors.white,
+                                side: BorderSide(
+                                  color: isExact ? const Color(0xFF0F766E) : Colors.grey.shade300,
+                                ),
+                                onPressed: () {
+                                  PaymentDialog.show(context).then((_) {
+                                    ref.read(currentShiftProvider.notifier).loadCurrentShift();
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ],
+
+                        const SizedBox(height: 12),
 
                         // Pay Action Button
                         FilledButton(

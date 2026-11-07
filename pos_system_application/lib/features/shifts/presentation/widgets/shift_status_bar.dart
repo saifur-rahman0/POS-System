@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/pos_error_card.dart';
 import '../../domain/models/register_shift.dart';
 import '../controllers/shift_controller.dart';
 import 'cash_in_out_dialog.dart';
@@ -43,28 +44,40 @@ class ShiftStatusBar extends ConsumerWidget {
         ),
       ),
       error: (e, _) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: Colors.amber.shade50,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(color: Colors.amber.shade200),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Icon(Icons.cloud_off_outlined, size: 18, color: Colors.amber.shade800),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Shift status offline: $e',
-                style: const TextStyle(fontSize: 12, color: Colors.red),
+                'Shift status offline: ${cleanErrorMessage(e)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.amber.shade900,
+                  fontWeight: FontWeight.w500,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),
-            TextButton(
+            TextButton.icon(
               onPressed: () => ref.read(currentShiftProvider.notifier).loadCurrentShift(),
-              child: const Text('Retry', style: TextStyle(fontSize: 12)),
+              icon: const Icon(Icons.refresh, size: 14),
+              label: const Text('Retry', style: TextStyle(fontSize: 12)),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.amber.shade900,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ],
         ),
