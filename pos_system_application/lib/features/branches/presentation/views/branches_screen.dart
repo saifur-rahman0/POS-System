@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/pos_error_card.dart';
 import 'package:pos_client/features/inventory/presentation/controllers/transfers_controller.dart';
 import 'package:pos_client/features/inventory/presentation/views/create_transfer_dialog.dart';
@@ -32,37 +33,69 @@ class _BranchesScreenState extends ConsumerState<BranchesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final loc = ref.watch(appLocalizationsProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Store Branches & Transfers'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Branches & Transfers',
-            onPressed: () {
-              ref.read(branchesListProvider.notifier).loadBranches();
-              ref.read(transfersListProvider.notifier).loadTransfers();
-            },
+      body: Column(
+        children: [
+          // Plain white background header & TabBar
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(20, 14, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      loc.tr('branches_title', 'Store Branches & Transfers'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, size: 20),
+                      tooltip: 'Refresh Branches & Transfers',
+                      onPressed: () {
+                        ref.read(branchesListProvider.notifier).loadBranches();
+                        ref.read(transfersListProvider.notifier).loadTransfers();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  labelColor: const Color(0xFF0F766E),
+                  unselectedLabelColor: const Color(0xFF64748B),
+                  indicatorColor: const Color(0xFF0F766E),
+                  indicatorWeight: 3,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                  tabs: [
+                    Tab(icon: const Icon(Icons.store, size: 18), text: loc.tr('retail_branches', 'Retail Branches')),
+                    Tab(icon: const Icon(Icons.swap_horiz, size: 18), text: loc.tr('stock_transfers', 'Stock Transfers')),
+                  ],
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(icon: Icon(Icons.store), text: 'Retail Branches'),
-            Tab(icon: Icon(Icons.swap_horiz), text: 'Stock Transfers'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _BranchesTab(),
-          _TransfersTab(),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                _BranchesTab(),
+                _TransfersTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

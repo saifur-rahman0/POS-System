@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/pos_error_card.dart';
 import '../controllers/advanced_inventory_controller.dart';
 import 'batch_inward_dialog.dart';
@@ -47,45 +48,80 @@ class _AdvancedInventoryScreenState extends ConsumerState<AdvancedInventoryScree
 
   @override
   Widget build(BuildContext context) {
+    final loc = ref.watch(appLocalizationsProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Advanced Inventory Management'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh All Inventory Data',
-            onPressed: () {
-              ref.invalidate(batchesListProvider);
-              ref.invalidate(expiryAlertsProvider);
-              ref.invalidate(stockCountsListProvider);
-              ref.invalidate(damagedStockListProvider);
-              ref.invalidate(stockReservationsListProvider);
-              ref.invalidate(reorderSuggestionsProvider);
-              ref.invalidate(inventoryValuationProvider);
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.qr_code_2), text: 'Batches & Expiry'),
-            Tab(icon: Icon(Icons.fact_check), text: 'Physical Audits'),
-            Tab(icon: Icon(Icons.remove_circle_outline), text: 'Damaged Stock'),
-            Tab(icon: Icon(Icons.bookmark_added), text: 'Reservations'),
-            Tab(icon: Icon(Icons.trending_up), text: 'Reorder & Valuation'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
+      backgroundColor: Colors.transparent,
+      body: Column(
         children: [
-          _buildBatchesTab(),
-          _buildAuditsTab(),
-          _buildDamagedTab(),
-          _buildReservationsTab(),
-          _buildReorderAndValuationTab(),
+          // Plain white background header & TabBar
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(20, 14, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      loc.tr('adv_inventory_mgmt', 'Advanced Inventory Management'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, size: 20),
+                      tooltip: 'Refresh All Inventory Data',
+                      onPressed: () {
+                        ref.invalidate(batchesListProvider);
+                        ref.invalidate(expiryAlertsProvider);
+                        ref.invalidate(stockCountsListProvider);
+                        ref.invalidate(damagedStockListProvider);
+                        ref.invalidate(stockReservationsListProvider);
+                        ref.invalidate(reorderSuggestionsProvider);
+                        ref.invalidate(inventoryValuationProvider);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  labelColor: const Color(0xFF0F766E),
+                  unselectedLabelColor: const Color(0xFF64748B),
+                  indicatorColor: const Color(0xFF0F766E),
+                  indicatorWeight: 3,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                  tabs: [
+                    Tab(icon: const Icon(Icons.qr_code_2, size: 18), text: loc.tr('batches_expiry', 'Batches & Expiry')),
+                    Tab(icon: const Icon(Icons.fact_check, size: 18), text: loc.tr('physical_audits', 'Physical Audits')),
+                    Tab(icon: const Icon(Icons.remove_circle_outline, size: 18), text: loc.tr('damaged_stock', 'Damaged Stock')),
+                    Tab(icon: const Icon(Icons.bookmark_added, size: 18), text: loc.tr('reservations', 'Reservations')),
+                    Tab(icon: const Icon(Icons.trending_up, size: 18), text: loc.tr('reorder_valuation', 'Reorder & Valuation')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildBatchesTab(),
+                _buildAuditsTab(),
+                _buildDamagedTab(),
+                _buildReservationsTab(),
+                _buildReorderAndValuationTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

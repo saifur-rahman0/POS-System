@@ -28,6 +28,15 @@ class AppTheme {
         elevation: 1,
         margin: EdgeInsets.all(8),
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: primaryColor,
+        unselectedLabelColor: Color(0xFF64748B),
+        indicatorColor: primaryColor,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Color(0xFFE2E8F0),
+        labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+      ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
     );
   }

@@ -179,3 +179,4 @@ class _PosErrorCardState extends State<PosErrorCard> {
     );
   }
 }
+

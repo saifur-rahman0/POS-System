@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../inventory/presentation/views/advanced_inventory_screen.dart';
 import '../../../pricing/presentation/views/pricing_screen.dart';
 import 'category_list_view.dart';
 import 'product_list_view.dart';
 
-class CatalogScreen extends StatelessWidget {
+class CatalogScreen extends ConsumerWidget {
   const CatalogScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loc = ref.watch(appLocalizationsProvider);
 
     return DefaultTabController(
       length: 4,
@@ -23,32 +25,33 @@ class CatalogScreen extends StatelessWidget {
               child: TabBar(
                 isScrollable: true,
                 tabAlignment: TabAlignment.start,
-                labelColor: theme.colorScheme.primary,
-                unselectedLabelColor: Colors.grey.shade600,
-                indicatorColor: theme.colorScheme.primary,
+                labelColor: const Color(0xFF0F766E),
+                unselectedLabelColor: const Color(0xFF64748B),
+                indicatorColor: const Color(0xFF0F766E),
                 indicatorWeight: 3,
-                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                tabs: const [
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                tabs: [
                   Tab(
-                    icon: Icon(Icons.inventory_2, size: 20),
-                    text: 'Products',
+                    icon: const Icon(Icons.inventory_2, size: 19),
+                    text: loc.tr('products', 'Products'),
                   ),
                   Tab(
-                    icon: Icon(Icons.category, size: 20),
-                    text: 'Categories',
+                    icon: const Icon(Icons.category, size: 19),
+                    text: loc.tr('categories', 'Categories'),
                   ),
                   Tab(
-                    icon: Icon(Icons.warehouse, size: 20),
-                    text: 'Advanced Inventory',
+                    icon: const Icon(Icons.warehouse, size: 19),
+                    text: loc.tr('advanced_inventory', 'Advanced Inventory'),
                   ),
                   Tab(
-                    icon: Icon(Icons.price_change, size: 20),
-                    text: 'Pricing & Promotions',
+                    icon: const Icon(Icons.price_change, size: 19),
+                    text: loc.tr('pricing_promotions', 'Pricing & Promotions'),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1, thickness: 1),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
             const Expanded(
               child: TabBarView(
                 children: [

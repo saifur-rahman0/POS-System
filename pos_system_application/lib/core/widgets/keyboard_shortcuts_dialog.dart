@@ -132,3 +132,4 @@ class KeyboardShortcutsDialog extends StatelessWidget {
     );
   }
 }
+

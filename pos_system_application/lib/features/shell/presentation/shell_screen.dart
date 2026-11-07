@@ -26,6 +26,7 @@ import '../../settings/presentation/controllers/settings_controller.dart';
 import '../../settings/presentation/views/settings_screen.dart';
 import '../../shifts/presentation/controllers/shift_controller.dart';
 import '../../sync/presentation/controllers/sync_controller.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/keyboard_shortcuts_dialog.dart';
 
 class ShellScreen extends ConsumerStatefulWidget {
@@ -124,10 +125,12 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           break;
       }
       if (showFeedback && mounted) {
+        final loc = ref.read(appLocalizationsProvider);
+        final label = _getDestinations(loc)[index].label;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_destinations[index].label} refreshed'),
+            content: Text('$label ${loc.isBangla ? "à¦°à¦¿à¦«à§à¦°à§‡à¦¶ à¦¸à¦®à§à¦ªà¦¨à§à¦¨" : "refreshed"}'),
             duration: const Duration(seconds: 1),
             behavior: SnackBarBehavior.floating,
           ),
@@ -142,56 +145,56 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     }
   }
 
-  static const List<NavigationDestination> _destinations = [
+  List<NavigationDestination> _getDestinations(AppLocalizations loc) => [
     NavigationDestination(
-      icon: Icon(Icons.point_of_sale_outlined),
-      selectedIcon: Icon(Icons.point_of_sale),
-      label: 'POS Register',
+      icon: const Icon(Icons.point_of_sale_outlined),
+      selectedIcon: const Icon(Icons.point_of_sale),
+      label: loc.tr('pos_register', 'POS Register'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.inventory_2_outlined),
-      selectedIcon: Icon(Icons.inventory_2),
-      label: 'Catalog & Stock',
+      icon: const Icon(Icons.inventory_2_outlined),
+      selectedIcon: const Icon(Icons.inventory_2),
+      label: loc.tr('catalog_stock', 'Catalog & Stock'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.local_shipping_outlined),
-      selectedIcon: Icon(Icons.local_shipping),
-      label: 'Purchasing',
+      icon: const Icon(Icons.local_shipping_outlined),
+      selectedIcon: const Icon(Icons.local_shipping),
+      label: loc.tr('purchasing', 'Purchasing'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.receipt_long_outlined),
-      selectedIcon: Icon(Icons.receipt_long),
-      label: 'Sales History',
+      icon: const Icon(Icons.receipt_long_outlined),
+      selectedIcon: const Icon(Icons.receipt_long),
+      label: loc.tr('sales_history', 'Sales History'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.request_quote_outlined),
-      selectedIcon: Icon(Icons.request_quote),
-      label: 'Expenses',
+      icon: const Icon(Icons.request_quote_outlined),
+      selectedIcon: const Icon(Icons.request_quote),
+      label: loc.tr('expenses', 'Expenses'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.account_balance_outlined),
-      selectedIcon: Icon(Icons.account_balance),
-      label: 'Accounts',
+      icon: const Icon(Icons.account_balance_outlined),
+      selectedIcon: const Icon(Icons.account_balance),
+      label: loc.tr('accounts', 'Accounts'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.people_outline),
-      selectedIcon: Icon(Icons.people),
-      label: 'Customers',
+      icon: const Icon(Icons.people_outline),
+      selectedIcon: const Icon(Icons.people),
+      label: loc.tr('customers', 'Customers'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.store_outlined),
-      selectedIcon: Icon(Icons.store),
-      label: 'Stores & Transfers',
+      icon: const Icon(Icons.store_outlined),
+      selectedIcon: const Icon(Icons.store),
+      label: loc.tr('stores_transfers', 'Stores & Transfers'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.analytics_outlined),
-      selectedIcon: Icon(Icons.analytics),
-      label: 'Reports',
+      icon: const Icon(Icons.analytics_outlined),
+      selectedIcon: const Icon(Icons.analytics),
+      label: loc.tr('reports', 'Reports'),
     ),
     NavigationDestination(
-      icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings),
-      label: 'Settings',
+      icon: const Icon(Icons.settings_outlined),
+      selectedIcon: const Icon(Icons.settings),
+      label: loc.tr('settings', 'Settings'),
     ),
   ];
 
@@ -207,14 +210,50 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     final branches = ref.watch(branchesListProvider).branches;
     final syncState = ref.watch(syncControllerProvider);
     final shiftState = ref.watch(currentShiftProvider).valueOrNull;
+    final loc = ref.watch(appLocalizationsProvider);
+    final destinations = _getDestinations(loc);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Retail POS — Local Terminal',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+        title: Text(
+          loc.tr('app_title', 'Retail POS â€” Local Terminal'),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         actions: [
+          // Language Switcher (EN / à¦¬à¦¾à¦‚à¦²à¦¾)
+          InkWell(
+            onTap: () {
+              final currentLang = ref.read(appLanguageProvider);
+              ref.read(appLanguageProvider.notifier).state =
+                  currentLang == 'en' ? 'bn' : 'en';
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.language, size: 14, color: Colors.white),
+                  const SizedBox(width: 5),
+                  Text(
+                    loc.isBangla ? 'English' : 'à¦¬à¦¾à¦‚à¦²à¦¾',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // Shift Status Pill
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -243,8 +282,8 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                 const SizedBox(width: 5),
                 Text(
                   (shiftState?.isOpen ?? false)
-                      ? 'Shift Active${shiftState?.cashierName != null ? " · ${shiftState!.cashierName}" : ""}'
-                      : 'Shift Inactive',
+                      ? '${loc.tr('shift_active', 'Shift Active')}${shiftState?.cashierName != null ? " Â· ${shiftState!.cashierName}" : ""}'
+                      : loc.tr('shift_inactive', 'Shift Inactive'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -403,7 +442,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Icon(Icons.storefront, size: 32, color: Color(0xFF0F766E)),
                   ),
-                  destinations: _destinations.map((d) {
+                  destinations: destinations.map((d) {
                     return NavigationRailDestination(
                       icon: d.icon,
                       selectedIcon: d.selectedIcon,
@@ -441,15 +480,15 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                                                       mainAxisAlignment: MainAxisAlignment.center,
                                                       children: [
                                                         Icon(
-                                                          _destinations[_selectedIndex].icon is Icon
-                                                              ? (_destinations[_selectedIndex].icon as Icon).icon
+                                                          destinations[_selectedIndex].icon is Icon
+                                                              ? (destinations[_selectedIndex].icon as Icon).icon
                                                               : Icons.dashboard,
                                                           size: 64,
                                                           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                                                         ),
                                                         const SizedBox(height: 16),
                                                         Text(
-                                                          _destinations[_selectedIndex].label,
+                                                          destinations[_selectedIndex].label,
                                                           style: Theme.of(context).textTheme.headlineSmall,
                                                         ),
                                                         const SizedBox(height: 8),

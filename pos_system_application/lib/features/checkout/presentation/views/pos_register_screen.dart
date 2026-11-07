@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/hardware/scanner/barcode_scanner_listener.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/keyboard_shortcuts_dialog.dart';
 import '../../../../core/widgets/pos_error_card.dart';
 import '../../../catalog/domain/models/product.dart';
@@ -305,6 +306,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
     final cart = ref.watch(cartProvider);
     final heldCarts = ref.watch(heldCartsProvider).heldCarts;
     final stockBalancesAsync = ref.watch(stockBalancesProvider);
+    final loc = ref.watch(appLocalizationsProvider);
 
     return BarcodeScannerWrapper(
       onBarcodeScanned: (scanned) {
@@ -337,7 +339,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                           controller: _barcodeSearchController,
                           focusNode: _barcodeFocusNode,
                           decoration: InputDecoration(
-                            hintText: 'Scan barcode or search product name / SKU...',
+                            hintText: loc.tr('search_hint', 'Scan barcode or search product name / SKU...'),
                             prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFF0F766E)),
                             suffixIcon: _barcodeSearchController.text.isNotEmpty
                                 ? IconButton(
@@ -396,7 +398,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                             Padding(
                               padding: const EdgeInsets.only(right: 8.0),
                               child: FilterChip(
-                                label: const Text('All Products'),
+                                label: Text(loc.tr('all_products', 'All Products')),
                                 selected: selectedCategory == null,
                                 onSelected: (_) {
                                   ref.read(posSelectedCategoryProvider.notifier).state = null;
@@ -707,9 +709,9 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                             const Icon(Icons.shopping_cart_outlined,
                                 color: Color(0xFF0F766E), size: 20),
                             const SizedBox(width: 6),
-                            const Text(
-                              'Order',
-                              style: TextStyle(
+                            Text(
+                              loc.tr('order', 'Order'),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -724,7 +726,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  '${cart.totalQuantity} items',
+                                  '${cart.totalQuantity} ${loc.tr('items', 'items')}',
                                   style: const TextStyle(
                                     color: Color(0xFF0F766E),
                                     fontWeight: FontWeight.bold,
@@ -891,7 +893,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    cart.customerName ?? 'Walk-in Customer',
+                                    cart.customerName ?? loc.tr('walk_in_customer', 'Walk-in Customer'),
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: cart.customerId != null
@@ -1142,7 +1144,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _summaryRow('Subtotal', currencyFmt.format(cart.subtotal)),
+                        _summaryRow(loc.tr('subtotal', 'Subtotal'), currencyFmt.format(cart.subtotal)),
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1151,7 +1153,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    'Discount',
+                                    loc.tr('discount', 'Discount'),
                                     style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                                   ),
                                   const SizedBox(width: 6),
@@ -1179,7 +1181,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                         ),
                         const SizedBox(height: 6),
                         _summaryRow(
-                          'VAT / Tax (${cart.taxRate.toStringAsFixed(0)}%)',
+                          '${loc.tr('vat_tax', 'VAT / Tax')} (${cart.taxRate.toStringAsFixed(0)}%)',
                           '+ ${currencyFmt.format(cart.taxTotal)}',
                         ),
                         const SizedBox(height: 6),
@@ -1190,7 +1192,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    'Delivery Fee',
+                                    loc.tr('delivery_fee', 'Delivery Fee'),
                                     style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                                   ),
                                   const SizedBox(width: 6),
@@ -1225,9 +1227,9 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Grand Total',
-                              style: TextStyle(
+                            Text(
+                              loc.tr('grand_total', 'Grand Total'),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -1257,7 +1259,9 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                 visualDensity: VisualDensity.compact,
                                 padding: EdgeInsets.zero,
                                 label: Text(
-                                  isExact ? 'Exact (${currencyFmt.format(amt)})' : currencyFmt.format(amt),
+                                  isExact
+                                      ? '${loc.tr('exact', 'Exact')} (${currencyFmt.format(amt)})'
+                                      : currencyFmt.format(amt),
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -1299,7 +1303,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                             ),
                           ),
                           child: Text(
-                            'Pay ${currencyFmt.format(cart.grandTotal)} (F4)',
+                            '${loc.tr('pay', 'Pay')} ${currencyFmt.format(cart.grandTotal)} (F4)',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
