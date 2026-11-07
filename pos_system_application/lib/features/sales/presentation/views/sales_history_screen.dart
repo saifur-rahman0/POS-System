@@ -77,7 +77,8 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                         _selectedTab == 0
                             ? 'Audit customer transactions, reprint thermal receipts, and issue returns / exchanges'
                             : 'Manage price quotations, pro-forma estimates, and convert them to live sales',
-                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 13, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -107,7 +108,9 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                     ),
                     const SizedBox(width: 12),
                     IconButton.filledTonal(
-                      tooltip: _selectedTab == 0 ? 'Refresh Sales' : 'Refresh Quotations',
+                      tooltip: _selectedTab == 0
+                          ? 'Refresh Sales'
+                          : 'Refresh Quotations',
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
                         if (_selectedTab == 0) {
@@ -123,463 +126,565 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
             ),
             const SizedBox(height: 16),
 
-            if (_selectedTab == 1)
-              const Expanded(child: QuotationsView())
-            else ...[
-
-            // Filter Bar
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Colors.grey.shade200),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    // Search box
-                    SizedBox(
-                      width: 260,
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search Receipt #...',
-                          prefixIcon: const Icon(Icons.search, size: 18),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 16),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    ref
-                                        .read(salesFilterProvider.notifier)
-                                        .setSearchQuery('');
-                                  },
-                                )
-                              : null,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onChanged: (val) {
-                          ref
-                              .read(salesFilterProvider.notifier)
-                              .setSearchQuery(val);
-                        },
-                      ),
-                    ),
-
-                    // Date Filters
-                    Wrap(
-                      spacing: 6,
-                      children: SalesDateFilter.values.map((df) {
-                        final isSelected = filterState.dateFilter == df;
-                        return ChoiceChip(
-                          label: Text(df.label),
-                          selected: isSelected,
-                          selectedColor:
-                              const Color(0xFF0F766E).withValues(alpha: 0.15),
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? const Color(0xFF0F766E)
-                                : Colors.black87,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            fontSize: 12,
-                          ),
-                          onSelected: (selected) {
-                            if (selected) {
-                              ref
-                                  .read(salesFilterProvider.notifier)
-                                  .setDateFilter(df);
-                            }
-                          },
-                        );
-                      }).toList(),
-                    ),
-
-                    // Status Dropdown
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: filterState.statusFilter,
-                          isDense: true,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black87,
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                                value: 'ALL', child: Text('All Statuses')),
-                            DropdownMenuItem(
-                                value: 'COMPLETED', child: Text('Completed')),
-                            DropdownMenuItem(
-                                value: 'PARTIALLY_REFUNDED',
-                                child: Text('Partially Refunded')),
-                            DropdownMenuItem(
-                                value: 'REFUNDED', child: Text('Refunded')),
-                            DropdownMenuItem(
-                                value: 'VOIDED', child: Text('Voided')),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              ref
-                                  .read(salesFilterProvider.notifier)
-                                  .setStatusFilter(val);
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Table Content Area
             Expanded(
-              child: Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                child: salesAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => PosErrorCard(
-                    error: err,
-                    title: 'Unable to Load Sales History',
-                    icon: Icons.receipt_long_outlined,
-                    onRetry: () => ref.invalidate(salesListProvider),
-                  ),
-                  data: (pageData) {
-                    if (pageData.items.isEmpty) {
-                      return Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: _selectedTab == 1
+                    ? const KeyedSubtree(
+                        key: ValueKey('quotations_tab_view'),
+                        child: QuotationsView(),
+                      )
+                    : KeyedSubtree(
+                        key: const ValueKey('sales_history_tab_view'),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Icon(
-                              Icons.receipt_long_outlined,
-                              size: 56,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'No sales found matching your filters',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                            // Filter Bar
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.grey.shade200),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Try selecting a different date range or clearing the search query',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Sales Table
-                        Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DataTable(
-                                headingRowColor: WidgetStateProperty.all(
-                                  Colors.grey.shade50,
-                                ),
-                                columns: const [
-                                  DataColumn(
-                                    label: Text(
-                                      'Receipt #',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'Date & Time',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'Customer',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'Items',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'Grand Total',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'Status',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'Actions',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                rows: pageData.items.map((sale) {
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(
-                                        Text(
-                                          sale.receiptNo,
-                                          style: const TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF0F766E),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                child: Wrap(
+                                  spacing: 12,
+                                  runSpacing: 12,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    // Search box
+                                    SizedBox(
+                                      width: 260,
+                                      child: TextField(
+                                        controller: _searchController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Search Receipt #...',
+                                          prefixIcon: const Icon(Icons.search,
+                                              size: 18),
+                                          suffixIcon: _searchController
+                                                  .text.isNotEmpty
+                                              ? IconButton(
+                                                  icon: const Icon(Icons.clear,
+                                                      size: 16),
+                                                  onPressed: () {
+                                                    _searchController.clear();
+                                                    ref
+                                                        .read(
+                                                            salesFilterProvider
+                                                                .notifier)
+                                                        .setSearchQuery('');
+                                                  },
+                                                )
+                                              : null,
+                                          isDense: true,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 10,
                                           ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Text(dateFmt.format(sale.createdAt)),
-                                      ),
-                                      DataCell(
-                                        Text(sale.customerName ?? 'Walk-in'),
-                                      ),
-                                      DataCell(
-                                        Text('${sale.itemsCount} items'),
-                                      ),
-                                      DataCell(
-                                        Text(
-                                          currencyFmt.format(sale.grandTotal),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _getStatusColor(sale.status)
-                                                .withValues(alpha: 0.1),
+                                          border: OutlineInputBorder(
                                             borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: _getStatusColor(
-                                                sale.status,
-                                              ).withValues(alpha: 0.3),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            sale.status,
-                                            style: TextStyle(
-                                              color:
-                                                  _getStatusColor(sale.status),
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 11,
-                                            ),
+                                                BorderRadius.circular(8),
                                           ),
                                         ),
+                                        onChanged: (val) {
+                                          ref
+                                              .read(
+                                                  salesFilterProvider.notifier)
+                                              .setSearchQuery(val);
+                                        },
                                       ),
-                                      DataCell(
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
+                                    ),
+
+                                    // Date Filters
+                                    Wrap(
+                                      spacing: 6,
+                                      children:
+                                          SalesDateFilter.values.map((df) {
+                                        final isSelected =
+                                            filterState.dateFilter == df;
+                                        return ChoiceChip(
+                                          label: Text(df.label),
+                                          selected: isSelected,
+                                          selectedColor: const Color(0xFF0F766E)
+                                              .withValues(alpha: 0.15),
+                                          labelStyle: TextStyle(
+                                            color: isSelected
+                                                ? const Color(0xFF0F766E)
+                                                : Colors.black87,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                            fontSize: 12,
+                                          ),
+                                          onSelected: (selected) {
+                                            if (selected) {
+                                              ref
+                                                  .read(salesFilterProvider
+                                                      .notifier)
+                                                  .setDateFilter(df);
+                                            }
+                                          },
+                                        );
+                                      }).toList(),
+                                    ),
+
+                                    // Status Dropdown
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: filterState.statusFilter,
+                                          isDense: true,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.black87,
+                                          ),
+                                          items: const [
+                                            DropdownMenuItem(
+                                                value: 'ALL',
+                                                child: Text('All Statuses')),
+                                            DropdownMenuItem(
+                                                value: 'COMPLETED',
+                                                child: Text('Completed')),
+                                            DropdownMenuItem(
+                                                value: 'PARTIALLY_REFUNDED',
+                                                child:
+                                                    Text('Partially Refunded')),
+                                            DropdownMenuItem(
+                                                value: 'REFUNDED',
+                                                child: Text('Refunded')),
+                                            DropdownMenuItem(
+                                                value: 'VOIDED',
+                                                child: Text('Voided')),
+                                          ],
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              ref
+                                                  .read(salesFilterProvider
+                                                      .notifier)
+                                                  .setStatusFilter(val);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Table Content Area
+                            Expanded(
+                              child: Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: Colors.grey.shade200),
+                                ),
+                                child: salesAsync.when(
+                                  loading: () => const Center(
+                                      child: CircularProgressIndicator()),
+                                  error: (err, _) => PosErrorCard(
+                                    error: err,
+                                    title: 'Unable to Load Sales History',
+                                    icon: Icons.receipt_long_outlined,
+                                    onRetry: () =>
+                                        ref.invalidate(salesListProvider),
+                                  ),
+                                  data: (pageData) {
+                                    if (pageData.items.isEmpty) {
+                                      return Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
-                                            IconButton(
-                                              tooltip: 'View Details',
-                                              icon: const Icon(
-                                                Icons.visibility_outlined,
-                                                size: 18,
-                                              ),
-                                              onPressed: () {
-                                                SaleDetailDrawer.show(
-                                                  context,
-                                                  sale.id,
-                                                  () => ref.refresh(
-                                                    salesListProvider,
-                                                  ),
-                                                );
-                                              },
+                                            Icon(
+                                              Icons.receipt_long_outlined,
+                                              size: 56,
+                                              color: Colors.grey.shade400,
                                             ),
-                                            if (sale.status != 'VOIDED' &&
-                                                sale.status != 'REFUNDED') ...[
-                                              IconButton(
-                                                tooltip: 'Process Return',
-                                                icon: const Icon(
-                                                  Icons
-                                                      .assignment_return_outlined,
-                                                  size: 18,
-                                                  color: Color(0xFF0F766E),
-                                                ),
-                                                onPressed: () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (ctx) =>
-                                                        ReturnDialog(
-                                                      saleId: sale.id,
-                                                      receiptNo: sale.receiptNo,
-                                                      onReturnSuccess: () {
-                                                        ref.invalidate(
-                                                          salesListProvider,
-                                                        );
-                                                      },
-                                                    ),
-                                                  );
-                                                },
+                                            const SizedBox(height: 12),
+                                            const Text(
+                                              'No sales found matching your filters',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                              IconButton(
-                                                tooltip: 'Product Exchange',
-                                                icon: const Icon(
-                                                  Icons.swap_horiz,
-                                                  size: 20,
-                                                  color: Color(0xFF0F766E),
-                                                ),
-                                                onPressed: () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (ctx) =>
-                                                        ProductExchangeDialog(
-                                                      saleId: sale.id,
-                                                      receiptNo: sale.receiptNo,
-                                                      onExchangeSuccess: () {
-                                                        ref.invalidate(
-                                                          salesListProvider,
-                                                        );
-                                                      },
-                                                    ),
-                                                  );
-                                                },
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              'Try selecting a different date range or clearing the search query',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey.shade600,
                                               ),
-                                            ],
+                                            ),
                                           ],
                                         ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                        ),
+                                      );
+                                    }
 
-                        // Pagination bar
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(color: Colors.grey.shade200),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Showing ${pageData.items.length} of ${pageData.total} sales (Page ${pageData.page} of ${pageData.totalPages})',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade600,
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        // Sales Table
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.vertical,
+                                            child: SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: DataTable(
+                                                headingRowColor:
+                                                    WidgetStateProperty.all(
+                                                  Colors.grey.shade50,
+                                                ),
+                                                columns: const [
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Receipt #',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Date & Time',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Customer',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Items',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Grand Total',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Status',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataColumn(
+                                                    label: Text(
+                                                      'Actions',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                                rows:
+                                                    pageData.items.map((sale) {
+                                                  return DataRow(
+                                                    cells: [
+                                                      DataCell(
+                                                        Text(
+                                                          sale.receiptNo,
+                                                          style:
+                                                              const TextStyle(
+                                                            fontFamily:
+                                                                'monospace',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Color(
+                                                                0xFF0F766E),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Text(dateFmt.format(
+                                                            sale.createdAt)),
+                                                      ),
+                                                      DataCell(
+                                                        Text(
+                                                            sale.customerName ??
+                                                                'Walk-in'),
+                                                      ),
+                                                      DataCell(
+                                                        Text(
+                                                            '${sale.itemsCount} items'),
+                                                      ),
+                                                      DataCell(
+                                                        Text(
+                                                          currencyFmt.format(
+                                                              sale.grandTotal),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 3,
+                                                          ),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: _getStatusColor(
+                                                                    sale.status)
+                                                                .withValues(
+                                                                    alpha: 0.1),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
+                                                            border: Border.all(
+                                                              color:
+                                                                  _getStatusColor(
+                                                                sale.status,
+                                                              ).withValues(
+                                                                      alpha:
+                                                                          0.3),
+                                                            ),
+                                                          ),
+                                                          child: Text(
+                                                            sale.status,
+                                                            style: TextStyle(
+                                                              color: _getStatusColor(
+                                                                  sale.status),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 11,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Row(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            IconButton(
+                                                              tooltip:
+                                                                  'View Details',
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .visibility_outlined,
+                                                                size: 18,
+                                                              ),
+                                                              onPressed: () {
+                                                                SaleDetailDrawer
+                                                                    .show(
+                                                                  context,
+                                                                  sale.id,
+                                                                  () => ref
+                                                                      .refresh(
+                                                                    salesListProvider,
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                            if (sale.status !=
+                                                                    'VOIDED' &&
+                                                                sale.status !=
+                                                                    'REFUNDED') ...[
+                                                              IconButton(
+                                                                tooltip:
+                                                                    'Process Return',
+                                                                icon:
+                                                                    const Icon(
+                                                                  Icons
+                                                                      .assignment_return_outlined,
+                                                                  size: 18,
+                                                                  color: Color(
+                                                                      0xFF0F766E),
+                                                                ),
+                                                                onPressed: () {
+                                                                  showDialog(
+                                                                    context:
+                                                                        context,
+                                                                    builder:
+                                                                        (ctx) =>
+                                                                            ReturnDialog(
+                                                                      saleId:
+                                                                          sale.id,
+                                                                      receiptNo:
+                                                                          sale.receiptNo,
+                                                                      onReturnSuccess:
+                                                                          () {
+                                                                        ref.invalidate(
+                                                                          salesListProvider,
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                              IconButton(
+                                                                tooltip:
+                                                                    'Product Exchange',
+                                                                icon:
+                                                                    const Icon(
+                                                                  Icons
+                                                                      .swap_horiz,
+                                                                  size: 20,
+                                                                  color: Color(
+                                                                      0xFF0F766E),
+                                                                ),
+                                                                onPressed: () {
+                                                                  showDialog(
+                                                                    context:
+                                                                        context,
+                                                                    builder:
+                                                                        (ctx) =>
+                                                                            ProductExchangeDialog(
+                                                                      saleId:
+                                                                          sale.id,
+                                                                      receiptNo:
+                                                                          sale.receiptNo,
+                                                                      onExchangeSuccess:
+                                                                          () {
+                                                                        ref.invalidate(
+                                                                          salesListProvider,
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ],
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }).toList(),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        // Pagination bar
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              top: BorderSide(
+                                                  color: Colors.grey.shade200),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Showing ${pageData.items.length} of ${pageData.total} sales (Page ${pageData.page} of ${pageData.totalPages})',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  OutlinedButton.icon(
+                                                    icon: const Icon(
+                                                      Icons.chevron_left,
+                                                      size: 18,
+                                                    ),
+                                                    label:
+                                                        const Text('Previous'),
+                                                    onPressed: pageData.page > 1
+                                                        ? () {
+                                                            ref
+                                                                .read(
+                                                                  salesFilterProvider
+                                                                      .notifier,
+                                                                )
+                                                                .setPage(pageData
+                                                                        .page -
+                                                                    1);
+                                                          }
+                                                        : null,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  OutlinedButton.icon(
+                                                    icon: const Icon(
+                                                      Icons.chevron_right,
+                                                      size: 18,
+                                                    ),
+                                                    label: const Text('Next'),
+                                                    onPressed: pageData.page <
+                                                            pageData.totalPages
+                                                        ? () {
+                                                            ref
+                                                                .read(
+                                                                  salesFilterProvider
+                                                                      .notifier,
+                                                                )
+                                                                .setPage(pageData
+                                                                        .page +
+                                                                    1);
+                                                          }
+                                                        : null,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
-                              Row(
-                                children: [
-                                  OutlinedButton.icon(
-                                    icon: const Icon(
-                                      Icons.chevron_left,
-                                      size: 18,
-                                    ),
-                                    label: const Text('Previous'),
-                                    onPressed: pageData.page > 1
-                                        ? () {
-                                            ref
-                                                .read(
-                                                  salesFilterProvider.notifier,
-                                                )
-                                                .setPage(pageData.page - 1);
-                                          }
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  OutlinedButton.icon(
-                                    icon: const Icon(
-                                      Icons.chevron_right,
-                                      size: 18,
-                                    ),
-                                    label: const Text('Next'),
-                                    onPressed:
-                                        pageData.page < pageData.totalPages
-                                            ? () {
-                                                ref
-                                                    .read(
-                                                      salesFilterProvider
-                                                          .notifier,
-                                                    )
-                                                    .setPage(pageData.page + 1);
-                                              }
-                                            : null,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    );
-                  },
-                ),
+                      ),
               ),
             ),
-            ],
           ],
         ),
       ),

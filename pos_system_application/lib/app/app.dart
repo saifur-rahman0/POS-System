@@ -23,7 +23,23 @@ class PosApp extends ConsumerWidget {
       title: 'Retail POS',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: homeScreen,
+      home: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeInOutCubic,
+        switchOutCurve: Curves.easeInOutCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey(authState.status == AuthStatus.unauthenticated
+              ? 'login_view'
+              : 'shell_view'),
+          child: homeScreen,
+        ),
+      ),
     );
   }
 }
