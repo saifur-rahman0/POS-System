@@ -244,6 +244,56 @@ void main() {
       expect(find.text('Quick Cash:'), findsOneWidget);
       expect(find.text('Exact'), findsOneWidget);
     });
+
+    testWidgets('Toggling between Grid and Table view switches layout and allows adding products in Table view',
+        (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 800));
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            posProductsProvider.overrideWith((ref) async => [sampleProduct]),
+            categoryListProvider.overrideWith((ref) => CategoryListNotifierMock([
+                  const CategoryModel(
+                    id: 'cat-test-1',
+                    businessId: 'biz-1',
+                    name: 'Peripherals',
+                    isActive: true,
+                  ),
+                ])),
+          ],
+          child: const PosRegisterScreen(),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Verify toggle buttons exist
+      expect(find.byKey(const Key('view_grid_button')), findsOneWidget);
+      expect(find.byKey(const Key('view_table_button')), findsOneWidget);
+
+      // Tap Table view button
+      await tester.tap(find.byKey(const Key('view_table_button')));
+      await tester.pumpAndSettle();
+
+      // Verify Table headers are displayed
+      expect(find.text('Product Name'), findsOneWidget);
+      expect(find.text('SKU / Barcode'), findsOneWidget);
+
+      // Verify product is in table view and tap Add button
+      expect(find.text('Ergonomic Optical Mouse'), findsOneWidget);
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      // Verify product added to cart
+      expect(find.text('1 items'), findsOneWidget);
+
+      // Switch back to Grid view
+      await tester.tap(find.byKey(const Key('view_grid_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ergonomic Optical Mouse'), findsWidgets);
+    });
   });
 
   group('Receipt Dialog Widget Tests', () {

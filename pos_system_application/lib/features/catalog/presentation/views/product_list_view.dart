@@ -17,6 +17,7 @@ class ProductListView extends ConsumerStatefulWidget {
 
 class _ProductListViewState extends ConsumerState<ProductListView> {
   late final TextEditingController _searchController;
+  bool _isGridView = false;
 
   @override
   void initState() {
@@ -151,6 +152,89 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                       ref.invalidate(paginatedProductsProvider);
                     },
                   ),
+                  const SizedBox(width: 8),
+                  // Table / Grid View Toggle
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Tooltip(
+                          message: 'Table View',
+                          child: InkWell(
+                            key: const Key('catalog_view_table'),
+                            onTap: () => setState(() => _isGridView = false),
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: !_isGridView ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.table_rows_rounded,
+                                    size: 16,
+                                    color: !_isGridView ? Colors.white : Colors.grey.shade700,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Table',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: !_isGridView ? Colors.white : Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Grid View',
+                          child: InkWell(
+                            key: const Key('catalog_view_grid'),
+                            onTap: () => setState(() => _isGridView = true),
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _isGridView ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.grid_view_rounded,
+                                    size: 16,
+                                    color: _isGridView ? Colors.white : Colors.grey.shade700,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Grid',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: _isGridView ? Colors.white : Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   // Add Product Button
                   ElevatedButton.icon(
@@ -202,6 +286,10 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                       ],
                     ),
                   );
+                }
+
+                if (_isGridView) {
+                  return _buildProductGrid(paginated.items, balancesMap);
                 }
 
                 return Card(
@@ -455,4 +543,149 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
       ),
     );
   }
+
+  Widget _buildProductGrid(
+    List<ProductModel> products,
+    Map<String, double> balancesMap,
+  ) {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 260,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final prod = products[index];
+        final price = prod.primaryVariant?.sellingPrice ?? 0.0;
+        final stock = prod.primaryVariant?.id != null ? (balancesMap[prod.primaryVariant!.id] ?? 0.0) : 0.0;
+        final isHealthy = stock > 5;
+        final isLow = stock > 0 && stock <= 5;
+
+        return Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        prod.categoryName ?? 'General',
+                        style: TextStyle(fontSize: 10, color: Colors.grey.shade700),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Edit Product',
+                      onPressed: () => _openFormDialog(prod),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  prod.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  prod.sku,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      isHealthy
+                          ? Icons.check_circle_outline
+                          : (isLow ? Icons.warning_amber_rounded : Icons.cancel_outlined),
+                      size: 12,
+                      color: isHealthy
+                          ? const Color(0xFF10B981)
+                          : (isLow ? const Color(0xFFF59E0B) : const Color(0xFFEF4444)),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      stock > 0 ? 'Stock: ${stock.toStringAsFixed(0)}' : 'Out of stock',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isHealthy
+                            ? const Color(0xFF047857)
+                            : (isLow ? const Color(0xFFB45309) : const Color(0xFFB91C1C)),
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '৳ ${price.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onSelected: (val) async {
+                        final variant = prod.primaryVariant;
+                        if (variant == null) return;
+                        if (val == 'adjust') {
+                          final adjusted = await StockAdjustmentDialog.show(
+                            context,
+                            productVariantId: variant.id,
+                            productName: prod.name,
+                            currentStock: stock,
+                          );
+                          if (adjusted != null) {
+                            ref.invalidate(stockBalancesProvider);
+                            ref.invalidate(paginatedProductsProvider);
+                          }
+                        } else if (val == 'movements') {
+                          StockMovementsDialog.show(
+                            context,
+                            productVariantId: variant.id,
+                            productName: prod.name,
+                          );
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        const PopupMenuItem(value: 'adjust', child: Text('Adjust Stock')),
+                        const PopupMenuItem(value: 'movements', child: Text('Stock Movements')),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }

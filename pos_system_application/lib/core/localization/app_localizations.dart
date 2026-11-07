@@ -34,8 +34,21 @@ class AppLocalizations {
       'refreshing': 'Refreshing...',
       'shortcuts': 'Shortcuts (F1)',
       'lang_toggle': 'বাংলা',
+      'lang_en': 'EN',
+      'lang_bn': 'বাংলা',
+      'refreshed_toast': 'refreshed',
 
-      // POS Register
+      // Product View Modes
+      'view_grid': 'Grid',
+      'view_table': 'Table',
+      'barcode_sku': 'SKU / Barcode',
+      'product_name': 'Product Name',
+      'category': 'Category',
+      'price': 'Price',
+      'stock_level': 'Stock',
+      'action': 'Action',
+      'add_to_cart': 'Add',
+      'no_products': 'No matching products found',
       'search_hint': 'Scan barcode or search product name / SKU...',
       'all_products': 'All Products',
       'order': 'Order',
@@ -110,6 +123,21 @@ class AppLocalizations {
       'refreshing': 'রিফ্রেশ হচ্ছে...',
       'shortcuts': 'শর্টকাট (F1)',
       'lang_toggle': 'English',
+      'lang_en': 'EN',
+      'lang_bn': 'বাংলা',
+      'refreshed_toast': 'রিফ্রেশ সম্পন্ন',
+
+      // Product View Modes
+      'view_grid': 'গ্রিড',
+      'view_table': 'টেবিল',
+      'barcode_sku': 'SKU / বারকোড',
+      'product_name': 'পণ্যের নাম',
+      'category': 'ক্যাটাগরি',
+      'price': 'মূল্য',
+      'stock_level': 'স্টক',
+      'action': 'অ্যাকশন',
+      'add_to_cart': 'যুক্ত',
+      'no_products': 'কোনো পণ্য পাওয়া যায়নি',
 
       // POS Register
       'search_hint': 'বারকোড স্ক্যান করুন অথবা পণ্যের নাম / SKU খুঁজুন...',

@@ -9,6 +9,14 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamilyFallback: const [
+        'Nirmala UI',
+        'Segoe UI',
+        'Kalpurush',
+        'Noto Sans Bengali',
+        'Arial',
+        'sans-serif',
+      ],
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         primary: primaryColor,
