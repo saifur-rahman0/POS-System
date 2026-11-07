@@ -665,8 +665,8 @@ class ExpensesService:
         end_date: date,
         branch_id: uuid.UUID | None = None,
     ) -> CashFlowReportOut:
-        start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
-        end_dt = datetime.combine(end_date, datetime.max.time(), tzinfo=UTC)
+        start_dt = datetime.combine(start_date, datetime.min.time())
+        end_dt = datetime.combine(end_date, datetime.max.time())
 
         # Inflows from Confirmed Sales PaymentTenders
         sales_inflow_stmt = (

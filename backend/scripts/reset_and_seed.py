@@ -104,6 +104,7 @@ async def seed_data() -> None:
             code="MAIN",
             address="House 12, Road 4, Gulshan-1, Dhaka",
             phone="+880 1711 000001",
+            branch_type="RETAIL_STORE",
             is_active=True,
             created_at=now_utc - timedelta(days=30),
         )
@@ -114,6 +115,7 @@ async def seed_data() -> None:
             code="DHAN",
             address="Plot 24, Satmasjid Road, Dhanmondi, Dhaka",
             phone="+880 1711 000002",
+            branch_type="RETAIL_STORE",
             is_active=True,
             created_at=now_utc - timedelta(days=25),
         )
@@ -124,6 +126,7 @@ async def seed_data() -> None:
             code="UTTR",
             address="Sector 3, Jashimuddin Avenue, Uttara, Dhaka",
             phone="+880 1711 000003",
+            branch_type="CENTRAL_WAREHOUSE",
             is_active=True,
             created_at=now_utc - timedelta(days=20),
         )

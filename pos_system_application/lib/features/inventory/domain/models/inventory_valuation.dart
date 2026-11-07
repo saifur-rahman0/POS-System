@@ -1,3 +1,10 @@
+double _toDouble(dynamic val) {
+  if (val == null) return 0.0;
+  if (val is num) return val.toDouble();
+  if (val is String) return double.tryParse(val) ?? 0.0;
+  return 0.0;
+}
+
 class CategoryValuationModel {
   final String? categoryId;
   final String categoryName;
@@ -22,10 +29,10 @@ class CategoryValuationModel {
       categoryId: json['category_id'] as String?,
       categoryName: json['category_name'] as String? ?? 'Uncategorized',
       itemCount: json['item_count'] as int? ?? 0,
-      totalUnits: (json['total_units'] as num?)?.toDouble() ?? 0.0,
-      fifoValuation: (json['fifo_valuation'] as num?)?.toDouble() ?? 0.0,
-      wacValuation: (json['wac_valuation'] as num?)?.toDouble() ?? 0.0,
-      retailValuation: (json['retail_valuation'] as num?)?.toDouble() ?? 0.0,
+      totalUnits: _toDouble(json['total_units']),
+      fifoValuation: _toDouble(json['fifo_valuation']),
+      wacValuation: _toDouble(json['wac_valuation']),
+      retailValuation: _toDouble(json['retail_valuation']),
     );
   }
 }
@@ -62,10 +69,10 @@ class InventoryValuationReportModel {
       branchName: json['branch_name'] as String?,
       asOfDate: DateTime.parse(json['as_of_date'] as String),
       totalVariants: json['total_variants'] as int? ?? 0,
-      totalQuantityOnHand: (json['total_quantity_on_hand'] as num?)?.toDouble() ?? 0.0,
-      totalFifoValuation: (json['total_fifo_valuation'] as num?)?.toDouble() ?? 0.0,
-      totalWacValuation: (json['total_wac_valuation'] as num?)?.toDouble() ?? 0.0,
-      totalRetailValuation: (json['total_retail_valuation'] as num?)?.toDouble() ?? 0.0,
+      totalQuantityOnHand: _toDouble(json['total_quantity_on_hand']),
+      totalFifoValuation: _toDouble(json['total_fifo_valuation']),
+      totalWacValuation: _toDouble(json['total_wac_valuation']),
+      totalRetailValuation: _toDouble(json['total_retail_valuation']),
       categories: (json['categories'] as List<dynamic>?)
               ?.map((e) => CategoryValuationModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
