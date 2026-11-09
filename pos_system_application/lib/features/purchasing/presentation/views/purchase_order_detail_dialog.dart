@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../catalog/domain/models/product.dart';
+import '../../../catalog/domain/models/product_variant.dart';
+import '../../../catalog/presentation/views/barcode_print_dialog.dart';
 import '../../domain/models/purchase_order.dart';
 import '../controllers/purchasing_controller.dart';
 
@@ -85,7 +88,8 @@ class _PurchaseOrderDetailDialogState
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Goods received and stock balances successfully updated!'),
+            content:
+                Text('Goods received and stock balances successfully updated!'),
             backgroundColor: Color(0xFF0F766E),
           ),
         );
@@ -111,7 +115,8 @@ class _PurchaseOrderDetailDialogState
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Disburse Payment — ${_order.referenceNo}'),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -128,7 +133,8 @@ class _PurchaseOrderDetailDialogState
                 ],
                 Text(
                   'Outstanding Due: ${currencyFmt.format(_order.dueAmount)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.red),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -137,7 +143,8 @@ class _PurchaseOrderDetailDialogState
                     labelText: 'Payment Amount (৳)',
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
@@ -147,9 +154,12 @@ class _PurchaseOrderDetailDialogState
                   ),
                   initialValue: selectedMethod,
                   items: const [
-                    DropdownMenuItem(value: 'CASH', child: Text('Cash (Debits Drawer)')),
-                    DropdownMenuItem(value: 'BANK_TRANSFER', child: Text('Bank Transfer')),
-                    DropdownMenuItem(value: 'BKASH', child: Text('bKash / MFS')),
+                    DropdownMenuItem(
+                        value: 'CASH', child: Text('Cash (Debits Drawer)')),
+                    DropdownMenuItem(
+                        value: 'BANK_TRANSFER', child: Text('Bank Transfer')),
+                    DropdownMenuItem(
+                        value: 'BKASH', child: Text('bKash / MFS')),
                   ],
                   onChanged: (v) => setModalState(() => selectedMethod = v!),
                 ),
@@ -178,9 +188,11 @@ class _PurchaseOrderDetailDialogState
               onPressed: _isPaying
                   ? null
                   : () async {
-                      final amt = double.tryParse(amountController.text.trim()) ?? 0.0;
+                      final amt =
+                          double.tryParse(amountController.text.trim()) ?? 0.0;
                       if (amt <= 0) {
-                        setModalState(() => paymentError = 'Amount must be greater than 0');
+                        setModalState(() =>
+                            paymentError = 'Amount must be greater than 0');
                         return;
                       }
                       if (amt > _order.dueAmount) {
@@ -205,12 +217,15 @@ class _PurchaseOrderDetailDialogState
                         if (ctx.mounted) Navigator.of(ctx).pop();
 
                         // Refresh orders
-                        ref.read(purchasesControllerProvider.notifier).refresh();
+                        ref
+                            .read(purchasesControllerProvider.notifier)
+                            .refresh();
 
                         setState(() {
                           _order = _order.copyWith(
                             paidTotal: _order.paidTotal + amt,
-                            dueBalance: (_order.dueBalance - amt).clamp(0.0, double.infinity),
+                            dueBalance: (_order.dueBalance - amt)
+                                .clamp(0.0, double.infinity),
                           );
                           _isPaying = false;
                         });
@@ -247,7 +262,8 @@ class _PurchaseOrderDetailDialogState
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.receipt_long, color: Color(0xFF0F766E), size: 26),
+                      const Icon(Icons.receipt_long,
+                          color: Color(0xFF0F766E), size: 26),
                       const SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +279,8 @@ class _PurchaseOrderDetailDialogState
                           if (_order.supplierName != null)
                             Text(
                               'Supplier: ${_order.supplierName}',
-                              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                              style: TextStyle(
+                                  fontSize: 13, color: Colors.grey.shade600),
                             ),
                         ],
                       ),
@@ -272,12 +289,17 @@ class _PurchaseOrderDetailDialogState
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isOrdered ? Colors.amber.shade50 : Colors.green.shade50,
+                          color: isOrdered
+                              ? Colors.amber.shade50
+                              : Colors.green.shade50,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isOrdered ? Colors.amber.shade400 : Colors.green.shade400,
+                            color: isOrdered
+                                ? Colors.amber.shade400
+                                : Colors.green.shade400,
                           ),
                         ),
                         child: Text(
@@ -285,7 +307,9 @@ class _PurchaseOrderDetailDialogState
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: isOrdered ? Colors.amber.shade900 : Colors.green.shade800,
+                            color: isOrdered
+                                ? Colors.amber.shade900
+                                : Colors.green.shade800,
                           ),
                         ),
                       ),
@@ -330,9 +354,11 @@ class _PurchaseOrderDetailDialogState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('Created At',
-                              style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              style:
+                                  TextStyle(fontSize: 11, color: Colors.grey)),
                           Text(dateFmt.format(_order.createdAt),
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                              style: const TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),
@@ -342,9 +368,11 @@ class _PurchaseOrderDetailDialogState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text('Notes',
-                                style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey)),
                             Text(_order.notes!,
-                                style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
+                                style: const TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis),
                           ],
                         ),
                       ),
@@ -371,7 +399,8 @@ class _PurchaseOrderDetailDialogState
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+                        headingRowColor:
+                            WidgetStateProperty.all(Colors.grey.shade50),
                         columns: const [
                           DataColumn(label: Text('Item / Product')),
                           DataColumn(label: Text('SKU')),
@@ -383,7 +412,8 @@ class _PurchaseOrderDetailDialogState
                           return DataRow(
                             cells: [
                               DataCell(Text(item.productName ?? 'Product',
-                                  style: const TextStyle(fontWeight: FontWeight.w500))),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500))),
                               DataCell(Text(item.sku ?? '-')),
                               DataCell(Text(item.quantity.toStringAsFixed(2))),
                               DataCell(Text(currencyFmt.format(item.unitCost))),
@@ -419,35 +449,44 @@ class _PurchaseOrderDetailDialogState
                   children: [
                     Column(
                       children: [
-                        const Text('Total Amount', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const Text('Total Amount',
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
                         Text(currencyFmt.format(_order.totalAmount),
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Column(
                       children: [
-                        const Text('Discount', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const Text('Discount',
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
                         Text(currencyFmt.format(_order.discount),
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     Column(
                       children: [
-                        const Text('Paid Amount', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const Text('Paid Amount',
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
                         Text(currencyFmt.format(_order.paidAmount),
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green)),
                       ],
                     ),
                     Column(
                       children: [
-                        const Text('Due Balance', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const Text('Due Balance',
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
                         Text(
                           currencyFmt.format(_order.dueAmount),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: _order.dueAmount > 0 ? Colors.red : Colors.grey,
+                            color:
+                                _order.dueAmount > 0 ? Colors.red : Colors.grey,
                           ),
                         ),
                       ],
@@ -477,13 +516,61 @@ class _PurchaseOrderDetailDialogState
                       label: const Text('Add Payment'),
                     ),
                   ],
+                  if (_order.status == 'RECEIVED') ...[
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0F766E),
+                        side: const BorderSide(color: Color(0xFF0F766E)),
+                      ),
+                      icon: const Icon(Icons.qr_code_2, size: 18),
+                      label: const Text('Print Item Barcodes'),
+                      onPressed: () {
+                        final batchProds = _order.items.map((item) {
+                          return ProductModel(
+                            id: item.productVariantId,
+                            businessId: _order.businessId,
+                            sku: item.sku ?? 'SKU-${item.id.substring(0, 6)}',
+                            name: item.productName ?? 'Product',
+                            productType: 'standard',
+                            taxRate: 0.0,
+                            hasVariants: false,
+                            isActive: true,
+                            primaryVariant: ProductVariantModel(
+                              id: item.productVariantId,
+                              productId: item.productVariantId,
+                              sku: item.sku,
+                              name: item.variantName ?? 'Standard',
+                              costPrice: item.unitCost,
+                              sellingPrice: item.unitCost * 1.25,
+                              trackStock: true,
+                              isActive: true,
+                            ),
+                          );
+                        }).toList();
+
+                        final quantities = <String, int>{};
+                        for (final item in _order.items) {
+                          quantities[item.productVariantId] =
+                              item.quantity.round().clamp(1, 9999);
+                        }
+
+                        BarcodePrintDialog.show(
+                          context,
+                          batchProducts: batchProds,
+                          quantities: quantities,
+                        );
+                      },
+                    ),
+                  ],
                   if (isOrdered) ...[
                     const SizedBox(width: 12),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0F766E),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
                       ),
                       onPressed: _isReceiving ? null : _receiveGoods,
                       icon: _isReceiving
@@ -492,7 +579,8 @@ class _PurchaseOrderDetailDialogState
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : const Icon(Icons.inventory_2, size: 18),

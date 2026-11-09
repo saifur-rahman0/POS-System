@@ -42,6 +42,12 @@ class PrinterService {
     return await _sendBytes(bytes, 'Receipt for ${sale.receiptNo}');
   }
 
+  /// Sends raw ESC/POS or TSPL command bytes directly to the printer or spooler
+  Future<bool> printRawBytes(List<int> bytes,
+      {String description = 'Raw Print Job'}) async {
+    return await _sendBytes(bytes, description);
+  }
+
   /// Sends standalone pulse command to open the cash drawer
   Future<bool> openCashDrawer() async {
     const bytes = EscPosCommands.kickCashDrawerPin2;
@@ -52,11 +58,13 @@ class PrinterService {
     try {
       switch (config.connectionType) {
         case PrinterConnectionType.networkTcp:
-          final socket = await Socket.connect(config.ipAddress, config.port, timeout: const Duration(seconds: 3));
+          final socket = await Socket.connect(config.ipAddress, config.port,
+              timeout: const Duration(seconds: 3));
           socket.add(bytes);
           await socket.flush();
           await socket.close();
-          developer.log('Sent ${bytes.length} bytes via TCP to ${config.ipAddress}:${config.port} [$description]');
+          developer.log(
+              'Sent ${bytes.length} bytes via TCP to ${config.ipAddress}:${config.port} [$description]');
           return true;
 
         case PrinterConnectionType.windowsSpooler:
@@ -65,7 +73,8 @@ class PrinterService {
           final tempDir = Directory.systemTemp;
           final file = File('${tempDir.path}/pos_thermal_spool.bin');
           await file.writeAsBytes(bytes);
-          developer.log('Simulated print [${bytes.length} bytes written to ${file.path}]: $description');
+          developer.log(
+              'Simulated print [${bytes.length} bytes written to ${file.path}]: $description');
           return true;
       }
     } catch (e) {

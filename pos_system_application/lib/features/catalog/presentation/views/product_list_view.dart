@@ -8,6 +8,7 @@ import '../../../inventory/presentation/views/stock_movements_dialog.dart';
 import '../../domain/models/paginated_products.dart';
 import '../../domain/models/product.dart';
 import '../controllers/catalog_providers.dart';
+import 'barcode_print_dialog.dart';
 import 'product_form_dialog.dart';
 
 class ProductListView extends ConsumerStatefulWidget {
@@ -71,205 +72,239 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Search input
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search by name, SKU, or barcode...',
-                        prefixIcon: const Icon(Icons.search, size: 20),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  filterNotifier.setSearch('');
-                                },
-                              )
-                            : null,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  // Row 1: Search & Filter Controls
+                  Row(
+                    children: [
+                      // Search input
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search by name, SKU, or barcode...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      filterNotifier.setSearch('');
+                                    },
+                                  )
+                                : null,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onSubmitted: (val) {
+                            filterNotifier.setSearch(val);
+                          },
                         ),
                       ),
-                      onSubmitted: (val) {
-                        filterNotifier.setSearch(val);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Category Dropdown
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<String>(
-                      key: ValueKey(filter.categoryId ?? ''),
-                      initialValue: filter.categoryId ?? '',
-                      isExpanded: true,
-                      isDense: true,
-                      decoration: InputDecoration(
-                        labelText: 'Category',
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      const SizedBox(width: 12),
+                      // Category Dropdown
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey(filter.categoryId ?? ''),
+                          initialValue: filter.categoryId ?? '',
+                          isExpanded: true,
+                          isDense: true,
+                          decoration: InputDecoration(
+                            labelText: 'Category',
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: '',
+                              child: Text('All Categories',
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                            ...categories.map((c) => DropdownMenuItem<String>(
+                                  value: c.id,
+                                  child: Text(c.name,
+                                      overflow: TextOverflow.ellipsis),
+                                )),
+                          ],
+                          onChanged: (val) {
+                            filterNotifier.setCategory(
+                                (val == null || val.isEmpty) ? null : val);
+                          },
                         ),
                       ),
-                      items: [
-                        const DropdownMenuItem<String>(
-                          value: '',
-                          child: Text('All Categories',
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        ...categories.map((c) => DropdownMenuItem<String>(
-                              value: c.id,
-                              child:
-                                  Text(c.name, overflow: TextOverflow.ellipsis),
-                            )),
-                      ],
-                      onChanged: (val) {
-                        filterNotifier.setCategory(
-                            (val == null || val.isEmpty) ? null : val);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Status Segmented Button
-                  SegmentedButton<bool?>(
-                    segments: const [
-                      ButtonSegment<bool?>(value: null, label: Text('All')),
-                      ButtonSegment<bool?>(value: true, label: Text('Active')),
-                      ButtonSegment<bool?>(
-                          value: false, label: Text('Inactive')),
+                      const SizedBox(width: 12),
+                      // Status Segmented Button
+                      SegmentedButton<bool?>(
+                        segments: const [
+                          ButtonSegment<bool?>(value: null, label: Text('All')),
+                          ButtonSegment<bool?>(
+                              value: true, label: Text('Active')),
+                          ButtonSegment<bool?>(
+                              value: false, label: Text('Inactive')),
+                        ],
+                        selected: {filter.isActive},
+                        onSelectionChanged: (selected) {
+                          filterNotifier.setIsActive(selected.first);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Refresh button
+                      IconButton.outlined(
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Refresh Products',
+                        onPressed: () {
+                          ref.invalidate(paginatedProductsProvider);
+                        },
+                      ),
                     ],
-                    selected: {filter.isActive},
-                    onSelectionChanged: (selected) {
-                      filterNotifier.setIsActive(selected.first);
-                    },
                   ),
-                  const SizedBox(width: 12),
-                  // Refresh button
-                  IconButton.outlined(
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Refresh Products',
-                    onPressed: () {
-                      ref.invalidate(paginatedProductsProvider);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  // Table / Grid View Toggle
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    padding: const EdgeInsets.all(2),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Tooltip(
-                          message: 'Table View',
-                          child: InkWell(
-                            key: const Key('catalog_view_table'),
-                            onTap: () => setState(() => _isGridView = false),
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: !_isGridView
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.transparent,
+                  const SizedBox(height: 10),
+                  // Row 2: View Switcher and Action Buttons
+                  Row(
+                    children: [
+                      // Table / Grid View Toggle
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        padding: const EdgeInsets.all(2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Tooltip(
+                              message: 'Table View',
+                              child: InkWell(
+                                key: const Key('catalog_view_table'),
+                                onTap: () =>
+                                    setState(() => _isGridView = false),
                                 borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.table_rows_rounded,
-                                    size: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 6),
+                                  decoration: BoxDecoration(
                                     color: !_isGridView
-                                        ? Colors.white
-                                        : Colors.grey.shade700,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Table',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: !_isGridView
-                                          ? Colors.white
-                                          : Colors.grey.shade700,
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.table_rows_rounded,
+                                        size: 16,
+                                        color: !_isGridView
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Table',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: !_isGridView
+                                              ? Colors.white
+                                              : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        Tooltip(
-                          message: 'Grid View',
-                          child: InkWell(
-                            key: const Key('catalog_view_grid'),
-                            onTap: () => setState(() => _isGridView = true),
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: _isGridView
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.transparent,
+                            Tooltip(
+                              message: 'Grid View',
+                              child: InkWell(
+                                key: const Key('catalog_view_grid'),
+                                onTap: () => setState(() => _isGridView = true),
                                 borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.grid_view_rounded,
-                                    size: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 6),
+                                  decoration: BoxDecoration(
                                     color: _isGridView
-                                        ? Colors.white
-                                        : Colors.grey.shade700,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Grid',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: _isGridView
-                                          ? Colors.white
-                                          : Colors.grey.shade700,
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.grid_view_rounded,
+                                        size: 16,
+                                        color: _isGridView
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Grid',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: _isGridView
+                                              ? Colors.white
+                                              : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Add Product Button
-                  ElevatedButton.icon(
-                    key: const Key('add_product_button'),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Product'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                    ),
-                    onPressed: () => _openFormDialog(),
+                      ),
+                      const Spacer(),
+                      // Print Labels Toolbar Action
+                      OutlinedButton.icon(
+                        key: const Key('print_labels_toolbar_button'),
+                        icon: const Icon(Icons.qr_code_2, size: 18),
+                        label: const Text('Print Labels'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0F766E),
+                          side: const BorderSide(color: Color(0xFF0F766E)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                        ),
+                        onPressed: () {
+                          final items = productsAsync.value?.items ?? [];
+                          BarcodePrintDialog.show(
+                            context,
+                            batchProducts: items.take(12).toList(),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Add Product Button
+                      ElevatedButton.icon(
+                        key: const Key('add_product_button'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Product'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                        ),
+                        onPressed: () => _openFormDialog(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -572,6 +607,17 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                                 tooltip: 'Edit Product',
                                 onPressed: () => _openFormDialog(prod),
                               ),
+                              IconButton(
+                                icon: const Icon(Icons.qr_code_2, size: 20),
+                                tooltip: 'Print Barcode & Shelf Tag',
+                                onPressed: () {
+                                  BarcodePrintDialog.show(
+                                    context,
+                                    product: prod,
+                                    variant: variant,
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -757,6 +803,12 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                           productVariantId: variant.id,
                           productName: prod.name,
                         );
+                      } else if (val == 'print_barcode') {
+                        BarcodePrintDialog.show(
+                          context,
+                          product: prod,
+                          variant: variant,
+                        );
                       }
                     },
                     itemBuilder: (ctx) => [
@@ -764,6 +816,9 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                           value: 'adjust', child: Text('Adjust Stock')),
                       const PopupMenuItem(
                           value: 'movements', child: Text('Stock Movements')),
+                      const PopupMenuItem(
+                          value: 'print_barcode',
+                          child: Text('Print Barcode Tag')),
                     ],
                   ),
                 ],
