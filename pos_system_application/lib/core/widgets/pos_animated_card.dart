@@ -39,32 +39,24 @@ class _PosHoverCardState extends State<PosHoverCard> {
   Widget build(BuildContext context) {
     final radius = widget.borderRadius ?? BorderRadius.circular(12);
     final theme = Theme.of(context);
-    final activeBorderColor =
-        widget.hoverBorderColor ?? theme.colorScheme.primary;
+    final activeBorderColor = widget.hoverBorderColor ?? theme.colorScheme.primary;
     final normalBorderColor = widget.borderColor ?? Colors.grey.shade200;
 
-    final currentScale =
-        _isPressed ? 0.98 : (_isHovered ? widget.hoverScale : 1.0);
+    final currentScale = _isPressed
+        ? 0.98
+        : (_isHovered ? widget.hoverScale : 1.0);
 
     return MouseRegion(
-      cursor: widget.onTap != null
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.basic,
+      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() {
         _isHovered = false;
         _isPressed = false;
       }),
       child: GestureDetector(
-        onTapDown: widget.onTap != null
-            ? (_) => setState(() => _isPressed = true)
-            : null,
-        onTapUp: widget.onTap != null
-            ? (_) => setState(() => _isPressed = false)
-            : null,
-        onTapCancel: widget.onTap != null
-            ? () => setState(() => _isPressed = false)
-            : null,
+        onTapDown: widget.onTap != null ? (_) => setState(() => _isPressed = true) : null,
+        onTapUp: widget.onTap != null ? (_) => setState(() => _isPressed = false) : null,
+        onTapCancel: widget.onTap != null ? () => setState(() => _isPressed = false) : null,
         onTap: widget.onTap,
         child: AnimatedScale(
           scale: currentScale,
