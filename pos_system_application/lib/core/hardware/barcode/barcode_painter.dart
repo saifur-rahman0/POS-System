@@ -43,3 +43,4 @@ class BarcodePainter extends CustomPainter {
         oldDelegate.backgroundColor != backgroundColor;
   }
 }
+
