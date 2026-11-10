@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/pos_error_card.dart';
+import '../../domain/models/pos_transaction.dart';
 import '../controllers/sales_history_controller.dart';
+import '../controllers/transactions_hub_controller.dart';
 import 'product_exchange_dialog.dart';
 import 'quotations_view.dart';
 import 'return_dialog.dart';
 import 'sale_detail_drawer.dart';
+import 'transactions_hub_view.dart';
 
 class SalesHistoryScreen extends ConsumerStatefulWidget {
-  const SalesHistoryScreen({super.key});
+  final int initialTab;
+  const SalesHistoryScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<SalesHistoryScreen> createState() => _SalesHistoryScreenState();
@@ -17,12 +21,52 @@ class SalesHistoryScreen extends ConsumerStatefulWidget {
 
 class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
-  int _selectedTab = 0; // 0 = Sales Receipts, 1 = Quotations
+  late int _selectedTab = widget.initialTab; // 0 = Sales Receipts, 1 = All Transactions, 2 = Purchases, 3 = Payments, 4 = Quotations
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.initialTab;
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  String _getHeaderTitle() {
+    switch (_selectedTab) {
+      case 0:
+        return 'Sales History & Receipts';
+      case 1:
+        return 'All Transactions History & Audit Ledger';
+      case 2:
+        return 'Purchases & Supplier Orders';
+      case 3:
+        return 'Payments & Tender History';
+      case 4:
+        return 'Pro-Forma Quotations';
+      default:
+        return 'Sales History & Receipts';
+    }
+  }
+
+  String _getHeaderSubtitle() {
+    switch (_selectedTab) {
+      case 0:
+        return 'Audit customer transactions, reprint thermal receipts, and issue returns / exchanges';
+      case 1:
+        return 'Comprehensive real-time financial timeline: Purchases, Sales, Payments, Expenses, and Transfers';
+      case 2:
+        return 'Supplier purchase orders, goods receipts, and vendor disbursements';
+      case 3:
+        return 'Payment inflows, customer collections, and supplier disbursements across all tender methods';
+      case 4:
+        return 'Manage price quotations, pro-forma estimates, and convert them to live sales';
+      default:
+        return 'Audit customer transactions, reprint thermal receipts, and issue returns / exchanges';
+    }
   }
 
   Color _getStatusColor(String status) {
@@ -54,7 +98,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header title & Tabs
+            // Header title & Actions
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -63,9 +107,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _selectedTab == 0
-                            ? 'Sales History & Receipts'
-                            : 'Pro-Forma Quotations',
+                        _getHeaderTitle(),
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -74,55 +116,71 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _selectedTab == 0
-                            ? 'Audit customer transactions, reprint thermal receipts, and issue returns / exchanges'
-                            : 'Manage price quotations, pro-forma estimates, and convert them to live sales',
+                        _getHeaderSubtitle(),
                         style:
                             const TextStyle(fontSize: 13, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
-                Row(
-                  children: [
-                    SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(
-                          value: 0,
-                          label: Text('Sales Receipts'),
-                          icon: Icon(Icons.receipt_long, size: 16),
-                        ),
-                        ButtonSegment(
-                          value: 1,
-                          label: Text('Quotations'),
-                          icon: Icon(Icons.request_quote_outlined, size: 16),
-                        ),
-                      ],
-                      selected: {_selectedTab},
-                      onSelectionChanged: (val) {
-                        setState(() {
-                          _selectedTab = val.first;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton.filledTonal(
-                      tooltip: _selectedTab == 0
-                          ? 'Refresh Sales'
-                          : 'Refresh Quotations',
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () {
-                        if (_selectedTab == 0) {
-                          ref.invalidate(salesListProvider);
-                        } else {
-                          // Handled inside QuotationsView
-                        }
-                      },
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                IconButton.filledTonal(
+                  tooltip: _selectedTab == 0
+                      ? 'Refresh Sales'
+                      : (_selectedTab == 4 ? 'Refresh Quotations' : 'Refresh Transactions'),
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    if (_selectedTab == 0) {
+                      ref.invalidate(salesListProvider);
+                    } else if (_selectedTab == 4) {
+                      // Handled inside QuotationsView
+                    } else {
+                      ref.read(transactionsHubControllerProvider).refreshAll();
+                    }
+                  },
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+
+            // Horizontal Tab Navigation
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(
+                    value: 0,
+                    label: Text('Sales Receipts'),
+                    icon: Icon(Icons.receipt_long, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: 1,
+                    label: Text('All Transactions'),
+                    icon: Icon(Icons.account_balance_wallet_outlined, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: 2,
+                    label: Text('Purchases'),
+                    icon: Icon(Icons.shopping_bag_outlined, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: 3,
+                    label: Text('Payments'),
+                    icon: Icon(Icons.payments_outlined, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: 4,
+                    label: Text('Quotations'),
+                    icon: Icon(Icons.request_quote_outlined, size: 16),
+                  ),
+                ],
+                selected: {_selectedTab},
+                onSelectionChanged: (val) {
+                  setState(() {
+                    _selectedTab = val.first;
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -133,11 +191,30 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                 switchOutCurve: Curves.easeInCubic,
                 child: _selectedTab == 1
                     ? const KeyedSubtree(
-                        key: ValueKey('quotations_tab_view'),
-                        child: QuotationsView(),
+                        key: ValueKey('all_transactions_tab_view'),
+                        child: TransactionsHubView(),
                       )
-                    : KeyedSubtree(
-                        key: const ValueKey('sales_history_tab_view'),
+                    : _selectedTab == 2
+                        ? const KeyedSubtree(
+                            key: ValueKey('purchases_tab_view'),
+                            child: TransactionsHubView(
+                              initialType: PosTransactionType.purchase,
+                            ),
+                          )
+                        : _selectedTab == 3
+                            ? const KeyedSubtree(
+                                key: ValueKey('payments_tab_view'),
+                                child: TransactionsHubView(
+                                  initialType: PosTransactionType.payment,
+                                ),
+                              )
+                            : _selectedTab == 4
+                                ? const KeyedSubtree(
+                                    key: ValueKey('quotations_tab_view'),
+                                    child: QuotationsView(),
+                                  )
+                                : KeyedSubtree(
+                                    key: const ValueKey('sales_history_tab_view'),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [

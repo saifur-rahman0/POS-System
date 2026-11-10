@@ -86,6 +86,17 @@ class AppLocalizations {
       'retail_branches': 'Retail Branches',
       'stock_transfers': 'Stock Transfers',
 
+      // Transactions Hub
+      'transactions_hub': 'Transactions Hub',
+      'all_transactions': 'All Transactions',
+      'total_inflow': 'Total Inflow',
+      'total_outflow': 'Total Outflow',
+      'net_cash_flow': 'Net Cash Flow',
+      'ledger_entries': 'Total Ledger Entries',
+      'sales_receipts': 'Sales Receipts',
+      'purchases_orders': 'Purchases',
+      'payments_tenders': 'Payments & Tenders',
+
       // Settings
       'store_profile': 'Store Profile',
       'hardware_printers': 'Hardware & Printers',
@@ -200,6 +211,17 @@ class AppLocalizations {
       'branches_title': 'দোকানের শাখা ও স্টক স্থানান্তর',
       'retail_branches': 'শাখা তালিকা',
       'stock_transfers': 'স্টক স্থানান্তর',
+
+      // Transactions Hub
+      'transactions_hub': 'লেনদেন ইতিহাস',
+      'all_transactions': 'সকল লেনদেন',
+      'total_inflow': 'মোট আগমন (আয়)',
+      'total_outflow': 'মোট নির্গমন (ব্যয়)',
+      'net_cash_flow': 'নীট নগদ প্রবাহ',
+      'ledger_entries': 'মোট লেনদেন সংখ্যা',
+      'sales_receipts': 'বিক্রয় রসিদ',
+      'purchases_orders': 'ক্রয় ও সাপ্লায়ার',
+      'payments_tenders': 'পেমেন্ট ও মাধ্যম',
 
       // Settings
       'store_profile': 'দোকানের তথ্য',

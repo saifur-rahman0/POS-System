@@ -223,7 +223,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '$label ${loc.isBangla ? "à¦°à¦¿à¦«à§à¦°à§‡à¦¶ à¦¸à¦®à§à¦ªà¦¨à§à¦¨" : "refreshed"}'),
+                '$label ${loc.isBangla ? "রিফ্রেশ সম্পন্ন" : "refreshed"}'),
             duration: const Duration(seconds: 1),
             behavior: SnackBarBehavior.floating,
           ),
