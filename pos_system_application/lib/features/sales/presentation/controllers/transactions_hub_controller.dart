@@ -263,3 +263,4 @@ class TransactionsHubController {
 final transactionsHubControllerProvider = Provider<TransactionsHubController>((ref) {
   return TransactionsHubController(ref);
 });
+
