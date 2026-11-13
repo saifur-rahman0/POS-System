@@ -5,6 +5,12 @@ import '../../../../core/network/api_provider.dart';
 import '../../../../core/utils/uuid_generator.dart';
 import '../../../catalog/domain/models/product.dart';
 import '../../../catalog/domain/models/product_variant.dart';
+import '../../../catalog/presentation/controllers/catalog_providers.dart';
+import '../../../expenses/presentation/controllers/financial_accounts_controller.dart';
+import '../../../inventory/presentation/controllers/inventory_controller.dart';
+import '../../../sales/presentation/controllers/sales_history_controller.dart';
+import '../../../sales/presentation/controllers/transactions_hub_controller.dart';
+import '../../../shifts/presentation/controllers/shift_controller.dart';
 import '../../data/checkout_api_service.dart';
 import '../../domain/models/cart_item.dart';
 import '../../domain/models/checkout_request.dart';
@@ -329,6 +335,16 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       // Successfully completed: clear cart and update state
       _ref.read(cartProvider.notifier).clearCart();
       state = CheckoutState(isLoading: false, completedSale: sale);
+
+      // Invalidate and refresh stock and cash drawer providers immediately
+      _ref.invalidate(stockBalancesProvider);
+      _ref.invalidate(posProductsProvider);
+      _ref.invalidate(paginatedProductsProvider);
+      _ref.read(currentShiftProvider.notifier).loadCurrentShift(branchId: branchId);
+      _ref.invalidate(salesListProvider);
+      _ref.invalidate(allTransactionsProvider);
+      _ref.invalidate(financialAccountsProvider);
+
       return sale;
     } catch (e) {
       state = CheckoutState(isLoading: false, errorMessage: e.toString());

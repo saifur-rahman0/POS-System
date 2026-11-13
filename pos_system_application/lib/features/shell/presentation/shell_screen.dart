@@ -371,7 +371,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      loc.tr('lang_bn', 'বাংলা'),
+                      loc.tr('lang_bn', '\u09ac\u09be\u0982\u09b2\u09be'),
                       style: TextStyle(
                         color: loc.isBangla
                             ? const Color(0xFF0F766E)
@@ -415,7 +415,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                 const SizedBox(width: 5),
                 Text(
                   (shiftState?.isOpen ?? false)
-                      ? '${loc.tr('shift_active', 'Shift Active')}${shiftState?.cashierName != null ? " · ${shiftState!.cashierName}" : ""}'
+                      ? '${loc.tr('shift_active', 'Shift Active')}${shiftState?.cashierName != null ? " \u00B7 ${shiftState!.cashierName}" : ""}'
                       : loc.tr('shift_inactive', 'Shift Inactive'),
                   style: const TextStyle(
                     color: Colors.white,

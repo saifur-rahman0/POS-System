@@ -21,6 +21,7 @@ from app.modules.crm.models import (
     LoyaltyTransaction,
     MembershipTier,
 )
+from app.modules.expenses.models import CashTransaction, FinancialAccount
 from app.modules.identity.models import User
 from app.modules.inventory.models import StockBalance, StockMovement
 from app.modules.inventory.repository import InventoryRepository
@@ -42,6 +43,7 @@ from app.modules.sales.models import (
     SaleItem,
 )
 from app.modules.sales.repository import SalesRepository
+from app.modules.shifts.models import RegisterShift
 from app.modules.sales.schemas import (
     CheckoutItem,
     CheckoutRequest,
@@ -233,22 +235,38 @@ class CheckoutService:
         # ---------------------------------------------------------------------
         branch_id = payload.branch_id
         if branch_id is None:
-            # Find default/active branch for business
-            branch_stmt = (
-                select(Branch)
-                .where(Branch.business_id == business_id, Branch.is_active.is_(True))
-                .order_by(Branch.created_at.asc())
+            # Check if cashier has an active open shift on a branch
+            shift_stmt = (
+                select(RegisterShift)
+                .where(
+                    RegisterShift.business_id == business_id,
+                    RegisterShift.user_id == cashier_id,
+                    RegisterShift.status == "OPEN",
+                )
+                .order_by(RegisterShift.opened_at.desc())
                 .limit(1)
             )
-            branch_res = await session.execute(branch_stmt)
-            default_branch = branch_res.scalars().first()
-            if not default_branch:
-                raise AppException(
-                    message="No active branch found for checkout",
-                    code="BRANCH_NOT_FOUND",
-                    status_code=404,
+            shift_res = await session.execute(shift_stmt)
+            active_shift = shift_res.scalars().first()
+            if active_shift and active_shift.branch_id:
+                branch_id = active_shift.branch_id
+            else:
+                # Find default/active branch for business
+                branch_stmt = (
+                    select(Branch)
+                    .where(Branch.business_id == business_id, Branch.is_active.is_(True))
+                    .order_by(Branch.created_at.asc())
+                    .limit(1)
                 )
-            branch_id = default_branch.id
+                branch_res = await session.execute(branch_stmt)
+                default_branch = branch_res.scalars().first()
+                if not default_branch:
+                    raise AppException(
+                        message="No active branch found for checkout",
+                        code="BRANCH_NOT_FOUND",
+                        status_code=404,
+                    )
+                branch_id = default_branch.id
 
         # Lock the branch row to serialize receipt number generation for this branch
         branch_lock_stmt = (
@@ -751,6 +769,9 @@ class CheckoutService:
         sale.gift_card_discount = gift_card_discount_total
         sale.store_credit_discount = store_credit_discount_total
 
+        # Persist sale header, items, and tenders before post-checkout operations
+        await self.sales_repo.create(session, sale, sale_items, payment_tenders)
+
         # ---------------------------------------------------------------------
         # 8c. Post-Checkout Loyalty Earning & Tier Progression
         # ---------------------------------------------------------------------
@@ -802,8 +823,6 @@ class CheckoutService:
             if qualifying_tier:
                 customer.membership_tier_id = qualifying_tier.id
 
-        await self.sales_repo.create(session, sale, sale_items, payment_tenders)
-
         if payload.held_cart_id is not None:
             await self.sales_repo.delete_held_cart(session, business_id, payload.held_cart_id)
 
@@ -832,6 +851,71 @@ class CheckoutService:
             after_json={"receipt_no": receipt_no, "grand_total": str(grand_total)},
         )
         session.add(audit_entry)
+
+        # ---------------------------------------------------------------------
+        # 10. Update Financial Accounts for Branch
+        # ---------------------------------------------------------------------
+        net_cash = cash_tendered - change_amount
+        if net_cash > Decimal("0.0000"):
+            drawer_acc_stmt = (
+                select(FinancialAccount)
+                .where(
+                    FinancialAccount.business_id == business_id,
+                    FinancialAccount.branch_id == branch_id,
+                    FinancialAccount.account_type == "CASH_DRAWER",
+                )
+                .with_for_update()
+                .limit(1)
+            )
+            drawer_acc = (await session.execute(drawer_acc_stmt)).scalars().first()
+            if drawer_acc:
+                drawer_acc.current_balance += net_cash
+
+        mobile_tendered = sum(
+            (
+                p.amount
+                for p in payload.payments
+                if p.method.upper() in ("BKASH", "NAGAD", "ROCKET", "UPAY")
+            ),
+            Decimal("0.0000"),
+        )
+        if mobile_tendered > Decimal("0.0000"):
+            mw_acc_stmt = (
+                select(FinancialAccount)
+                .where(
+                    FinancialAccount.business_id == business_id,
+                    FinancialAccount.branch_id == branch_id,
+                    FinancialAccount.account_type == "MOBILE_WALLET",
+                )
+                .with_for_update()
+                .limit(1)
+            )
+            mw_acc = (await session.execute(mw_acc_stmt)).scalars().first()
+            if mw_acc:
+                mw_acc.current_balance += mobile_tendered
+
+        bank_tendered = sum(
+            (
+                p.amount
+                for p in payload.payments
+                if p.method.upper() in ("CARD", "BANK_TRANSFER")
+            ),
+            Decimal("0.0000"),
+        )
+        if bank_tendered > Decimal("0.0000"):
+            bank_acc_stmt = (
+                select(FinancialAccount)
+                .where(
+                    FinancialAccount.business_id == business_id,
+                    FinancialAccount.branch_id == branch_id,
+                    FinancialAccount.account_type == "BANK",
+                )
+                .with_for_update()
+                .limit(1)
+            )
+            bank_acc = (await session.execute(bank_acc_stmt)).scalars().first()
+            if bank_acc:
+                bank_acc.current_balance += bank_tendered
 
         # Commit entire atomic transaction
         await session.commit()

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../branches/presentation/controllers/branches_controller.dart';
+import '../../../shifts/presentation/controllers/shift_controller.dart';
 import '../controllers/cart_controller.dart';
 import '../../domain/models/payment_tender.dart';
 import 'receipt_dialog.dart';
@@ -128,10 +130,17 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       return;
     }
 
+    final activeBranch = ref.read(activeBranchProvider);
+    final currentShift = ref.read(currentShiftProvider).valueOrNull;
+    final effectiveBranchId = activeBranch?.id ?? currentShift?.branchId;
+
     try {
       final sale = await ref
           .read(checkoutControllerProvider.notifier)
-          .processCheckout(payments: tenderInputs);
+          .processCheckout(
+            payments: tenderInputs,
+            branchId: effectiveBranchId,
+          );
 
       if (!mounted) return;
 

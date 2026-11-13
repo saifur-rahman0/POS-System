@@ -210,6 +210,7 @@ class SalesRepository:
         for payment in payments:
             payment.sale_id = sale.id
             session.add(payment)
+        await session.flush()
         return sale
 
     async def create_held_cart(

@@ -461,57 +461,72 @@ class ShiftService:
     ) -> ShiftSummaryTotals:
         """Computes authoritative cash totals, cash-in, cash-out, and expected drawer balance."""
         start_time = _to_naive_utc(shift.opened_at) or datetime.now(UTC).replace(tzinfo=None)
-        end_time = _to_naive_utc(shift.closed_at) or datetime.now(UTC).replace(tzinfo=None)
+        is_open = (shift.status == "OPEN" or shift.closed_at is None)
+        end_time = _to_naive_utc(shift.closed_at) if not is_open else None
 
         # 1. Cash sales tendered during shift
+        cash_sales_filters = [
+            Sale.business_id == shift.business_id,
+            Sale.branch_id == shift.branch_id,
+            Sale.cashier_id == shift.user_id,
+            PaymentTender.received_at >= start_time,
+            PaymentTender.method == "CASH",
+            PaymentTender.status == "CONFIRMED",
+        ]
+        if not is_open and end_time is not None:
+            cash_sales_filters.append(PaymentTender.received_at <= end_time)
+
         cash_sales_stmt = (
             select(func.sum(PaymentTender.amount))
             .join(Sale, Sale.id == PaymentTender.sale_id)
-            .where(
-                Sale.business_id == shift.business_id,
-                Sale.branch_id == shift.branch_id,
-                Sale.cashier_id == shift.user_id,
-                PaymentTender.received_at >= start_time,
-                PaymentTender.received_at <= end_time,
-                PaymentTender.method == "CASH",
-                PaymentTender.status == "CONFIRMED",
-            )
+            .where(*cash_sales_filters)
         )
         cash_sales_res = await session.execute(cash_sales_stmt)
         cash_sales = Decimal(str(cash_sales_res.scalar_one_or_none() or "0.0000"))
 
         # 2. Cash In during shift (excluding initial float which is in opening_cash)
-        cash_in_stmt = select(func.sum(CashTransaction.amount)).where(
+        cash_in_filters = [
             CashTransaction.business_id == shift.business_id,
             CashTransaction.branch_id == shift.branch_id,
             CashTransaction.created_at >= start_time,
-            CashTransaction.created_at <= end_time,
             CashTransaction.direction == "IN",
+            (CashTransaction.reference_id == shift.id) | (CashTransaction.reference_type == "SHIFT_CASH_IN"),
             CashTransaction.reference_type != "FLOAT_IN",
-        )
+        ]
+        if not is_open and end_time is not None:
+            cash_in_filters.append(CashTransaction.created_at <= end_time)
+
+        cash_in_stmt = select(func.sum(CashTransaction.amount)).where(*cash_in_filters)
         cash_in_res = await session.execute(cash_in_stmt)
         cash_in = Decimal(str(cash_in_res.scalar_one_or_none() or "0.0000"))
 
-        # 3. Cash Out during shift (withdrawals, drops, petty expenses, supplier disbursements)
-        cash_out_stmt = select(func.sum(CashTransaction.amount)).where(
+        # 3. Cash Out during shift (withdrawals, drops, petty expenses from register drawer)
+        cash_out_filters = [
             CashTransaction.business_id == shift.business_id,
             CashTransaction.branch_id == shift.branch_id,
             CashTransaction.created_at >= start_time,
-            CashTransaction.created_at <= end_time,
             CashTransaction.direction == "OUT",
-        )
+            (CashTransaction.reference_id == shift.id) | (CashTransaction.reference_type.in_(["SHIFT_CASH_OUT", "DRAWER_DROP"])),
+        ]
+        if not is_open and end_time is not None:
+            cash_out_filters.append(CashTransaction.created_at <= end_time)
+
+        cash_out_stmt = select(func.sum(CashTransaction.amount)).where(*cash_out_filters)
         cash_out_res = await session.execute(cash_out_stmt)
         cash_out = Decimal(str(cash_out_res.scalar_one_or_none() or "0.0000"))
 
         # 4. Customer returns / refund total during shift
-        returns_stmt = select(func.sum(Return.refund_total)).where(
+        returns_filters = [
             Return.business_id == shift.business_id,
             Return.branch_id == shift.branch_id,
             Return.created_by == shift.user_id,
             Return.created_at >= start_time,
-            Return.created_at <= end_time,
             Return.status == "COMPLETED",
-        )
+        ]
+        if not is_open and end_time is not None:
+            returns_filters.append(Return.created_at <= end_time)
+
+        returns_stmt = select(func.sum(Return.refund_total)).where(*returns_filters)
         returns_res = await session.execute(returns_stmt)
         cash_refunds = Decimal(str(returns_res.scalar_one_or_none() or "0.0000"))
 

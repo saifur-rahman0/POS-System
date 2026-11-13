@@ -6,7 +6,6 @@ import 'package:pos_client/core/network/api_client.dart';
 import 'package:pos_client/features/catalog/data/catalog_api_service.dart';
 import 'package:pos_client/features/catalog/domain/models/category.dart';
 import 'package:pos_client/features/catalog/presentation/controllers/catalog_providers.dart';
-import 'package:pos_client/features/checkout/presentation/views/pos_register_screen.dart';
 
 void main() {
   testWidgets('App shell boots and displays title and destinations', (WidgetTester tester) async {

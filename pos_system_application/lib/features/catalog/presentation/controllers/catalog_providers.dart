@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_provider.dart';
+import '../../../branches/presentation/controllers/branches_controller.dart';
 import '../../data/catalog_api_service.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/paginated_products.dart';
@@ -8,6 +9,28 @@ import '../../domain/models/product.dart';
 final catalogApiServiceProvider = Provider<CatalogApiService>((ref) {
   final client = ref.watch(apiClientProvider);
   return CatalogApiService(apiClient: client);
+});
+
+// ---------------- POS Catalog & Search State ----------------
+
+final posCatalogSearchProvider = StateProvider<String>((ref) => '');
+final posSelectedCategoryProvider = StateProvider<String?>((ref) => null);
+
+final posProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
+  final apiService = ref.watch(catalogApiServiceProvider);
+  final search = ref.watch(posCatalogSearchProvider);
+  final categoryId = ref.watch(posSelectedCategoryProvider);
+  // Re-fetch catalog when active store branch changes
+  ref.watch(activeBranchProvider);
+
+  final res = await apiService.getProducts(
+    search: search.isNotEmpty ? search : null,
+    categoryId: categoryId,
+    isActive: true,
+    page: 1,
+    limit: 100,
+  );
+  return res.items;
 });
 
 // ---------------- Categories State ----------------

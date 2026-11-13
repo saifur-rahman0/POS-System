@@ -19,28 +19,7 @@ import 'delivery_charge_dialog.dart';
 import 'held_carts_dialog.dart';
 import 'line_discount_dialog.dart';
 import 'save_quotation_dialog.dart';
-import '../../../branches/presentation/controllers/branches_controller.dart';
 import '../../../inventory/presentation/controllers/inventory_controller.dart';
-
-final posCatalogSearchProvider = StateProvider<String>((ref) => '');
-final posSelectedCategoryProvider = StateProvider<String?>((ref) => null);
-
-final posProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
-  final apiService = ref.watch(catalogApiServiceProvider);
-  final search = ref.watch(posCatalogSearchProvider);
-  final categoryId = ref.watch(posSelectedCategoryProvider);
-  // Re-fetch catalog when active store branch changes
-  ref.watch(activeBranchProvider);
-
-  final res = await apiService.getProducts(
-    search: search.isNotEmpty ? search : null,
-    categoryId: categoryId,
-    isActive: true,
-    page: 1,
-    limit: 100,
-  );
-  return res.items;
-});
 
 class PosRegisterScreen extends ConsumerStatefulWidget {
   const PosRegisterScreen({super.key});
@@ -1579,6 +1558,8 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                   ),
                                   onPressed: () {
                                     PaymentDialog.show(context).then((_) {
+                                      ref.invalidate(stockBalancesProvider);
+                                      ref.invalidate(posProductsProvider);
                                       ref
                                           .read(currentShiftProvider.notifier)
                                           .loadCurrentShift();
@@ -1597,6 +1578,8 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                 ? null
                                 : () {
                                     PaymentDialog.show(context).then((_) {
+                                      ref.invalidate(stockBalancesProvider);
+                                      ref.invalidate(posProductsProvider);
                                       ref
                                           .read(currentShiftProvider.notifier)
                                           .loadCurrentShift();
