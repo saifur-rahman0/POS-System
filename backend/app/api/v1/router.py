@@ -22,11 +22,13 @@ from app.api.v1.shifts import router as shifts_router
 from app.api.v1.suppliers import router as suppliers_router
 from app.api.v1.sync import router as sync_router
 from app.api.v1.transfers import router as transfers_router
+from app.api.v1.users import router as users_router
 
 api_v1_router = APIRouter(prefix="/api/v1")
 
 # Authentication & Registration
 api_v1_router.include_router(auth_router)
+api_v1_router.include_router(users_router)
 
 # System & Health
 api_v1_router.include_router(health_router)

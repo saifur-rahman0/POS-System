@@ -36,9 +36,10 @@ async def _seed_dev_business() -> None:
 
         from app.modules.business.models import Branch
         from app.modules.catalog.models import ProductVariant
-        from app.modules.identity.models import Membership, User
+        from app.modules.identity.models import Membership, MembershipRole, Role, User
         from app.modules.inventory.models import StockBalance
         from app.shared.auth import DEV_USER_ID
+        from app.shared.roles import ROLE_LABELS, ROLE_PERMISSIONS
 
         session_factory = get_session_maker()
         async with session_factory() as session:
@@ -54,31 +55,95 @@ async def _seed_dev_business() -> None:
                 session.add(dev_biz)
                 await session.flush()
 
-            existing_user = await session.get(User, DEV_USER_ID)
-            if not existing_user:
-                dev_user = User(
-                    id=DEV_USER_ID,
-                    username="dev_cashier",
-                    password_hash="dev_dummy_hash_not_for_prod",
-                    display_name="Dev Cashier",
-                    is_active=True,
+            # Ensure roles exist for dev business
+            roles_map: dict[str, Role] = {}
+            for r_name, r_label in ROLE_LABELS.items():
+                r_stmt = select(Role).where(
+                    Role.business_id == DEV_BUSINESS_ID,
+                    Role.name == r_name,
                 )
-                session.add(dev_user)
-                await session.flush()
-
-            m_stmt = select(Membership).where(
-                Membership.business_id == DEV_BUSINESS_ID,
-                Membership.user_id == DEV_USER_ID,
-            )
-            m_res = await session.execute(m_stmt)
-            if not m_res.scalars().first():
-                session.add(
-                    Membership(
+                r_obj = (await session.execute(r_stmt)).scalars().first()
+                if not r_obj:
+                    r_obj = Role(
                         business_id=DEV_BUSINESS_ID,
-                        user_id=DEV_USER_ID,
+                        name=r_name,
+                        description=r_label,
+                    )
+                    session.add(r_obj)
+                    await session.flush()
+                roles_map[r_name] = r_obj
+
+            # Seed standard user profiles: Stall Owner (admin), Manager, Cashier, Stock Keeper
+            seed_users = [
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000003"),
+                    "username": "admin",
+                    "display_name": "Stall Owner (Admin)",
+                    "email": "owner@pos.local",
+                    "role": "ADMIN",
+                },
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000004"),
+                    "username": "manager",
+                    "display_name": "Store Manager",
+                    "email": "manager@pos.local",
+                    "role": "MANAGER",
+                },
+                {
+                    "id": DEV_USER_ID,
+                    "username": "dev_cashier",
+                    "display_name": "Counter Cashier",
+                    "email": "cashier@pos.local",
+                    "role": "CASHIER",
+                },
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000005"),
+                    "username": "stock_keeper",
+                    "display_name": "Warehouse & Stock Keeper",
+                    "email": "stock@pos.local",
+                    "role": "STOCK_KEEPER",
+                },
+            ]
+
+            for u_data in seed_users:
+                u_stmt = select(User).where(User.username == u_data["username"])
+                user_obj = (await session.execute(u_stmt)).scalars().first()
+                if not user_obj:
+                    user_obj = User(
+                        id=u_data["id"],
+                        username=u_data["username"],
+                        password_hash="dev_dummy_hash_not_for_prod",
+                        display_name=u_data["display_name"],
+                        email=u_data["email"],
+                        is_active=True,
+                    )
+                    session.add(user_obj)
+                    await session.flush()
+
+                # Membership
+                m_stmt = select(Membership).where(
+                    Membership.business_id == DEV_BUSINESS_ID,
+                    Membership.user_id == user_obj.id,
+                )
+                m_obj = (await session.execute(m_stmt)).scalars().first()
+                if not m_obj:
+                    m_obj = Membership(
+                        business_id=DEV_BUSINESS_ID,
+                        user_id=user_obj.id,
                         status="ACTIVE",
                     )
-                )
+                    session.add(m_obj)
+                    await session.flush()
+
+                # MembershipRole
+                r_obj = roles_map.get(u_data["role"])
+                if r_obj:
+                    mr_stmt = select(MembershipRole).where(
+                        MembershipRole.membership_id == m_obj.id,
+                        MembershipRole.role_id == r_obj.id,
+                    )
+                    if not (await session.execute(mr_stmt)).scalars().first():
+                        session.add(MembershipRole(membership_id=m_obj.id, role_id=r_obj.id))
 
             existing_branch = await session.get(Branch, DEV_BRANCH_ID)
             if not existing_branch:

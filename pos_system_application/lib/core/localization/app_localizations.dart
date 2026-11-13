@@ -103,6 +103,17 @@ class AppLocalizations {
       'offline_licensing': 'Offline Licensing',
       'database_backups': 'Database Backups',
       'system_preferences': 'System Preferences',
+      'staff_permissions': 'Users & Permissions',
+
+      // Roles & Permissions
+      'role_admin': 'Stall Owner (Admin)',
+      'role_manager': 'Store Manager',
+      'role_cashier': 'Cashier',
+      'role_stock_keeper': 'Stock Keeper',
+      'access_restricted': 'Access Restricted',
+      'access_restricted_desc': 'Your role does not have permission to access this module.',
+      'switch_role': 'Switch Role (Demo)',
+      'demo_accounts': 'Or Quick Sign-in as Demo Role:',
 
       // Auth
       'login_title': 'Retail POS Terminal',
@@ -229,6 +240,17 @@ class AppLocalizations {
       'offline_licensing': 'অফলাইন লাইসেন্স',
       'database_backups': 'ডাটাবেজ ব্যাকআপ',
       'system_preferences': 'সিস্টেম পছন্দসমূহ',
+      'staff_permissions': 'কর্মী ও পারমিশন',
+
+      // Roles & Permissions
+      'role_admin': 'স্টল মালিক (অ্যাডমিন)',
+      'role_manager': 'স্টোর ম্যানেজার',
+      'role_cashier': 'ক্যাশিয়ার',
+      'role_stock_keeper': 'স্টক কিপার',
+      'access_restricted': 'প্রবেশাধিকার সীমাবদ্ধ',
+      'access_restricted_desc': 'এই মডিউলে প্রবেশ করার জন্য আপনার অ্যাকাউন্টের অনুমতি নেই।',
+      'switch_role': 'ভূমিকা পরিবর্তন (ডেমো)',
+      'demo_accounts': 'অথবা ডেমো একাউন্ট দিয়ে লগইন করুন:',
 
       // Auth
       'login_title': 'রিটেল পিওএস টার্মিনাল',

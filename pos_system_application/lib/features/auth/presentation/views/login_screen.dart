@@ -301,6 +301,74 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
+                      const SizedBox(height: 18),
+
+                      // Demo Roles Quick Selector (Admin, Manager, Cashier, Stock)
+                      Row(
+                        children: [
+                          const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              loc.tr('demo_accounts', 'Or Quick Sign-in as Demo Role:'),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _buildRoleChip(
+                            key: const Key('login_chip_owner'),
+                            label: '👑 Stall Owner',
+                            color: const Color(0xFF7C3AED),
+                            onTap: () {
+                              _usernameController.text = 'admin';
+                              _passwordController.text = 'password';
+                              ref.read(authControllerProvider.notifier).switchDemoRole('ADMIN');
+                            },
+                          ),
+                          _buildRoleChip(
+                            key: const Key('login_chip_manager'),
+                            label: '👔 Manager',
+                            color: const Color(0xFF2563EB),
+                            onTap: () {
+                              _usernameController.text = 'manager';
+                              _passwordController.text = 'password';
+                              ref.read(authControllerProvider.notifier).switchDemoRole('MANAGER');
+                            },
+                          ),
+                          _buildRoleChip(
+                            key: const Key('login_chip_cashier'),
+                            label: '💳 Cashier',
+                            color: const Color(0xFF0F766E),
+                            onTap: () {
+                              _usernameController.text = 'dev_cashier';
+                              _passwordController.text = 'password';
+                              ref.read(authControllerProvider.notifier).switchDemoRole('CASHIER');
+                            },
+                          ),
+                          _buildRoleChip(
+                            key: const Key('login_chip_stock'),
+                            label: '📦 Stock Keeper',
+                            color: const Color(0xFFD97706),
+                            onTap: () {
+                              _usernameController.text = 'stock_keeper';
+                              _passwordController.text = 'password';
+                              ref.read(authControllerProvider.notifier).switchDemoRole('STOCK_KEEPER');
+                            },
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 24),
 
                       // Register link footer
@@ -336,6 +404,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleChip({
+    required Key key,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      key: key,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
     );

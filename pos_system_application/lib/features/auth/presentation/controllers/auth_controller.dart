@@ -55,11 +55,13 @@ class AuthController extends StateNotifier<AuthState> {
   final Ref _ref;
 
   static const _defaultDevUser = AuthUserModel(
-    id: '00000000-0000-0000-0000-000000000001',
-    username: 'dev_cashier',
-    displayName: 'Dev Cashier',
-    email: 'cashier@pos.local',
+    id: '00000000-0000-0000-0000-000000000003',
+    username: 'admin',
+    displayName: 'Stall Owner (Admin)',
+    email: 'owner@pos.local',
     isActive: true,
+    role: 'ADMIN',
+    permissions: ['*'],
   );
 
   static const _defaultDevBusiness = BusinessInfoModel(
@@ -141,10 +143,77 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   void quickDevLogin() {
+    switchDemoRole('CASHIER');
+  }
+
+  void switchDemoRole(String role) {
+    AuthUserModel user;
+    switch (role.toUpperCase()) {
+      case 'ADMIN':
+      case 'OWNER':
+        user = const AuthUserModel(
+          id: '00000000-0000-0000-0000-000000000003',
+          username: 'admin',
+          displayName: 'Stall Owner (Admin)',
+          email: 'owner@pos.local',
+          isActive: true,
+          role: 'ADMIN',
+          permissions: ['*'],
+        );
+        break;
+      case 'MANAGER':
+        user = const AuthUserModel(
+          id: '00000000-0000-0000-0000-000000000004',
+          username: 'manager',
+          displayName: 'Store Manager',
+          email: 'manager@pos.local',
+          isActive: true,
+          role: 'MANAGER',
+          permissions: [
+            'pos:access', 'pos:discount:custom', 'pos:price_override', 'pos:void_sale',
+            'catalog:read', 'catalog:write', 'inventory:read', 'inventory:write', 'inventory:adjust',
+            'purchasing:read', 'purchasing:write', 'sales:read', 'sales:refund',
+            'shifts:manage', 'expenses:read', 'expenses:write', 'accounting:read',
+            'customers:read', 'customers:write', 'transfers:read', 'transfers:write',
+            'reports:read', 'settings:read',
+          ],
+        );
+        break;
+      case 'STOCK_KEEPER':
+      case 'STOCK':
+        user = const AuthUserModel(
+          id: '00000000-0000-0000-0000-000000000005',
+          username: 'stock_keeper',
+          displayName: 'Warehouse & Stock Keeper',
+          email: 'stock@pos.local',
+          isActive: true,
+          role: 'STOCK_KEEPER',
+          permissions: [
+            'catalog:read', 'catalog:write', 'inventory:read', 'inventory:write', 'inventory:adjust',
+            'purchasing:read', 'purchasing:write', 'transfers:read', 'transfers:write',
+          ],
+        );
+        break;
+      case 'CASHIER':
+      default:
+        user = const AuthUserModel(
+          id: '00000000-0000-0000-0000-000000000001',
+          username: 'dev_cashier',
+          displayName: 'Counter Cashier',
+          email: 'cashier@pos.local',
+          isActive: true,
+          role: 'CASHIER',
+          permissions: [
+            'pos:access', 'pos:discount:custom', 'sales:read', 'shifts:manage',
+            'customers:read', 'customers:write',
+          ],
+        );
+        break;
+    }
     _ref.read(apiClientProvider).setAuthToken('dev-token');
-    state = const AuthState(
+    state = AuthState(
       status: AuthStatus.authenticated,
-      user: _defaultDevUser,
+      user: user,
       business: _defaultDevBusiness,
       token: 'dev-token',
     );
@@ -166,4 +235,3 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   final apiService = ref.watch(authApiServiceProvider);
   return AuthController(apiService, ref);
 });
-

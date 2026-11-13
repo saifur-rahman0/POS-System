@@ -59,6 +59,18 @@ import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/widgets/keyboard_shortcuts_dialog.dart';
 
+class _ShellNavTarget {
+  final int screenIndex;
+  final String sectionKey;
+  final NavigationDestination destination;
+
+  const _ShellNavTarget({
+    required this.screenIndex,
+    required this.sectionKey,
+    required this.destination,
+  });
+}
+
 class ShellScreen extends ConsumerStatefulWidget {
   const ShellScreen({super.key});
 
@@ -238,58 +250,133 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     }
   }
 
-  List<NavigationDestination> _getDestinations(AppLocalizations loc) => [
-        NavigationDestination(
-          icon: const Icon(Icons.point_of_sale_outlined),
-          selectedIcon: const Icon(Icons.point_of_sale),
-          label: loc.tr('pos_register', 'POS Register'),
+  List<_ShellNavTarget> _getAllNavTargets(AppLocalizations loc) => [
+        _ShellNavTarget(
+          screenIndex: 0,
+          sectionKey: 'pos',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.point_of_sale_outlined),
+            selectedIcon: const Icon(Icons.point_of_sale),
+            label: loc.tr('pos_register', 'POS Register'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.inventory_2_outlined),
-          selectedIcon: const Icon(Icons.inventory_2),
-          label: loc.tr('catalog_stock', 'Catalog & Stock'),
+        _ShellNavTarget(
+          screenIndex: 1,
+          sectionKey: 'catalog',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.inventory_2_outlined),
+            selectedIcon: const Icon(Icons.inventory_2),
+            label: loc.tr('catalog_stock', 'Catalog & Stock'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.local_shipping_outlined),
-          selectedIcon: const Icon(Icons.local_shipping),
-          label: loc.tr('purchasing', 'Purchasing'),
+        _ShellNavTarget(
+          screenIndex: 2,
+          sectionKey: 'purchasing',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.local_shipping_outlined),
+            selectedIcon: const Icon(Icons.local_shipping),
+            label: loc.tr('purchasing', 'Purchasing'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.receipt_long_outlined),
-          selectedIcon: const Icon(Icons.receipt_long),
-          label: loc.tr('sales_history', 'Sales History'),
+        _ShellNavTarget(
+          screenIndex: 3,
+          sectionKey: 'sales',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
+            label: loc.tr('sales_history', 'Sales History'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.request_quote_outlined),
-          selectedIcon: const Icon(Icons.request_quote),
-          label: loc.tr('expenses', 'Expenses'),
+        _ShellNavTarget(
+          screenIndex: 4,
+          sectionKey: 'expenses',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.request_quote_outlined),
+            selectedIcon: const Icon(Icons.request_quote),
+            label: loc.tr('expenses', 'Expenses'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.account_balance_outlined),
-          selectedIcon: const Icon(Icons.account_balance),
-          label: loc.tr('accounts', 'Accounts'),
+        _ShellNavTarget(
+          screenIndex: 5,
+          sectionKey: 'accounts',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.account_balance_outlined),
+            selectedIcon: const Icon(Icons.account_balance),
+            label: loc.tr('accounts', 'Accounts'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.people_outline),
-          selectedIcon: const Icon(Icons.people),
-          label: loc.tr('customers', 'Customers'),
+        _ShellNavTarget(
+          screenIndex: 6,
+          sectionKey: 'customers',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.people_outline),
+            selectedIcon: const Icon(Icons.people),
+            label: loc.tr('customers', 'Customers'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.store_outlined),
-          selectedIcon: const Icon(Icons.store),
-          label: loc.tr('stores_transfers', 'Stores & Transfers'),
+        _ShellNavTarget(
+          screenIndex: 7,
+          sectionKey: 'transfers',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.store_outlined),
+            selectedIcon: const Icon(Icons.store),
+            label: loc.tr('stores_transfers', 'Stores & Transfers'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.analytics_outlined),
-          selectedIcon: const Icon(Icons.analytics),
-          label: loc.tr('reports', 'Reports'),
+        _ShellNavTarget(
+          screenIndex: 8,
+          sectionKey: 'reports',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.analytics_outlined),
+            selectedIcon: const Icon(Icons.analytics),
+            label: loc.tr('reports', 'Reports'),
+          ),
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.settings_outlined),
-          selectedIcon: const Icon(Icons.settings),
-          label: loc.tr('settings', 'Settings'),
+        _ShellNavTarget(
+          screenIndex: 9,
+          sectionKey: 'settings',
+          destination: NavigationDestination(
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: loc.tr('settings', 'Settings'),
+          ),
         ),
       ];
+
+  List<NavigationDestination> _getDestinations(AppLocalizations loc) =>
+      _getAllNavTargets(loc).map((t) => t.destination).toList();
+
+  Color _getRoleColor(String? role) {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN':
+      case 'OWNER':
+        return const Color(0xFF7C3AED); // Purple
+      case 'MANAGER':
+        return const Color(0xFF2563EB); // Blue
+      case 'STOCK_KEEPER':
+      case 'STOCK':
+        return const Color(0xFFD97706); // Amber
+      case 'CASHIER':
+      default:
+        return const Color(0xFF0F766E); // Teal
+    }
+  }
+
+  String _getRoleLabel(String? role, AppLocalizations loc) {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN':
+      case 'OWNER':
+        return loc.tr('role_admin', 'Stall Owner');
+      case 'MANAGER':
+        return loc.tr('role_manager', 'Store Manager');
+      case 'STOCK_KEEPER':
+      case 'STOCK':
+        return loc.tr('role_stock_keeper', 'Stock Keeper');
+      case 'CASHIER':
+      default:
+        return loc.tr('role_cashier', 'Cashier');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -309,9 +396,24 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     final shiftState = ref.watch(currentShiftProvider).valueOrNull;
 
     final loc = ref.watch(appLocalizationsProvider);
-
-    final destinations = _getDestinations(loc);
     final authUser = ref.watch(authControllerProvider).user;
+    final allTargets = _getAllNavTargets(loc);
+    final allowedTargets = allTargets.where((t) {
+      if (authUser == null) return true;
+      return authUser.canAccessSection(t.sectionKey);
+    }).toList();
+
+    // Ensure _selectedIndex is valid among allowed targets
+    final allowedIndices = allowedTargets.map((t) => t.screenIndex).toList();
+    if (!allowedIndices.contains(_selectedIndex) && allowedIndices.isNotEmpty) {
+      _selectedIndex = allowedIndices.first;
+    }
+
+    int railSelectedIndex =
+        allowedTargets.indexWhere((t) => t.screenIndex == _selectedIndex);
+    if (railSelectedIndex < 0) railSelectedIndex = 0;
+    final destinations = _getDestinations(loc);
+    final roleColor = _getRoleColor(authUser?.role);
 
     return Scaffold(
       appBar: AppBar(
@@ -565,7 +667,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
 
-                  // Cashier Profile & Logout Action
+                  // User Profile & Role Switcher Popup Menu
                   PopupMenuButton<String>(
                     key: const Key('user_menu_button'),
                     tooltip: loc.tr('switch_user', 'User Account / Logout'),
@@ -573,7 +675,19 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     onSelected: (val) {
-                      if (val == 'logout') {
+                      if (val.startsWith('role_')) {
+                        final roleName = val.replaceFirst('role_', '');
+                        ref.read(authControllerProvider.notifier).switchDemoRole(roleName);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Switched to ${_getRoleLabel(roleName, loc)}'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      } else if (val == 'manage_users') {
+                        setState(() => _selectedIndex = 9);
+                      } else if (val == 'logout') {
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
@@ -618,12 +732,33 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              authUser?.displayName ?? 'Dev Cashier',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: Color(0xFF0F172A)),
+                            Row(
+                              children: [
+                                Text(
+                                  authUser?.displayName ?? 'Dev Cashier',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Color(0xFF0F172A)),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: roleColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: roleColor.withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    _getRoleLabel(authUser?.role, loc),
+                                    style: TextStyle(
+                                      color: roleColor,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             Text(
                               '@${authUser?.username ?? "dev_cashier"}',
@@ -633,6 +768,71 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                           ],
                         ),
                       ),
+                      const PopupMenuDivider(),
+                      PopupMenuItem(
+                        enabled: false,
+                        height: 24,
+                        child: Text(
+                          loc.tr('switch_role', 'Switch Role (Demo):'),
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'role_ADMIN',
+                        child: Row(
+                          children: [
+                            Text('👑', style: TextStyle(fontSize: 14)),
+                            SizedBox(width: 8),
+                            Text('Stall Owner (Admin)', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'role_MANAGER',
+                        child: Row(
+                          children: [
+                            Text('👔', style: TextStyle(fontSize: 14)),
+                            SizedBox(width: 8),
+                            Text('Store Manager', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'role_CASHIER',
+                        child: Row(
+                          children: [
+                            Text('💳', style: TextStyle(fontSize: 14)),
+                            SizedBox(width: 8),
+                            Text('Cashier', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'role_STOCK_KEEPER',
+                        child: Row(
+                          children: [
+                            Text('📦', style: TextStyle(fontSize: 14)),
+                            SizedBox(width: 8),
+                            Text('Stock Keeper', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      if (authUser?.isAdmin == true) ...[
+                        const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: 'manage_users',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.manage_accounts, size: 16, color: Color(0xFF0F766E)),
+                              const SizedBox(width: 8),
+                              Text(
+                                loc.tr('staff_permissions', 'Users & Permissions'),
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const PopupMenuDivider(),
                       PopupMenuItem(
                         value: 'logout',
@@ -664,15 +864,45 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.account_circle,
-                              size: 16, color: Colors.white),
-                          const SizedBox(width: 5),
+                          CircleAvatar(
+                            radius: 10,
+                            backgroundColor: roleColor,
+                            child: Text(
+                              (authUser != null && authUser.displayName.isNotEmpty
+                                      ? authUser.displayName[0]
+                                      : 'U')
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
                           Text(
                             authUser?.displayName ?? 'Cashier',
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: roleColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              _getRoleLabel(authUser?.role, loc),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 2),
                           const Icon(Icons.arrow_drop_down,
@@ -696,13 +926,14 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       MediaQuery.of(context).size.height - kToolbarHeight),
               child: IntrinsicHeight(
                 child: NavigationRail(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: (int index) {
+                  selectedIndex: railSelectedIndex,
+                  onDestinationSelected: (int railIdx) {
+                    final targetScreenIndex = allowedTargets[railIdx].screenIndex;
                     setState(() {
-                      _selectedIndex = index;
+                      _selectedIndex = targetScreenIndex;
                     });
 
-                    _refreshScreen(index);
+                    _refreshScreen(targetScreenIndex);
                   },
                   labelType: NavigationRailLabelType.all,
                   leading: const Padding(
@@ -710,11 +941,11 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     child: Icon(Icons.storefront,
                         size: 32, color: Color(0xFF0F766E)),
                   ),
-                  destinations: destinations.map((d) {
+                  destinations: allowedTargets.map((t) {
                     return NavigationRailDestination(
-                      icon: d.icon,
-                      selectedIcon: d.selectedIcon,
-                      label: Text(d.label),
+                      icon: t.destination.icon,
+                      selectedIcon: t.destination.selectedIcon,
+                      label: Text(t.destination.label),
                     );
                   }).toList(),
                 ),
@@ -755,6 +986,17 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     AppLocalizations loc,
     List<NavigationDestination> destinations,
   ) {
+    final authUser = ref.watch(authControllerProvider).user;
+    final allTargets = _getAllNavTargets(loc);
+    final target = allTargets.firstWhere(
+      (t) => t.screenIndex == index,
+      orElse: () => allTargets.first,
+    );
+
+    if (authUser != null && !authUser.canAccessSection(target.sectionKey)) {
+      return _buildUnauthorizedScreen(loc, target.destination.label);
+    }
+
     switch (index) {
       case 0:
         return const PosRegisterScreen();
@@ -805,5 +1047,67 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           ),
         );
     }
+  }
+
+  Widget _buildUnauthorizedScreen(AppLocalizations loc, String sectionTitle) {
+    final user = ref.watch(authControllerProvider).user;
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 480),
+        padding: const EdgeInsets.all(32),
+        margin: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.lock_person_rounded, size: 48, color: Colors.red.shade600),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              loc.tr('access_restricted', 'Access Restricted'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              loc.tr(
+                'access_restricted_desc',
+                'Your account role (${user?.roleDisplayName ?? "Staff"}) does not have permission to access $sectionTitle.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0F766E),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: const Text('Back to Cash Register'),
+              onPressed: () {
+                setState(() => _selectedIndex = 0);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

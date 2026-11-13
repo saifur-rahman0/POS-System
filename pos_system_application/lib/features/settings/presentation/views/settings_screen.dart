@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_client/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:pos_client/features/settings/presentation/controllers/settings_controller.dart';
 import 'package:pos_client/features/settings/presentation/views/tabs/store_profile_tab.dart';
 import 'package:pos_client/features/settings/presentation/views/tabs/hardware_tab.dart';
 import 'package:pos_client/features/settings/presentation/views/tabs/licensing_tab.dart';
 import 'package:pos_client/features/settings/presentation/views/tabs/backups_tab.dart';
 import 'package:pos_client/features/settings/presentation/views/tabs/system_preferences_tab.dart';
+import 'package:pos_client/features/settings/presentation/views/tabs/users_tab.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -21,7 +23,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -50,6 +52,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currentUser = ref.watch(authControllerProvider).user;
+    final canManageUsers = currentUser?.isAdmin == true || currentUser?.hasPermission('users:manage') == true;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -98,7 +102,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Configure store branding, thermal printers, offline licensing, and automated backups',
+                              'Configure store branding, staff permissions, thermal printers, and automated backups',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF64748B),
@@ -136,26 +140,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   indicatorColor: theme.primaryColor,
                   indicatorWeight: 3,
-                  tabs: const [
-                    Tab(
+                  tabs: [
+                    const Tab(
                       icon: Icon(Icons.storefront_outlined),
                       text: 'Store Profile',
                     ),
-                    Tab(
+                    const Tab(
                       icon: Icon(Icons.print_outlined),
                       text: 'Hardware & Printers',
                     ),
-                    Tab(
+                    const Tab(
                       icon: Icon(Icons.vpn_key_outlined),
                       text: 'Offline Licensing',
                     ),
-                    Tab(
+                    const Tab(
                       icon: Icon(Icons.backup_outlined),
                       text: 'Database Backups',
                     ),
-                    Tab(
+                    const Tab(
                       icon: Icon(Icons.tune_outlined),
                       text: 'System Preferences',
+                    ),
+                    Tab(
+                      icon: const Icon(Icons.badge_outlined),
+                      text: canManageUsers ? 'Users & Permissions' : 'My Permissions',
                     ),
                   ],
                 ),
@@ -172,6 +180,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 LicensingTab(),
                 BackupsTab(),
                 SystemPreferencesTab(),
+                UsersTab(),
               ],
             ),
           ),

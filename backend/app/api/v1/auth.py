@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.modules.business.models import Branch, Business
-from app.modules.identity.models import Membership, User
+from app.modules.identity.models import Membership, MembershipRole, Role, User
 from app.shared.auth import (
     DEV_BUSINESS_ID,
     DEV_USER_ID,
@@ -20,6 +20,7 @@ from app.shared.auth import (
     create_access_token,
     get_current_user,
 )
+from app.shared.roles import ROLE_PERMISSIONS
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,8 @@ class UserOut(BaseModel):
     email: str | None = None
     phone: str | None = None
     is_active: bool = True
+    role: str = "CASHIER"
+    permissions: list[str] = Field(default_factory=list)
 
 
 class BusinessOut(BaseModel):
@@ -86,9 +89,23 @@ class MessageResponse(BaseModel):
 
 def verify_password(stored_hash: str, candidate_password: str, username: str) -> bool:
     """Verifies candidate password against argon2 hash, with fallback for dev accounts."""
-    # Dev account convenience fallback
-    if username in ("dev_cashier", "dev_admin"):
-        if candidate_password in ("dev_cashier", "dev_admin", "password", "123456", "dev_dummy_hash_not_for_prod"):
+    # Dev / demo account convenience fallback
+    uname = username.lower()
+    if uname in ("dev_cashier", "cashier", "admin", "dev_admin", "owner", "stall_owner", "manager", "dev_manager", "stock_keeper", "stock"):
+        common_passwords = (
+            uname,
+            "password",
+            "123456",
+            "admin",
+            "admin123",
+            "manager",
+            "manager123",
+            "stock",
+            "stock123",
+            "cashier",
+            "dev_dummy_hash_not_for_prod",
+        )
+        if candidate_password in common_passwords:
             return True
         if stored_hash == candidate_password:
             return True
@@ -181,6 +198,19 @@ async def register(
         status="ACTIVE",
     )
     session.add(membership)
+    await session.flush()
+
+    # 5b. Create ADMIN role and attach to owner membership
+    admin_role = Role(
+        business_id=new_biz.id,
+        name="ADMIN",
+        description="Stall Owner (Admin)",
+    )
+    session.add(admin_role)
+    await session.flush()
+
+    session.add(MembershipRole(membership_id=membership.id, role_id=admin_role.id))
+
     await session.commit()
     await session.refresh(new_user)
     await session.refresh(new_biz)
@@ -205,6 +235,8 @@ async def register(
             email=new_user.email,
             phone=new_user.phone,
             is_active=new_user.is_active,
+            role="ADMIN",
+            permissions=["*"],
         ),
         business=BusinessOut(
             id=new_biz.id,
@@ -286,15 +318,19 @@ async def login(
         await session.commit()
         await session.refresh(business)
 
+    from app.api.v1.users import _resolve_user_role_and_permissions
+
+    role_key, perms = await _resolve_user_role_and_permissions(session, business.id, user)
+
     # Generate JWT
     token = create_access_token(
         user_id=user.id,
         business_id=business.id,
         username=user.username,
-        permissions=["*"],
+        permissions=perms,
     )
 
-    logger.info("User %s successfully logged in to business %s", user.username, business.name)
+    logger.info("User %s (%s) successfully logged in to business %s", user.username, role_key, business.name)
 
     return AuthResponse(
         access_token=token,
@@ -306,6 +342,8 @@ async def login(
             email=user.email,
             phone=user.phone,
             is_active=user.is_active,
+            role=role_key,
+            permissions=perms,
         ),
         business=BusinessOut(
             id=business.id,
@@ -326,6 +364,8 @@ async def get_me(
     session: AsyncSession = Depends(get_db),
 ) -> Any:
     """Returns the authenticated principal's profile and active business context."""
+    from app.api.v1.users import _resolve_user_role_and_permissions
+
     user = await session.get(User, current_user.user_id)
     business = await session.get(Business, current_user.business_id)
 
@@ -339,12 +379,16 @@ async def get_me(
     biz_currency = business.currency if business else "BDT"
     biz_timezone = business.timezone if business else "Asia/Dhaka"
 
+    role_key, perms = ("ADMIN", ["*"]) if not user else await _resolve_user_role_and_permissions(
+        session, current_user.business_id, user
+    )
+
     # Re-issue valid current token
     token = create_access_token(
         user_id=current_user.user_id,
         business_id=current_user.business_id,
         username=current_user.username,
-        permissions=list(current_user.permissions),
+        permissions=perms,
     )
 
     return AuthResponse(
@@ -357,6 +401,8 @@ async def get_me(
             email=email,
             phone=phone,
             is_active=is_active,
+            role=role_key,
+            permissions=perms,
         ),
         business=BusinessOut(
             id=current_user.business_id,
