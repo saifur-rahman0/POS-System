@@ -92,8 +92,15 @@ async def _seed_dev_business() -> None:
                 {
                     "id": DEV_USER_ID,
                     "username": "dev_cashier",
-                    "display_name": "Counter Cashier",
+                    "display_name": "Counter Cashier (Senior)",
                     "email": "cashier@pos.local",
+                    "role": "CASHIER",
+                },
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000010"),
+                    "username": "cashier_sumon",
+                    "display_name": "Sumon Mahmud (Cashier)",
+                    "email": "sumon@pos.local",
                     "role": "CASHIER",
                 },
                 {

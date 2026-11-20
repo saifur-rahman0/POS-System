@@ -14,7 +14,7 @@ async def test_get_roles_and_permissions_meta(client: AsyncClient):
     assert "CASHIER" in data["roles"]
     assert "STOCK_KEEPER" in data["roles"]
     assert "*" in data["roles"]["ADMIN"]
-    assert "pos:access" in data["roles"]["CASHIER"]
+    assert "pos" in data["roles"]["CASHIER"]
     assert "labels" in data
     assert data["labels"]["ADMIN"] == "Stall Owner (Admin)"
 
@@ -49,7 +49,7 @@ async def test_role_based_logins(client: AsyncClient):
     assert cashier_res.status_code == 200
     cashier_data = cashier_res.json()
     assert cashier_data["user"]["role"] == "CASHIER"
-    assert "pos:access" in cashier_data["user"]["permissions"]
+    assert "pos" in cashier_data["user"]["permissions"]
     assert "users:manage" not in cashier_data["user"]["permissions"]
 
     # 4. Stock keeper login
@@ -61,7 +61,7 @@ async def test_role_based_logins(client: AsyncClient):
     stock_data = stock_res.json()
     assert stock_data["user"]["role"] == "STOCK_KEEPER"
     assert "inventory:read" in stock_data["user"]["permissions"]
-    assert "pos:access" not in stock_data["user"]["permissions"]
+    assert "pos" not in stock_data["user"]["permissions"]
 
 
 @pytest.mark.asyncio

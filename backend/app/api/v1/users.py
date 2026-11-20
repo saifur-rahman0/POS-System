@@ -397,7 +397,7 @@ async def reset_user_password(
 
 @router.delete(
     "/{user_id}",
-    response_model=dict[str, str],
+    response_model=dict[str, Any],
     summary="Deactivate staff user account",
 )
 async def deactivate_user(
@@ -418,4 +418,8 @@ async def deactivate_user(
 
     target_user.is_active = False
     await session.commit()
-    return {"message": f"Staff user {target_user.username} has been deactivated."}
+    return {
+        "id": str(target_user.id),
+        "is_active": False,
+        "message": f"Staff user {target_user.username} has been deactivated.",
+    }
