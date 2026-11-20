@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 
 import '../../../../core/hardware/scanner/barcode_scanner_listener.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -31,7 +33,6 @@ class PosRegisterScreen extends ConsumerStatefulWidget {
 class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
   final TextEditingController _barcodeSearchController =
       TextEditingController();
-  bool _isTableView = false;
 
   @override
   void initState() {
@@ -134,6 +135,36 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
 
     final list = set.toList()..sort();
     return list.take(5).toList();
+  }
+
+  Widget _buildCategoryChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: FilterChip(
+        selected: isSelected,
+        showCheckmark: isSelected,
+        checkmarkColor: Colors.white,
+        label: Text(label),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          color: isSelected ? Colors.white : const Color(0xFF1E293B),
+        ),
+        backgroundColor: Colors.white,
+        selectedColor: const Color(0xFF0F766E),
+        side: BorderSide(
+          color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFCBD5E1),
+          width: isSelected ? 1.5 : 1,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        onSelected: (_) => onTap(),
+      ),
+    );
   }
 
   Widget _buildShortcutChip(String key, String label) {
@@ -293,6 +324,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
     final heldCarts = ref.watch(heldCartsProvider).heldCarts;
     final stockBalancesAsync = ref.watch(stockBalancesProvider);
     final loc = ref.watch(appLocalizationsProvider);
+    final isTableView = ref.watch(terminalPreferencesProvider).isPosTableView;
 
     return BarcodeScannerWrapper(
       onBarcodeScanned: (scanned) {
@@ -395,38 +427,22 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                 return ListView(
                                   scrollDirection: Axis.horizontal,
                                   children: [
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(right: 8.0),
-                                      child: FilterChip(
-                                        label: Text(loc.tr(
-                                            'all_products', 'All Products')),
-                                        selected: selectedCategory == null,
-                                        onSelected: (_) {
-                                          ref
-                                              .read(posSelectedCategoryProvider
-                                                  .notifier)
-                                              .state = null;
-                                        },
-                                      ),
+                                    _buildCategoryChip(
+                                      label: loc.tr('all_products', 'All Products'),
+                                      isSelected: selectedCategory == null,
+                                      onTap: () {
+                                        ref.read(posSelectedCategoryProvider.notifier).state = null;
+                                      },
                                     ),
                                     ...cats.map((c) {
-                                      final isSelected =
-                                          selectedCategory == c.id;
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 8.0),
-                                        child: FilterChip(
-                                          label: Text(c.name),
-                                          selected: isSelected,
-                                          onSelected: (_) {
-                                            ref
-                                                .read(
-                                                    posSelectedCategoryProvider
-                                                        .notifier)
-                                                .state = isSelected ? null : c.id;
-                                          },
-                                        ),
+                                      final isSelected = selectedCategory == c.id;
+                                      return _buildCategoryChip(
+                                        label: c.name,
+                                        isSelected: isSelected,
+                                        onTap: () {
+                                          ref.read(posSelectedCategoryProvider.notifier).state =
+                                              isSelected ? null : c.id;
+                                        },
                                       );
                                     }),
                                   ],
@@ -453,14 +469,15 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                 message: loc.tr('view_grid', 'Grid View'),
                                 child: InkWell(
                                   key: const Key('view_grid_button'),
-                                  onTap: () =>
-                                      setState(() => _isTableView = false),
+                                  onTap: () => ref
+                                      .read(terminalPreferencesProvider.notifier)
+                                      .setPosTableView(false),
                                   borderRadius: BorderRadius.circular(6),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 5),
                                     decoration: BoxDecoration(
-                                      color: !_isTableView
+                                      color: !isTableView
                                           ? const Color(0xFF0F766E)
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(6),
@@ -471,7 +488,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                         Icon(
                                           Icons.grid_view_rounded,
                                           size: 15,
-                                          color: !_isTableView
+                                          color: !isTableView
                                               ? Colors.white
                                               : Colors.grey.shade700,
                                         ),
@@ -481,7 +498,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: !_isTableView
+                                            color: !isTableView
                                                 ? Colors.white
                                                 : Colors.grey.shade700,
                                           ),
@@ -495,14 +512,15 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                 message: loc.tr('view_table', 'Table View'),
                                 child: InkWell(
                                   key: const Key('view_table_button'),
-                                  onTap: () =>
-                                      setState(() => _isTableView = true),
+                                  onTap: () => ref
+                                      .read(terminalPreferencesProvider.notifier)
+                                      .setPosTableView(true),
                                   borderRadius: BorderRadius.circular(6),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 5),
                                     decoration: BoxDecoration(
-                                      color: _isTableView
+                                      color: isTableView
                                           ? const Color(0xFF0F766E)
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(6),
@@ -513,7 +531,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                         Icon(
                                           Icons.table_rows_rounded,
                                           size: 15,
-                                          color: _isTableView
+                                          color: isTableView
                                               ? Colors.white
                                               : Colors.grey.shade700,
                                         ),
@@ -523,7 +541,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: _isTableView
+                                            color: isTableView
                                                 ? Colors.white
                                                 : Colors.grey.shade700,
                                           ),
@@ -571,7 +589,7 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                             duration: const Duration(milliseconds: 200),
                             switchInCurve: Curves.easeOutCubic,
                             switchOutCurve: Curves.easeInCubic,
-                            child: _isTableView
+                            child: isTableView
                                 ? KeyedSubtree(
                                     key: const ValueKey('pos_table_view'),
                                     child: _buildProductTableView(
@@ -612,24 +630,19 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                                                         .spaceBetween,
                                                 children: [
                                                   Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 2),
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 7, vertical: 2.5),
                                                     decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade100,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
+                                                      color: const Color(0xFFF1F5F9),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                      border: Border.all(color: const Color(0xFFE2E8F0)),
                                                     ),
                                                     child: Text(
-                                                      prod.categoryName ??
-                                                          'General',
-                                                      style: TextStyle(
+                                                      prod.categoryName ?? 'General',
+                                                      style: GoogleFonts.inter(
                                                         fontSize: 10,
-                                                        color: Colors
-                                                            .grey.shade700,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: const Color(0xFF334155),
                                                       ),
                                                     ),
                                                   ),

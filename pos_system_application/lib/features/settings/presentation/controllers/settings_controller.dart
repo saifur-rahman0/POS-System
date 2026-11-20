@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_client/core/hardware/printer/printer_service.dart';
 import 'package:pos_client/core/hardware/printer/receipt_esc_pos_generator.dart';
@@ -263,26 +265,56 @@ final hardwareSettingsProvider =
 // Terminal & System Preferences Notifier
 // ============================================================================
 class TerminalPreferencesNotifier extends StateNotifier<TerminalPreferencesModel> {
-  TerminalPreferencesNotifier() : super(const TerminalPreferencesModel());
+  TerminalPreferencesNotifier() : super(const TerminalPreferencesModel()) {
+    _loadFromDisk();
+  }
+
+  void _loadFromDisk() {
+    try {
+      final file = File('pos_terminal_preferences.json');
+      if (file.existsSync()) {
+        final content = file.readAsStringSync();
+        final json = jsonDecode(content) as Map<String, dynamic>;
+        state = TerminalPreferencesModel.fromJson(json);
+      }
+    } catch (_) {}
+  }
+
+  void _saveToDisk() {
+    try {
+      final file = File('pos_terminal_preferences.json');
+      file.writeAsStringSync(jsonEncode(state.toJson()));
+    } catch (_) {}
+  }
 
   void setTerminalName(String name) {
     state = state.copyWith(terminalName: name);
+    _saveToDisk();
   }
 
   void setDeviceId(String id) {
     state = state.copyWith(deviceId: id);
+    _saveToDisk();
   }
 
   void setAutoRefreshInterval(int seconds) {
     state = state.copyWith(autoRefreshIntervalSeconds: seconds);
+    _saveToDisk();
   }
 
   void toggleSoundEffects(bool enabled) {
     state = state.copyWith(soundEffectsEnabled: enabled);
+    _saveToDisk();
   }
 
   void toggleDarkMode(bool enabled) {
     state = state.copyWith(isDarkMode: enabled);
+    _saveToDisk();
+  }
+
+  void setPosTableView(bool isTable) {
+    state = state.copyWith(isPosTableView: isTable);
+    _saveToDisk();
   }
 }
 

@@ -150,9 +150,19 @@ class AppTheme {
         unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 13),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: const Color(0xFFF1F5F9),
-        selectedColor: AppColors.accentTeal.withValues(alpha: 0.12),
-        labelStyle: GoogleFonts.inter(fontSize: 12),
+        backgroundColor: Colors.white,
+        selectedColor: const Color(0xFF0F766E),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF1E293B),
+        ),
+        secondaryLabelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        checkmarkColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         side: const BorderSide(color: AppColors.cardBorder),
       ),
