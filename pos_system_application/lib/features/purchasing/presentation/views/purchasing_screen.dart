@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../app/theme.dart';
+import '../../../../core/widgets/stat_strip.dart';
 import '../controllers/purchasing_controller.dart';
 import 'create_purchase_order_dialog.dart';
 import 'purchase_order_detail_dialog.dart';
@@ -142,6 +144,41 @@ class _PurchasingScreenState extends ConsumerState<PurchasingScreen> {
                 label: const Text('Create Purchase Order'),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // Premium Purchasing Stats Strip
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: StatStrip(
+              items: [
+                StatStripItem(
+                  label: 'TOTAL PURCHASE ORDERS',
+                  value: '${orders.length}',
+                  icon: Icons.receipt_long_outlined,
+                  color: AppColors.accentTeal,
+                ),
+                StatStripItem(
+                  label: 'TOTAL PROCUREMENT COST',
+                  value: currencyFmt.format(orders.fold<double>(0.0, (acc, o) => acc + o.total)),
+                  icon: Icons.payments_outlined,
+                  color: AppColors.accentPurple,
+                ),
+                StatStripItem(
+                  label: 'DISBURSED TO SUPPLIERS',
+                  value: currencyFmt.format(orders.fold<double>(0.0, (acc, o) => acc + o.paidTotal)),
+                  icon: Icons.check_circle_outline,
+                  color: AppColors.accentGreen,
+                ),
+                StatStripItem(
+                  label: 'OUTSTANDING AP DUE',
+                  value: currencyFmt.format(orders.fold<double>(0.0, (acc, o) => acc + o.dueBalance)),
+                  icon: Icons.pending_actions_rounded,
+                  color: orders.fold<double>(0.0, (acc, o) => acc + o.dueBalance) > 0 ? AppColors.accentRose : AppColors.accentTeal,
+                  badge: orders.fold<double>(0.0, (acc, o) => acc + o.dueBalance) > 0 ? 'DUE' : null,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 

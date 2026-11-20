@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../app/theme.dart';
 import '../../../../core/widgets/pos_error_card.dart';
+import '../../../../core/widgets/stat_strip.dart';
 import '../controllers/financial_accounts_controller.dart';
 import 'account_transfer_dialog.dart';
 
@@ -202,6 +204,40 @@ class FinancialAccountsScreen extends ConsumerWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Premium Treasury Liquidity Stats Strip
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: StatStrip(
+                        items: [
+                          StatStripItem(
+                            label: 'TOTAL TREASURY LIQUIDITY',
+                            value: currencyFmt.format(totalLiquidity),
+                            icon: Icons.account_balance_outlined,
+                            color: AppColors.accentTeal,
+                          ),
+                          StatStripItem(
+                            label: 'ACTIVE ACCOUNTS',
+                            value: '${accounts.length}',
+                            icon: Icons.wallet_outlined,
+                            color: AppColors.accentBlue,
+                          ),
+                          StatStripItem(
+                            label: 'CASH & VAULT',
+                            value: currencyFmt.format(accounts.where((a) => a.accountType == 'SAFE' || a.accountType == 'CASH_DRAWER' || a.accountType == 'PETTY_CASH').fold<double>(0.0, (acc, a) => acc + a.currentBalance)),
+                            icon: Icons.savings_outlined,
+                            color: AppColors.accentGreen,
+                          ),
+                          StatStripItem(
+                            label: 'BANK & MFS WALLETS',
+                            value: currencyFmt.format(accounts.where((a) => a.accountType == 'BANK' || a.accountType == 'MOBILE_WALLET').fold<double>(0.0, (acc, a) => acc + a.currentBalance)),
+                            icon: Icons.smartphone_rounded,
+                            color: AppColors.accentPurple,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     // Total Liquidity Banner
                     Container(
                       padding: const EdgeInsets.all(20),

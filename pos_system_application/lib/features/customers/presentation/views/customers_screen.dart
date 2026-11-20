@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/theme.dart';
+import '../../../../core/widgets/stat_strip.dart';
 import '../../../crm/domain/models/loyalty_settings.dart';
 import '../../../crm/domain/models/membership_tier.dart';
 import '../../../crm/domain/models/rfm_analytics.dart';
@@ -181,27 +183,38 @@ class _CustomerDirectoryTabState extends ConsumerState<_CustomerDirectoryTab> {
           ),
           const SizedBox(height: 14),
 
-          // KPI Cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildKpiCard(
-                  title: 'Total Customers',
+          // Premium CRM Stats Strip
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: StatStrip(
+              items: [
+                StatStripItem(
+                  label: 'TOTAL CUSTOMERS',
                   value: '${paginated?.total ?? 0}',
-                  icon: Icons.people,
-                  color: const Color(0xFF0F766E),
+                  icon: Icons.people_alt_outlined,
+                  color: AppColors.accentTeal,
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: _buildKpiCard(
-                  title: 'Total Outstanding Dues',
+                StatStripItem(
+                  label: 'OUTSTANDING DUES',
                   value: currencyFmt.format(paginated?.totalOutstandingDues ?? 0.0),
-                  icon: Icons.account_balance_wallet,
-                  color: Colors.red,
+                  icon: Icons.account_balance_wallet_outlined,
+                  color: AppColors.accentRose,
+                  badge: (paginated?.totalOutstandingDues ?? 0.0) > 0 ? 'DUE' : null,
                 ),
-              ),
-            ],
+                StatStripItem(
+                  label: 'ACTIVE LOYALTY PROFILES',
+                  value: '${customers.where((c) => c.loyaltyPointsBalance > 0).length}',
+                  icon: Icons.stars_outlined,
+                  color: AppColors.accentPurple,
+                ),
+                StatStripItem(
+                  label: 'OVER CREDIT LIMIT',
+                  value: '${customers.where((c) => c.dueBalance > (c.creditLimit > 0 ? c.creditLimit : 99999999)).length}',
+                  icon: Icons.warning_amber_rounded,
+                  color: AppColors.accentAmber,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -375,35 +388,6 @@ class _CustomerDirectoryTabState extends ConsumerState<_CustomerDirectoryTab> {
                           ],
                         ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKpiCard({required String title, required String value, required IconData icon, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-              const SizedBox(height: 2),
-              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-            ],
           ),
         ],
       ),

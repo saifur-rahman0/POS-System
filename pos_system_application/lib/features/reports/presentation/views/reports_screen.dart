@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import 'package:pos_client/app/theme.dart';
+import 'package:pos_client/core/widgets/chart_shimmer.dart';
+import 'package:pos_client/core/widgets/empty_state_widget.dart';
+import 'package:pos_client/core/widgets/kpi_metric_card.dart';
+import 'package:pos_client/core/widgets/section_header.dart';
+import 'package:pos_client/core/widgets/trend_badge.dart';
 import 'package:pos_client/features/branches/presentation/controllers/branches_controller.dart';
 import 'package:pos_client/features/reports/presentation/controllers/reports_controller.dart';
+import 'package:pos_client/features/reports/presentation/widgets/payment_methods_donut.dart';
+import 'package:pos_client/features/reports/presentation/widgets/sales_trend_chart.dart';
+import 'package:pos_client/features/reports/presentation/widgets/stock_valuation_chart.dart';
+import 'package:pos_client/features/reports/presentation/widgets/top_products_chart.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -17,16 +28,16 @@ class ReportsScreen extends ConsumerWidget {
     final branches = ref.watch(branchesListProvider).branches;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppColors.pageBg,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header Bar
+          // ── Top Header Bar ──────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
             ),
             child: Row(
               children: [
@@ -34,44 +45,81 @@ class ReportsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Analytics & Financial Reports',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.accentTeal.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.analytics_rounded, size: 18, color: AppColors.accentTeal),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Business Intelligence & Analytics',
+                            style: GoogleFonts.inter(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Business intelligence, sales velocity, profit margins, and capital valuation',
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                        'Live revenue velocity, profit margins, stock valuation, and tender breakdowns',
+                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
                 ),
 
-                // Date Presets
-                Wrap(
-                  spacing: 6,
-                  children: ReportDatePreset.values.map((p) {
-                    final isSelected = p == preset;
-                    return ChoiceChip(
-                      label: Text(p.label),
-                      selected: isSelected,
-                      selectedColor: const Color(0xFF0F766E),
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey.shade800,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 12,
-                      ),
-                      onSelected: (selected) {
-                        if (selected) {
-                          ref.read(reportDatePresetProvider.notifier).state = p;
-                        }
-                      },
-                    );
-                  }).toList(),
+                // Date Filter Chips
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: ReportDatePreset.values.map((p) {
+                      final isSelected = p == preset;
+                      return InkWell(
+                        onTap: () => ref.read(reportDatePresetProvider.notifier).state = p,
+                        borderRadius: BorderRadius.circular(8),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.06),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Text(
+                            p.label,
+                            style: GoogleFonts.inter(
+                              color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
                 const SizedBox(width: 12),
 
@@ -80,21 +128,22 @@ class ReportsScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      color: Colors.white,
+                      border: Border.all(color: AppColors.cardBorder),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String?>(
                         value: branchFilter,
-                        hint: const Text('All Outlets', style: TextStyle(fontSize: 12)),
+                        hint: Text('All Stores', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary)),
                         items: [
-                          const DropdownMenuItem<String?>(
+                          DropdownMenuItem<String?>(
                             value: null,
-                            child: Text('All Outlets', style: TextStyle(fontSize: 12)),
+                            child: Text('All Stores', style: GoogleFonts.inter(fontSize: 12)),
                           ),
                           ...branches.map((b) => DropdownMenuItem<String?>(
                                 value: b.id,
-                                child: Text(b.name, style: const TextStyle(fontSize: 12)),
+                                child: Text(b.name, style: GoogleFonts.inter(fontSize: 12)),
                               )),
                         ],
                         onChanged: (val) {
@@ -106,13 +155,13 @@ class ReportsScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
 
                 // Export CSV Button
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.download, size: 16),
+                FilledButton.icon(
+                  icon: const Icon(Icons.file_download_outlined, size: 16),
                   label: const Text('Export CSV'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0F766E),
-                    side: const BorderSide(color: Color(0xFF0F766E)),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.sidebarBg,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                   onPressed: () async {
                     try {
@@ -136,10 +185,8 @@ class ReportsScreen extends ConsumerWidget {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(
-                            'Generated CSV for $currentType (${csvData.split('\n').length} lines). Export successful.',
-                          ),
-                          backgroundColor: const Color(0xFF0F766E),
+                          content: Text('Exported $currentType (${csvData.split('\n').length} rows) successfully.'),
+                          backgroundColor: AppColors.accentTeal,
                         ),
                       );
                     } catch (e) {
@@ -147,7 +194,7 @@ class ReportsScreen extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Export failed: $e'),
-                          backgroundColor: Colors.red.shade700,
+                          backgroundColor: AppColors.accentRose,
                         ),
                       );
                     }
@@ -157,22 +204,22 @@ class ReportsScreen extends ConsumerWidget {
             ),
           ),
 
-          // Sub-Tab Switcher
+          // ── Sub-Tab Switcher ───────────────────────────────────────────
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               children: [
-                _buildTabButton(context, ref, 0, 'Executive Overview', Icons.dashboard_outlined),
-                _buildTabButton(context, ref, 1, 'Top Products', Icons.star_outline),
-                _buildTabButton(context, ref, 2, 'Stock Valuation', Icons.inventory_2_outlined),
-                _buildTabButton(context, ref, 3, 'Payment Breakdown', Icons.payments_outlined),
-                _buildTabButton(context, ref, 4, 'Customer Dues', Icons.people_outline),
+                _buildTabButton(context, ref, 0, 'Executive Dashboard', Icons.dashboard_rounded),
+                _buildTabButton(context, ref, 1, 'Top Products SAR', Icons.star_rounded),
+                _buildTabButton(context, ref, 2, 'Stock Valuation & Risk', Icons.inventory_2_rounded),
+                _buildTabButton(context, ref, 3, 'Payment Breakdown', Icons.account_balance_wallet_rounded),
+                _buildTabButton(context, ref, 4, 'Customer Dues & Credit', Icons.people_alt_rounded),
               ],
             ),
           ),
 
-          // Main Tab Body
+          // ── Main Tab Views ─────────────────────────────────────────────
           Expanded(
             child: IndexedStack(
               index: activeTab,
@@ -207,7 +254,7 @@ class ReportsScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isSelected ? const Color(0xFF0F766E) : Colors.transparent,
+              color: isSelected ? AppColors.accentTeal : Colors.transparent,
               width: 2.5,
             ),
           ),
@@ -216,16 +263,16 @@ class ReportsScreen extends ConsumerWidget {
           children: [
             Icon(
               icon,
-              size: 18,
-              color: isSelected ? const Color(0xFF0F766E) : Colors.grey.shade600,
+              size: 16,
+              color: isSelected ? AppColors.accentTeal : AppColors.textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
-                color: isSelected ? const Color(0xFF0F766E) : Colors.grey.shade700,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 13,
+              style: GoogleFonts.inter(
+                color: isSelected ? AppColors.accentTeal : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12.5,
               ),
             ),
           ],
@@ -244,198 +291,230 @@ class ReportsScreen extends ConsumerWidget {
   ) {
     final metricsAsync = ref.watch(dashboardMetricsProvider);
     final timeSeriesAsync = ref.watch(salesTimeSeriesProvider);
+    final paymentAsync = ref.watch(paymentBreakdownProvider);
 
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        // 4 Primary KPI Summary Cards
+        // 4 Primary KPI Summary Cards with micro-animations & sparklines
         metricsAsync.when(
           data: (m) => Column(
             children: [
               Row(
                 children: [
                   Expanded(
-                    child: _buildMetricCard(
-                      title: 'GROSS SALES',
+                    child: KpiMetricCard(
+                      title: 'GROSS REVENUE',
                       value: currencyFmt.format(m.grossSales),
-                      subtitle: '${m.totalOrders} total sales transactions',
-                      icon: Icons.point_of_sale,
-                      iconBg: Colors.blue.shade50,
-                      iconColor: Colors.blue.shade700,
+                      changeLabel: '${m.totalOrders} total sales transactions',
+                      accentColor: AppColors.accentTeal,
+                      icon: Icons.payments_rounded,
+                      sparklineData: const [10, 15, 12, 19, 22, 28, 35, 42],
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildMetricCard(
+                    child: KpiMetricCard(
                       title: 'NET SALES',
                       value: currencyFmt.format(m.netSales),
-                      subtitle: 'Refunds: ${currencyFmt.format(m.totalRefunds)}',
-                      icon: Icons.attach_money,
-                      iconBg: Colors.teal.shade50,
-                      iconColor: const Color(0xFF0F766E),
+                      changeLabel: 'Refunds: ${currencyFmt.format(m.totalRefunds)}',
+                      accentColor: AppColors.accentPurple,
+                      icon: Icons.account_balance_wallet_rounded,
+                      sparklineData: const [8, 12, 14, 16, 20, 25, 30, 38],
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildMetricCard(
+                    child: KpiMetricCard(
                       title: 'GROSS PROFIT',
                       value: currencyFmt.format(m.grossProfit),
-                      subtitle: 'Margin: ${m.profitMarginPct.toStringAsFixed(1)}%',
-                      icon: Icons.trending_up,
-                      iconBg: Colors.green.shade50,
-                      iconColor: Colors.green.shade700,
+                      changePercent: m.profitMarginPct,
+                      changeLabel: 'Margin: ${m.profitMarginPct.toStringAsFixed(1)}%',
+                      accentColor: AppColors.accentGreen,
+                      icon: Icons.trending_up_rounded,
+                      sparklineData: const [5, 7, 9, 11, 14, 18, 22, 26],
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildMetricCard(
-                      title: 'AVG BASKET',
+                    child: KpiMetricCard(
+                      title: 'AVG ORDER VALUE',
                       value: currencyFmt.format(m.averageBasketValue),
-                      subtitle: '${m.totalItemsSold.toStringAsFixed(0)} units sold',
-                      icon: Icons.shopping_basket_outlined,
-                      iconBg: Colors.purple.shade50,
-                      iconColor: Colors.purple.shade700,
+                      changeLabel: '${m.totalItemsSold.toStringAsFixed(0)} units sold',
+                      accentColor: AppColors.accentBlue,
+                      icon: Icons.shopping_bag_outlined,
+                      sparklineData: const [12, 11, 13, 14, 13, 15, 16, 17],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Secondary operational cards
+              // Secondary Quick Stats Strip
               Row(
                 children: [
                   Expanded(
-                    child: _buildMetricCard(
-                      title: 'COLLECTIONS VS DUES',
-                      value: currencyFmt.format(m.totalCollected),
-                      subtitle: 'Store Credit Granted: ${currencyFmt.format(m.totalDueIssued)}',
-                      icon: Icons.account_balance_wallet_outlined,
-                      iconBg: const Color(0xFFE6FFFA),
-                      iconColor: const Color(0xFF0F766E),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentTeal.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.savings_outlined, size: 18, color: AppColors.accentTeal),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('COLLECTIONS VS DUES', style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text(currencyFmt.format(m.totalCollected), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            ],
+                          ),
+                          const Spacer(),
+                          Text('Due: ${currencyFmt.format(m.totalDueIssued)}', style: GoogleFonts.inter(fontSize: 11, color: AppColors.accentRose, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildMetricCard(
-                      title: 'INVENTORY ALERTS',
-                      value: '${m.lowStockCount} Low Stock',
-                      subtitle: '${m.outOfStockCount} Out of stock items',
-                      icon: Icons.warning_amber_rounded,
-                      iconBg: Colors.amber.shade50,
-                      iconColor: Colors.amber.shade800,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentAmber.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.inventory_2_outlined, size: 18, color: AppColors.accentAmber),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('INVENTORY RISK ALERTS', style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text('${m.lowStockCount} Low · ${m.outOfStockCount} Out of Stock', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          loading: () => const Row(
+            children: [
+              Expanded(child: CardShimmer(height: 140)),
+              SizedBox(width: 16),
+              Expanded(child: CardShimmer(height: 140)),
+              SizedBox(width: 16),
+              Expanded(child: CardShimmer(height: 140)),
+              SizedBox(width: 16),
+              Expanded(child: CardShimmer(height: 140)),
+            ],
           ),
           error: (e, _) => _buildErrorBanner('Failed to load dashboard metrics: $e'),
         ),
 
         const SizedBox(height: 24),
 
-        // Sales Velocity Trend Chart Card
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Sales Revenue Trend',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Time-bucketed sales velocity',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              timeSeriesAsync.when(
-                data: (ts) {
-                  if (ts.points.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Text(
-                          'No sales recorded for the selected period',
-                          style: TextStyle(color: Colors.grey.shade500),
-                        ),
-                      ),
-                    );
-                  }
-
-                  final maxGross = ts.points.fold<double>(
-                    0.0,
-                    (max, p) => p.grossSales > max ? p.grossSales : max,
-                  );
-
-                  return SizedBox(
-                    height: 200,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: ts.points.map((pt) {
-                        final ratio = maxGross > 0 ? (pt.grossSales / maxGross) : 0.0;
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  currencyFmt.format(pt.grossSales),
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  height: (140 * ratio).clamp(8.0, 140.0),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF0F766E),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  pt.periodLabel.length > 10
-                                      ? pt.periodLabel.substring(11)
-                                      : pt.periodLabel,
-                                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
+        // Main Charts Row: 2/3 Sales Trend Area Chart + 1/3 Tender Donut Chart
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left 2/3: Sales Trend
+            Expanded(
+              flex: 3,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.cardBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  );
-                },
-                loading: () => const SizedBox(
-                  height: 160,
-                  child: Center(child: CircularProgressIndicator()),
+                  ],
                 ),
-                error: (e, _) => _buildErrorBanner('Failed to load sales trend: $e'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionHeader(
+                      title: 'Sales Revenue Velocity',
+                      subtitle: 'Interactive real-time sales curves by time-bucketed intervals',
+                    ),
+                    timeSeriesAsync.when(
+                      data: (ts) => SalesTrendChart(
+                        timeSeries: ts,
+                        currencyFmt: currencyFmt,
+                      ),
+                      loading: () => const ChartShimmer(height: 240),
+                      error: (e, _) => _buildErrorBanner('Failed to load sales trend: $e'),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 16),
+            // Right 1/3: Payment Method Donut
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.cardBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionHeader(
+                      title: 'Payment Breakdown',
+                      subtitle: 'Tender share by revenue',
+                    ),
+                    paymentAsync.when(
+                      data: (pb) => PaymentMethodsDonutChart(
+                        breakdown: pb,
+                        currencyFmt: currencyFmt,
+                      ),
+                      loading: () => const ChartShimmer(height: 240),
+                      error: (e, _) => _buildErrorBanner('Failed to load payment breakdown: $e'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -451,261 +530,253 @@ class ReportsScreen extends ConsumerWidget {
   ) {
     final topAsync = ref.watch(topProductsProvider);
 
-    return topAsync.when(
-      data: (data) {
-        if (data.items.isEmpty) {
-          return Center(
-            child: Text(
-              'No product sales recorded in this period.',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-          );
-        }
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        topAsync.when(
+          data: (top) {
+            if (top.items.isEmpty) {
+              return const EmptyStateWidget(
+                icon: Icons.star_border_rounded,
+                title: 'No product performance data',
+                subtitle: 'Execute checkout transactions in the POS terminal to populate velocity metrics.',
+              );
+            }
 
-        return ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  dataRowMinHeight: 52,
-                  dataRowMaxHeight: 64,
-                  headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-                columns: const [
-                  DataColumn(label: Text('Rank', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(label: Text('Product / Variant', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(label: Text('SKU', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(numeric: true, label: Text('Units Sold', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(numeric: true, label: Text('Gross Revenue', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(numeric: true, label: Text('COGS', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(numeric: true, label: Text('Profit', style: TextStyle(fontWeight: FontWeight.bold))),
-                  DataColumn(numeric: true, label: Text('Margin %', style: TextStyle(fontWeight: FontWeight.bold))),
-                ],
-                rows: data.items.asMap().entries.map((entry) {
-                  final idx = entry.key + 1;
-                  final p = entry.value;
-                  return DataRow(
-                    cells: [
-                      DataCell(Text('#$idx', style: const TextStyle(fontWeight: FontWeight.bold))),
-                      DataCell(
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(p.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            Text(p.variantName, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
-                          ],
-                        ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Chart Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(
+                        title: 'Top 7 Revenue Generators',
+                        subtitle: 'Ranked comparison of high-velocity catalog items',
                       ),
-                      DataCell(Text(p.sku)),
-                      DataCell(Text(p.unitsSold.toStringAsFixed(1))),
-                      DataCell(Text(currencyFmt.format(p.grossRevenue))),
-                      DataCell(Text(currencyFmt.format(p.cogs))),
-                      DataCell(Text(
-                        currencyFmt.format(p.profit),
-                        style: TextStyle(
-                          color: p.profit >= 0 ? Colors.green.shade800 : Colors.red.shade800,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: p.marginPct >= 20 ? Colors.green.shade50 : Colors.amber.shade50,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '${p.marginPct.toStringAsFixed(1)}%',
-                            style: TextStyle(
-                              color: p.marginPct >= 20 ? Colors.green.shade800 : Colors.amber.shade900,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
+                      TopProductsBarChart(
+                        items: top.items,
+                        currencyFmt: currencyFmt,
                       ),
                     ],
-                  );
-                }).toList(),
+                  ),
                 ),
-              ),
-            ),
-          ],
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => _buildErrorBanner('Failed to load top products: $e'),
+                const SizedBox(height: 20),
+
+                // Detailed Table Card
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          'Full Catalog Ranking & Profit Margins',
+                          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      DataTable(
+                        columnSpacing: 20,
+                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                        headingTextStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                        dataTextStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.textPrimary),
+                        columns: const [
+                          DataColumn(label: Text('#')),
+                          DataColumn(label: Text('PRODUCT & VARIANT')),
+                          DataColumn(label: Text('SKU')),
+                          DataColumn(numeric: true, label: Text('UNITS SOLD')),
+                          DataColumn(numeric: true, label: Text('GROSS REVENUE')),
+                          DataColumn(numeric: true, label: Text('EST. PROFIT')),
+                          DataColumn(numeric: true, label: Text('MARGIN')),
+                        ],
+                        rows: top.items.asMap().entries.map((entry) {
+                          final idx = entry.key + 1;
+                          final p = entry.value;
+                          final isTop3 = idx <= 3;
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Container(
+                                  width: 22,
+                                  height: 22,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isTop3 ? AppColors.accentTeal.withValues(alpha: 0.15) : Colors.grey.shade100,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '$idx',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: isTop3 ? AppColors.accentTeal : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(p.productName, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12)),
+                                    if (p.variantName.isNotEmpty)
+                                      Text(p.variantName, style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                              DataCell(Text(p.sku, style: const TextStyle(fontFamily: 'monospace', fontSize: 11))),
+                              DataCell(Text(p.unitsSold.toStringAsFixed(0), style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+                              DataCell(Text(currencyFmt.format(p.grossRevenue), style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                              DataCell(Text(currencyFmt.format(p.profit), style: GoogleFonts.inter(color: AppColors.accentGreen, fontWeight: FontWeight.w600))),
+                              DataCell(
+                                TrendBadge(value: p.marginPct, suffix: '%'),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+          loading: () => const ChartShimmer(height: 400),
+          error: (e, _) => _buildErrorBanner('Failed to load top products: $e'),
+        ),
+      ],
     );
   }
 
   // =========================================================================
-  // TAB 2: Stock Valuation
+  // TAB 2: Stock Valuation & Risk
   // =========================================================================
   Widget _buildStockValuationTab(
     BuildContext context,
     WidgetRef ref,
     NumberFormat currencyFmt,
   ) {
-    final stockAsync = ref.watch(stockValuationProvider);
+    final valAsync = ref.watch(stockValuationProvider);
 
-    return stockAsync.when(
-      data: (stock) => ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          // Capital valuation KPI cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  title: 'TOTAL CAPITAL INVESTED',
-                  value: currencyFmt.format(stock.totalCostValue),
-                  subtitle: '${stock.totalUnitsOnHand.toStringAsFixed(0)} units on hand',
-                  icon: Icons.inventory,
-                  iconBg: Colors.indigo.shade50,
-                  iconColor: Colors.indigo.shade700,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricCard(
-                  title: 'POTENTIAL RETAIL REVENUE',
-                  value: currencyFmt.format(stock.totalRetailValue),
-                  subtitle: '${stock.totalVariantsStocked} stocked variants',
-                  icon: Icons.storefront,
-                  iconBg: Colors.teal.shade50,
-                  iconColor: const Color(0xFF0F766E),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricCard(
-                  title: 'PROJECTED GROSS PROFIT',
-                  value: currencyFmt.format(stock.potentialGrossProfit),
-                  subtitle: 'Unrealized inventory margin',
-                  icon: Icons.monetization_on_outlined,
-                  iconBg: Colors.green.shade50,
-                  iconColor: Colors.green.shade700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Low Stock Alert Table
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        valAsync.when(
+          data: (val) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Reorder & Stock Alert Items',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '${stock.lowStockCount} Low Stock • ${stock.outOfStockCount} Out of Stock',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (stock.lowStockItems.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Center(
-                      child: Text(
-                        'All stocked items are above low stock threshold.',
-                        style: TextStyle(color: Colors.grey.shade600),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(
+                        title: 'Capital Valuation & Inventory Exposure',
+                        subtitle: 'Comparison of cost invested vs expected retail revenue',
                       ),
+                      StockValuationBarChart(
+                        valuation: val,
+                        currencyFmt: currencyFmt,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Low Stock Warning Table
+                if (val.lowStockItems.isNotEmpty)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.cardBorder),
                     ),
-                  )
-                else
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      dataRowMinHeight: 52,
-                      dataRowMaxHeight: 64,
-                      headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-                      columns: const [
-                        DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Product / Variant', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('SKU', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('On Hand', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('Cost Price', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('Selling Price', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('Cost Capital', style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                      rows: stock.lowStockItems.map((item) {
-                        final isOut = item.isOutOfStock;
-                        return DataRow(
-                          cells: [
-                            DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isOut ? Colors.red.shade50 : Colors.amber.shade50,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: isOut ? Colors.red.shade200 : Colors.amber.shade200,
-                                  ),
-                                ),
-                                child: Text(
-                                  isOut ? 'OUT OF STOCK' : 'LOW STOCK',
-                                  style: TextStyle(
-                                    color: isOut ? Colors.red.shade800 : Colors.amber.shade900,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, color: AppColors.accentAmber, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Low Stock / Out of Stock Reorder Alerts (${val.lowStockItems.length})',
+                                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                               ),
-                            ),
-                            DataCell(
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(item.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  Text(item.variantName, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
-                                ],
-                              ),
-                            ),
-                            DataCell(Text(item.sku)),
-                            DataCell(Text(
-                              item.quantityOnHand.toStringAsFixed(1),
-                              style: TextStyle(
-                                color: isOut ? Colors.red.shade800 : Colors.amber.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )),
-                            DataCell(Text(currencyFmt.format(item.costPrice))),
-                            DataCell(Text(currencyFmt.format(item.sellingPrice))),
-                            DataCell(Text(currencyFmt.format(item.stockCostValue))),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        DataTable(
+                          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                          columns: const [
+                            DataColumn(label: Text('PRODUCT')),
+                            DataColumn(label: Text('SKU')),
+                            DataColumn(numeric: true, label: Text('ON HAND')),
+                            DataColumn(numeric: true, label: Text('COST PRICE')),
+                            DataColumn(numeric: true, label: Text('RETAIL PRICE')),
+                            DataColumn(label: Text('STATUS')),
                           ],
-                        );
-                      }).toList(),
+                          rows: val.lowStockItems.map((item) {
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(item.productName, style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+                                DataCell(Text(item.sku, style: const TextStyle(fontFamily: 'monospace', fontSize: 11))),
+                                DataCell(Text(item.quantityOnHand.toStringAsFixed(0), style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                                DataCell(Text(currencyFmt.format(item.costPrice))),
+                                DataCell(Text(currencyFmt.format(item.sellingPrice))),
+                                DataCell(
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: (item.isOutOfStock ? AppColors.accentRose : AppColors.accentAmber).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      item.isOutOfStock ? 'OUT OF STOCK' : 'LOW STOCK',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: item.isOutOfStock ? AppColors.accentRose : AppColors.accentAmber,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
                   ),
               ],
-            ),
-          ),
-        ],
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => _buildErrorBanner('Failed to load stock valuation: $e'),
+            );
+          },
+          loading: () => const ChartShimmer(height: 380),
+          error: (e, _) => _buildErrorBanner('Failed to load stock valuation: $e'),
+        ),
+      ],
     );
   }
 
@@ -717,134 +788,86 @@ class ReportsScreen extends ConsumerWidget {
     WidgetRef ref,
     NumberFormat currencyFmt,
   ) {
-    final payAsync = ref.watch(paymentBreakdownProvider);
+    final paymentAsync = ref.watch(paymentBreakdownProvider);
 
-    return payAsync.when(
-      data: (data) => ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          // Total collected header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Row(
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        paymentAsync.when(
+          data: (pb) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TOTAL VALUE RECORDED',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        currencyFmt.format(data.totalCollected),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F766E),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  '${data.methods.length} payment tender methods used',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Methods Grid
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: data.methods.map((m) {
-              return SizedBox(
-                width: 320,
-                child: Container(
-                  padding: const EdgeInsets.all(18),
+                Container(
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            m.method,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F766E).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${m.percentage.toStringAsFixed(1)}%',
-                              style: const TextStyle(
-                                color: Color(0xFF0F766E),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SectionHeader(
+                        title: 'Tender Methods Distribution',
+                        subtitle: 'Multi-tender analysis across retail checkouts',
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        currencyFmt.format(m.totalAmount),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${m.transactionCount} transactions',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 10),
-                      LinearProgressIndicator(
-                        value: (m.percentage / 100.0).clamp(0.0, 1.0),
-                        backgroundColor: Colors.grey.shade100,
-                        color: const Color(0xFF0F766E),
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(3),
+                      PaymentMethodsDonutChart(
+                        breakdown: pb,
+                        currencyFmt: currencyFmt,
                       ),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => _buildErrorBanner('Failed to load payment breakdown: $e'),
+                const SizedBox(height: 20),
+
+                // Table
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                    columns: const [
+                      DataColumn(label: Text('PAYMENT METHOD')),
+                      DataColumn(numeric: true, label: Text('TRANSACTIONS')),
+                      DataColumn(numeric: true, label: Text('TOTAL COLLECTED')),
+                      DataColumn(numeric: true, label: Text('SHARE %')),
+                    ],
+                    rows: pb.methods.map((m) {
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            Row(
+                              children: [
+                                const Icon(Icons.payment, size: 16, color: AppColors.accentTeal),
+                                const SizedBox(width: 8),
+                                Text(m.method, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                          DataCell(Text('${m.transactionCount}')),
+                          DataCell(Text(currencyFmt.format(m.totalAmount), style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                          DataCell(Text('${m.percentage.toStringAsFixed(1)}%')),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            );
+          },
+          loading: () => const ChartShimmer(height: 350),
+          error: (e, _) => _buildErrorBanner('Failed to load payment methods: $e'),
+        ),
+      ],
     );
   }
 
   // =========================================================================
-  // TAB 4: Customer Dues
+  // TAB 4: Customer Dues & Credit
   // =========================================================================
   Widget _buildCustomerDuesTab(
     BuildContext context,
@@ -853,205 +876,113 @@ class ReportsScreen extends ConsumerWidget {
   ) {
     final duesAsync = ref.watch(customerDuesReportProvider);
 
-    return duesAsync.when(
-      data: (dues) => ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  title: 'TOTAL RECEIVABLES (DUES)',
-                  value: currencyFmt.format(dues.totalOutstandingDue),
-                  subtitle: '${dues.totalCustomersWithDue} accounts with unpaid balances',
-                  icon: Icons.assignment_late_outlined,
-                  iconBg: Colors.red.shade50,
-                  iconColor: Colors.red.shade700,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricCard(
-                  title: 'TOTAL CREDIT LIMIT',
-                  value: currencyFmt.format(dues.totalCreditLimit),
-                  subtitle: 'Aggregate customer credit allowance',
-                  icon: Icons.credit_score,
-                  iconBg: Colors.blue.shade50,
-                  iconColor: Colors.blue.shade700,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricCard(
-                  title: 'CREDIT UTILIZATION',
-                  value: '${dues.overallCreditUtilizationPct.toStringAsFixed(1)}%',
-                  subtitle: 'Outstanding vs available allowance',
-                  icon: Icons.pie_chart_outline,
-                  iconBg: Colors.amber.shade50,
-                  iconColor: Colors.amber.shade800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        duesAsync.when(
+          data: (dues) {
+            final overdueAccountsCount = dues.topDebtors.where((d) => d.dueBalance > d.creditLimit && d.creditLimit > 0).length;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Top Outstanding Debtors',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                if (dues.topDebtors.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Center(
-                      child: Text(
-                        'Zero outstanding customer dues. All sales fully settled.',
-                        style: TextStyle(color: Colors.grey.shade600),
+                // Top Summary Strip
+                Row(
+                  children: [
+                    Expanded(
+                      child: KpiMetricCard(
+                        title: 'TOTAL OUTSTANDING DUES',
+                        value: currencyFmt.format(dues.totalOutstandingDue),
+                        changeLabel: '${dues.totalCustomersWithDue} accounts with active credit balance',
+                        accentColor: AppColors.accentRose,
+                        icon: Icons.account_balance_wallet_outlined,
                       ),
                     ),
-                  )
-                else
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      dataRowMinHeight: 48,
-                      dataRowMaxHeight: 56,
-                      headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-                      columns: const [
-                        DataColumn(label: Text('Customer Name', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Phone', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('Outstanding Due', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('Credit Limit', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(numeric: true, label: Text('Utilization %', style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                      rows: dues.topDebtors.map((d) {
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(d.name, style: const TextStyle(fontWeight: FontWeight.w600))),
-                            DataCell(Text(d.phone ?? '—')),
-                            DataCell(Text(
-                              currencyFmt.format(d.dueBalance),
-                              style: TextStyle(color: Colors.red.shade800, fontWeight: FontWeight.bold),
-                            )),
-                            DataCell(Text(currencyFmt.format(d.creditLimit))),
-                            DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: d.utilizationPct > 80 ? Colors.red.shade50 : Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '${d.utilizationPct.toStringAsFixed(1)}%',
-                                  style: TextStyle(
-                                    color: d.utilizationPct > 80 ? Colors.red.shade800 : Colors.blue.shade800,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: KpiMetricCard(
+                        title: 'ACCOUNTS OVER CREDIT LIMIT',
+                        value: '$overdueAccountsCount',
+                        changeLabel: 'Over credit limit threshold',
+                        accentColor: AppColors.accentAmber,
+                        icon: Icons.warning_amber_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Table
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                    columns: const [
+                      DataColumn(label: Text('CUSTOMER')),
+                      DataColumn(label: Text('PHONE')),
+                      DataColumn(numeric: true, label: Text('CREDIT LIMIT')),
+                      DataColumn(numeric: true, label: Text('TOTAL DUE')),
+                      DataColumn(label: Text('STATUS')),
+                    ],
+                    rows: dues.topDebtors.map((d) {
+                      final isOverLimit = d.dueBalance > d.creditLimit && d.creditLimit > 0;
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(d.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+                          DataCell(Text(d.phone ?? '—', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary))),
+                          DataCell(Text(d.creditLimit > 0 ? currencyFmt.format(d.creditLimit) : 'Unlimited')),
+                          DataCell(Text(currencyFmt.format(d.dueBalance), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.accentRose))),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: (isOverLimit ? AppColors.accentRose : AppColors.accentTeal).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                isOverLimit ? 'OVER LIMIT' : 'ACTIVE CREDIT',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isOverLimit ? AppColors.accentRose : AppColors.accentTeal,
                                 ),
                               ),
                             ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => _buildErrorBanner('Failed to load customer dues report: $e'),
-    );
-  }
-
-  // =========================================================================
-  // HELPER WIDGETS
-  // =========================================================================
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+          loading: () => const ChartShimmer(height: 300),
+          error: (e, _) => _buildErrorBanner('Failed to load customer dues: $e'),
+        ),
+      ],
     );
   }
 
   Widget _buildErrorBanner(String message) {
     return Container(
       padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.shade200),
+        color: AppColors.accentRose.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.accentRose.withValues(alpha: 0.3)),
       ),
-      child: Text(message, style: TextStyle(color: Colors.red.shade800)),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.accentRose, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(message, style: GoogleFonts.inter(fontSize: 12, color: AppColors.accentRose))),
+        ],
+      ),
     );
   }
 }
-

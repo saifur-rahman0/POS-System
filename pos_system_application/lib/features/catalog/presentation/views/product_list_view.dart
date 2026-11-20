@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../app/theme.dart';
 import '../../../../core/widgets/pos_animated_card.dart';
 import '../../../../core/widgets/pos_error_card.dart';
+import '../../../../core/widgets/stat_strip.dart';
 import '../../../inventory/presentation/controllers/inventory_controller.dart';
 import '../../../inventory/presentation/views/stock_adjustment_dialog.dart';
 import '../../../inventory/presentation/views/stock_movements_dialog.dart';
@@ -58,11 +60,54 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
       orElse: () => [],
     );
 
+    final totalProducts = productsAsync.maybeWhen(
+      data: (p) => p.total,
+      orElse: () => 0,
+    );
+    final totalUnits = balancesMap.values.fold<double>(0.0, (acc, qty) => acc + qty).toInt();
+    final lowStockCount = balancesMap.values.where((qty) => qty > 0 && qty <= 5).length;
+    final outOfStockCount = balancesMap.values.where((qty) => qty <= 0).length;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Premium Catalog Stats Strip
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: StatStrip(
+              items: [
+                StatStripItem(
+                  label: 'TOTAL PRODUCTS',
+                  value: '$totalProducts',
+                  icon: Icons.inventory_2_outlined,
+                  color: AppColors.accentTeal,
+                ),
+                StatStripItem(
+                  label: 'UNITS IN STOCK',
+                  value: '$totalUnits',
+                  icon: Icons.all_inbox_rounded,
+                  color: AppColors.accentBlue,
+                ),
+                StatStripItem(
+                  label: 'ACTIVE CATEGORIES',
+                  value: '${categories.length}',
+                  icon: Icons.category_outlined,
+                  color: AppColors.accentPurple,
+                ),
+                StatStripItem(
+                  label: 'STOCK ALERTS',
+                  value: '$lowStockCount Low · $outOfStockCount Out',
+                  icon: Icons.warning_amber_rounded,
+                  color: outOfStockCount > 0 ? AppColors.accentRose : AppColors.accentAmber,
+                  badge: outOfStockCount > 0 ? 'ALERT' : null,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // Filter Toolbar
           Card(
             elevation: 0,

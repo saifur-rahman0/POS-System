@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../app/theme.dart';
 import '../../../../core/widgets/pos_error_card.dart';
+import '../../../../core/widgets/stat_strip.dart';
 import '../../domain/models/pos_transaction.dart';
 import '../controllers/sales_history_controller.dart';
 import '../controllers/transactions_hub_controller.dart';
@@ -183,6 +185,42 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
+            if (_selectedTab == 0 && salesAsync.hasValue) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: StatStrip(
+                  items: [
+                    StatStripItem(
+                      label: 'TOTAL SALES RECEIPTS',
+                      value: '${salesAsync.value?.total ?? 0}',
+                      icon: Icons.receipt_long_outlined,
+                      color: AppColors.accentTeal,
+                    ),
+                    StatStripItem(
+                      label: 'GROSS VOLUME',
+                      value: currencyFmt.format(salesAsync.value?.items.fold<double>(0.0, (acc, s) => acc + s.grandTotal) ?? 0.0),
+                      icon: Icons.payments_outlined,
+                      color: AppColors.accentPurple,
+                    ),
+                    StatStripItem(
+                      label: 'PAID COLLECTED',
+                      value: currencyFmt.format(salesAsync.value?.items.fold<double>(0.0, (acc, s) => acc + s.paidTotal) ?? 0.0),
+                      icon: Icons.account_balance_wallet_outlined,
+                      color: AppColors.accentGreen,
+                    ),
+                    StatStripItem(
+                      label: 'OUTSTANDING DUE',
+                      value: currencyFmt.format(salesAsync.value?.items.fold<double>(0.0, (acc, s) => acc + s.dueTotal) ?? 0.0),
+                      icon: Icons.credit_card_off_outlined,
+                      color: AppColors.accentRose,
+                      badge: (salesAsync.value?.items.fold<double>(0.0, (acc, s) => acc + s.dueTotal) ?? 0.0) > 0 ? 'DUE' : null,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             Expanded(
               child: AnimatedSwitcher(

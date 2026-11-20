@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../app/theme.dart';
 import '../../../../core/widgets/pos_animated_card.dart';
 import '../../../../core/widgets/pos_error_card.dart';
+import '../../../../core/widgets/stat_strip.dart';
 import '../controllers/expenses_controller.dart';
 import '../controllers/financial_accounts_controller.dart';
 import '../../domain/models/expense.dart';
@@ -260,6 +262,17 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     final currencyFmt = NumberFormat.currency(symbol: '৳ ', decimalDigits: 2);
     final dateFmt = DateFormat('dd MMM yyyy, hh:mm a');
 
+    final expenseItems = expensesAsync.maybeWhen(
+      data: (items) => items,
+      orElse: () => <ExpenseModel>[],
+    );
+    final categoryItems = categoriesAsync.maybeWhen(
+      data: (items) => items,
+      orElse: () => <ExpenseCategoryModel>[],
+    );
+    final totalExpenseAmount = expenseItems.fold<double>(0.0, (acc, e) => acc + e.amount);
+    final pendingCount = expenseItems.where((e) => e.approvalStatus == 'PENDING_APPROVAL').length;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Padding(
@@ -385,7 +398,42 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
+
+            // Premium Expenses Stats Strip
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: StatStrip(
+                items: [
+                  StatStripItem(
+                    label: 'TOTAL VOUCHERS',
+                    value: '${expenseItems.length}',
+                    icon: Icons.receipt_long_outlined,
+                    color: AppColors.accentTeal,
+                  ),
+                  StatStripItem(
+                    label: 'TOTAL OUTFLOW',
+                    value: currencyFmt.format(totalExpenseAmount),
+                    icon: Icons.payments_outlined,
+                    color: AppColors.accentRose,
+                  ),
+                  StatStripItem(
+                    label: 'EXPENSE CATEGORIES',
+                    value: '${categoryItems.length}',
+                    icon: Icons.pie_chart_outline,
+                    color: AppColors.accentPurple,
+                  ),
+                  StatStripItem(
+                    label: 'PENDING APPROVAL',
+                    value: '$pendingCount Vouchers',
+                    icon: Icons.hourglass_top_rounded,
+                    color: pendingCount > 0 ? AppColors.accentAmber : AppColors.accentGreen,
+                    badge: pendingCount > 0 ? 'PENDING' : 'CLEAR',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Tab bar switcher
             Container(

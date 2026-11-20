@@ -5,7 +5,6 @@ import 'package:pos_client/core/network/api_client.dart';
 import 'package:pos_client/features/auth/data/users_api_service.dart';
 import 'package:pos_client/features/auth/domain/models/auth_user.dart';
 import 'package:pos_client/features/auth/domain/models/staff_user_model.dart';
-import 'package:pos_client/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:pos_client/features/auth/presentation/controllers/users_controller.dart';
 import 'package:pos_client/features/auth/presentation/views/login_screen.dart';
 import 'package:pos_client/features/shell/presentation/shell_screen.dart';
