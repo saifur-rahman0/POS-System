@@ -425,7 +425,7 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     Map<String, double> balancesMap,
   ) {
     final filterNotifier = ref.read(productFilterProvider.notifier);
-    final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+    final colWidths = ref.watch(terminalPreferencesProvider.select((p) => p.tableColumnWidths));
     final skuWidth = colWidths['cat_col_sku'] ?? 110.0;
     final nameWidth = colWidths['cat_col_name'] ?? 240.0;
     final catWidth = colWidths['cat_col_cat'] ?? 140.0;

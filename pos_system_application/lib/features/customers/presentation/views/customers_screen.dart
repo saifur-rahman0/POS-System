@@ -271,7 +271,7 @@ class _CustomerDirectoryTabState extends ConsumerState<_CustomerDirectoryTab> {
                       ? const Center(child: Text('No customers found', style: TextStyle(color: Colors.grey)))
                       : Builder(
                           builder: (context) {
-                            final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                            final colWidths = ref.watch(terminalPreferencesProvider.select((p) => p.tableColumnWidths));
                             final nameWidth = colWidths['cust_col_name'] ?? 180.0;
                             final phoneWidth = colWidths['cust_col_phone'] ?? 130.0;
                             final ptsWidth = colWidths['cust_col_pts'] ?? 100.0;
@@ -800,7 +800,7 @@ class _GiftCardsTab extends ConsumerWidget {
                   if (cards.isEmpty) {
                     return const Center(child: Text('No gift cards found', style: TextStyle(color: Colors.grey)));
                   }
-                  final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                  final colWidths = ref.watch(terminalPreferencesProvider.select((p) => p.tableColumnWidths));
                   final gcNumWidth = colWidths['gc_col_num'] ?? 160.0;
                   final gcInitWidth = colWidths['gc_col_init'] ?? 120.0;
                   final gcBalWidth = colWidths['gc_col_bal'] ?? 130.0;
@@ -1110,7 +1110,7 @@ class _PromotionalCampaignsTab extends ConsumerWidget {
                   if (campaigns.isEmpty) {
                     return const Center(child: Text('No promotional campaigns drafted yet.', style: TextStyle(color: Colors.grey)));
                   }
-                  final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                  final colWidths = ref.watch(terminalPreferencesProvider.select((p) => p.tableColumnWidths));
                   final campTitleWidth = colWidths['camp_col_title'] ?? 180.0;
                   final campSegWidth = colWidths['camp_col_seg'] ?? 140.0;
                   final campChanWidth = colWidths['camp_col_chan'] ?? 110.0;

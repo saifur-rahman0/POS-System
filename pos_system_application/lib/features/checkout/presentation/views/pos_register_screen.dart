@@ -1496,11 +1496,14 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                               Expanded(
                                 child: Row(
                                   children: [
-                                    Text(
-                                      loc.tr('discount', 'Discount'),
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey.shade700),
+                                    Flexible(
+                                      child: Text(
+                                        loc.tr('discount', 'Discount'),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey.shade700),
+                                      ),
                                     ),
                                     const SizedBox(width: 6),
                                     InkWell(
@@ -1539,11 +1542,14 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                               Expanded(
                                 child: Row(
                                   children: [
-                                    Text(
-                                      loc.tr('delivery_fee', 'Delivery Fee'),
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey.shade700),
+                                    Flexible(
+                                      child: Text(
+                                        loc.tr('delivery_fee', 'Delivery Fee'),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey.shade700),
+                                      ),
                                     ),
                                     const SizedBox(width: 6),
                                     InkWell(
@@ -1578,21 +1584,30 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                loc.tr('grand_total', 'Grand Total'),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
+                              Flexible(
+                                child: Text(
+                                  loc.tr('grand_total', 'Grand Total'),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: PosAnimatedText(
-                                  text: currencyFmt.format(cart.grandTotal),
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFF0F766E),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: PosAnimatedText(
+                                      text: currencyFmt.format(cart.grandTotal),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF0F766E),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1713,7 +1728,8 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
     NumberFormat currencyFmt,
     AppLocalizations loc,
   ) {
-    final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+    final prefColWidths = ref.watch(terminalPreferencesProvider.select((p) => p.tableColumnWidths));
+    final colWidths = _dragColWidths ?? prefColWidths;
     final nameWidth = colWidths['pos_col_name'] ?? 240.0;
     final skuWidth = colWidths['pos_col_sku'] ?? 140.0;
     final catWidth = colWidths['pos_col_cat'] ?? 140.0;
@@ -1731,87 +1747,139 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final contentWidth = math.max(constraints.maxWidth, totalWidth);
+          final contentWidth = math.max(constraints.maxWidth, totalWidth + 32.0);
+
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
               width: contentWidth,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
+                    width: contentWidth,
                     color: const Color(0xFFF1F5F9),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Row(
-                      children: [
-                        ResizableHeaderCell(
-                          title: loc.tr('product_name', 'Product Name'),
-                          width: nameWidth,
-                          minWidth: 140,
-                          onResize: (w) => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_name', w),
-                          onDoubleTapReset: () => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_name', 240.0),
-                        ),
-                        ResizableHeaderCell(
-                          title: loc.tr('barcode_sku', 'SKU / Barcode'),
-                          width: skuWidth,
-                          minWidth: 90,
-                          onResize: (w) => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_sku', w),
-                          onDoubleTapReset: () => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_sku', 140.0),
-                        ),
-                        ResizableHeaderCell(
-                          title: loc.tr('category', 'Category'),
-                          width: catWidth,
-                          minWidth: 90,
-                          onResize: (w) => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_cat', w),
-                          onDoubleTapReset: () => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_cat', 140.0),
-                        ),
-                        ResizableHeaderCell(
-                          title: loc.tr('stock_level', 'Stock Level'),
-                          width: stockWidth,
-                          minWidth: 90,
-                          onResize: (w) => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_stock', w),
-                          onDoubleTapReset: () => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_stock', 130.0),
-                        ),
-                        ResizableHeaderCell(
-                          title: loc.tr('price', 'Price'),
-                          width: priceWidth,
-                          minWidth: 80,
-                          isNumeric: true,
-                          onResize: (w) => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_price', w),
-                          onDoubleTapReset: () => ref
-                              .read(terminalPreferencesProvider.notifier)
-                              .setTableColumnWidth('pos_col_price', 110.0),
-                        ),
-                        SizedBox(
-                          width: actionWidth,
-                          child: const Center(
-                            child: Text(
-                              'Action',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: Color(0xFF475569)),
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: totalWidth,
+                      child: Row(
+                        children: [
+                          ResizableHeaderCell(
+                            title: loc.tr('product_name', 'Product Name'),
+                            width: nameWidth,
+                            minWidth: 140,
+                            onResize: (w) {
+                              setState(() {
+                                final current = Map<String, double>.from(_dragColWidths ?? prefColWidths);
+                                current['pos_col_name'] = w;
+                                _dragColWidths = current;
+                              });
+                            },
+                            onResizeEnd: (w) {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_name', w);
+                              setState(() => _dragColWidths = null);
+                            },
+                            onDoubleTapReset: () {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_name', 240.0);
+                              setState(() => _dragColWidths = null);
+                            },
+                          ),
+                          ResizableHeaderCell(
+                            title: loc.tr('barcode_sku', 'SKU / Barcode'),
+                            width: skuWidth,
+                            minWidth: 90,
+                            onResize: (w) {
+                              setState(() {
+                                final current = Map<String, double>.from(_dragColWidths ?? prefColWidths);
+                                current['pos_col_sku'] = w;
+                                _dragColWidths = current;
+                              });
+                            },
+                            onResizeEnd: (w) {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_sku', w);
+                              setState(() => _dragColWidths = null);
+                            },
+                            onDoubleTapReset: () {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_sku', 140.0);
+                              setState(() => _dragColWidths = null);
+                            },
+                          ),
+                          ResizableHeaderCell(
+                            title: loc.tr('category', 'Category'),
+                            width: catWidth,
+                            minWidth: 90,
+                            onResize: (w) {
+                              setState(() {
+                                final current = Map<String, double>.from(_dragColWidths ?? prefColWidths);
+                                current['pos_col_cat'] = w;
+                                _dragColWidths = current;
+                              });
+                            },
+                            onResizeEnd: (w) {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_cat', w);
+                              setState(() => _dragColWidths = null);
+                            },
+                            onDoubleTapReset: () {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_cat', 140.0);
+                              setState(() => _dragColWidths = null);
+                            },
+                          ),
+                          ResizableHeaderCell(
+                            title: loc.tr('stock_level', 'Stock Level'),
+                            width: stockWidth,
+                            minWidth: 90,
+                            onResize: (w) {
+                              setState(() {
+                                final current = Map<String, double>.from(_dragColWidths ?? prefColWidths);
+                                current['pos_col_stock'] = w;
+                                _dragColWidths = current;
+                              });
+                            },
+                            onResizeEnd: (w) {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_stock', w);
+                              setState(() => _dragColWidths = null);
+                            },
+                            onDoubleTapReset: () {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_stock', 130.0);
+                              setState(() => _dragColWidths = null);
+                            },
+                          ),
+                          ResizableHeaderCell(
+                            title: loc.tr('price', 'Price'),
+                            width: priceWidth,
+                            minWidth: 80,
+                            isNumeric: true,
+                            onResize: (w) {
+                              setState(() {
+                                final current = Map<String, double>.from(_dragColWidths ?? prefColWidths);
+                                current['pos_col_price'] = w;
+                                _dragColWidths = current;
+                              });
+                            },
+                            onResizeEnd: (w) {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_price', w);
+                              setState(() => _dragColWidths = null);
+                            },
+                            onDoubleTapReset: () {
+                              ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('pos_col_price', 110.0);
+                              setState(() => _dragColWidths = null);
+                            },
+                          ),
+                          SizedBox(
+                            width: actionWidth,
+                            child: const Center(
+                              child: Text(
+                                'Action',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Color(0xFF475569)),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const Divider(height: 1, color: Color(0xFFE2E8F0)),
@@ -1834,161 +1902,166 @@ class _PosRegisterScreenState extends ConsumerState<PosRegisterScreen> {
                         return InkWell(
                           onTap: () => _onProductTap(prod),
                           hoverColor: const Color(0xFFF0FDFA),
-                          child: Padding(
+                          child: Container(
+                            width: contentWidth,
+                            alignment: Alignment.centerLeft,
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: nameWidth,
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          prod.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                            color: Color(0xFF0F172A),
-                                          ),
-                                        ),
-                                      ),
-                                      if (prod.variants.length > 1) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF0F766E)
-                                                .withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
+                            child: SizedBox(
+                              width: totalWidth,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: nameWidth,
+                                    child: Row(
+                                      children: [
+                                        Flexible(
                                           child: Text(
-                                            '${prod.variants.length} vars',
+                                            prod.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF0F766E),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                              color: Color(0xFF0F172A),
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: skuWidth,
-                                  child: Text(
-                                    prod.primaryVariant?.barcode ?? prod.sku,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: catWidth,
-                                  child: Text(
-                                    prod.categoryName ?? 'General',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: stockWidth,
-                                  child: stockQty != null
-                                      ? Row(
-                                          children: [
-                                            Icon(
-                                              isHealthy
-                                                  ? Icons.check_circle_outline
-                                                  : (isLow
-                                                      ? Icons.warning_amber_rounded
-                                                      : Icons.cancel_outlined),
-                                              size: 13,
-                                              color: isHealthy
-                                                  ? const Color(0xFF10B981)
-                                                  : (isLow
-                                                      ? const Color(0xFFF59E0B)
-                                                      : const Color(0xFFEF4444)),
+                                        if (prod.variants.length > 1) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF0F766E)
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(4),
                                             ),
-                                            const SizedBox(width: 4),
-                                            Expanded(
-                                              child: Text(
-                                                stockQty > 0
-                                                    ? '${stockQty.toStringAsFixed(0)} in stock'
-                                                    : loc.tr(
-                                                        'out_of_stock', 'Out of stock'),
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isHealthy
-                                                      ? const Color(0xFF047857)
-                                                      : (isLow
-                                                          ? const Color(0xFFB45309)
-                                                          : const Color(0xFFB91C1C)),
-                                                ),
+                                            child: Text(
+                                              '${prod.variants.length} vars',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF0F766E),
                                               ),
                                             ),
-                                          ],
-                                        )
-                                      : const Text('—',
-                                          style: TextStyle(
-                                              fontSize: 12, color: Colors.grey)),
-                                ),
-                                SizedBox(
-                                  width: priceWidth,
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 12),
-                                      child: Text(
-                                        currencyFmt.format(price),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF0F766E),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: skuWidth,
+                                    child: Text(
+                                      prod.primaryVariant?.barcode ?? prod.sku,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: catWidth,
+                                    child: Text(
+                                      prod.categoryName ?? 'General',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: stockWidth,
+                                    child: stockQty != null
+                                        ? Row(
+                                            children: [
+                                              Icon(
+                                                isHealthy
+                                                    ? Icons.check_circle_outline
+                                                    : (isLow
+                                                        ? Icons.warning_amber_rounded
+                                                        : Icons.cancel_outlined),
+                                                size: 13,
+                                                color: isHealthy
+                                                    ? const Color(0xFF10B981)
+                                                    : (isLow
+                                                        ? const Color(0xFFF59E0B)
+                                                        : const Color(0xFFEF4444)),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  stockQty > 0
+                                                      ? '${stockQty.toStringAsFixed(0)} in stock'
+                                                      : loc.tr(
+                                                          'out_of_stock', 'Out of stock'),
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isHealthy
+                                                        ? const Color(0xFF047857)
+                                                        : (isLow
+                                                            ? const Color(0xFFB45309)
+                                                            : const Color(0xFFB91C1C)),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : const Text('—',
+                                            style: TextStyle(
+                                                fontSize: 12, color: Colors.grey)),
+                                  ),
+                                  SizedBox(
+                                    width: priceWidth,
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(right: 14),
+                                        child: Text(
+                                          currencyFmt.format(price),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: Color(0xFF0F766E),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(
-                                  width: actionWidth,
-                                  child: Center(
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF0F766E),
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 6),
-                                        minimumSize: const Size(60, 28),
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(6)),
-                                      ),
-                                      onPressed: () => _onProductTap(prod),
-                                      icon:
-                                          const Icon(Icons.add_shopping_cart, size: 14),
-                                      label: Text(
-                                        loc.tr('add_to_cart', 'Add'),
-                                        style: const TextStyle(
-                                            fontSize: 11, fontWeight: FontWeight.bold),
+                                  SizedBox(
+                                    width: actionWidth,
+                                    child: Center(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF0F766E),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          minimumSize: const Size(60, 28),
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(6)),
+                                        ),
+                                        onPressed: () => _onProductTap(prod),
+                                        icon:
+                                            const Icon(Icons.add_shopping_cart, size: 14),
+                                        label: Text(
+                                          loc.tr('add_to_cart', 'Add'),
+                                          style: const TextStyle(
+                                              fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );

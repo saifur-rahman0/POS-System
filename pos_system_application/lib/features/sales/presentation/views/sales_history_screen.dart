@@ -470,7 +470,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                         // Sales Table
                                         Builder(
                                           builder: (context) {
-                                            final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                                            final colWidths = ref.watch(terminalPreferencesProvider.select((p) => p.tableColumnWidths));
                                             final receiptWidth = colWidths['sale_col_receipt'] ?? 140.0;
                                             final dateWidth = colWidths['sale_col_date'] ?? 160.0;
                                             final custWidth = colWidths['sale_col_cust'] ?? 180.0;
