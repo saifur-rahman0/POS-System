@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../../app/theme.dart';
 import '../../../../core/widgets/pos_error_card.dart';
 import '../../../../core/widgets/stat_strip.dart';
+import '../../../../core/widgets/resizable_header_cell.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/models/pos_transaction.dart';
 import '../controllers/sales_history_controller.dart';
 import '../controllers/transactions_hub_controller.dart';
@@ -466,266 +468,338 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                           CrossAxisAlignment.stretch,
                                       children: [
                                         // Sales Table
-                                        Expanded(
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.vertical,
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: DataTable(
-                                                headingRowColor:
-                                                    WidgetStateProperty.all(
-                                                  Colors.grey.shade50,
-                                                ),
-                                                columns: const [
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Receipt #',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
+                                        Builder(
+                                          builder: (context) {
+                                            final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                                            final receiptWidth = colWidths['sale_col_receipt'] ?? 140.0;
+                                            final dateWidth = colWidths['sale_col_date'] ?? 160.0;
+                                            final custWidth = colWidths['sale_col_cust'] ?? 180.0;
+                                            final itemsWidth = colWidths['sale_col_items'] ?? 100.0;
+                                            final totalWidth = colWidths['sale_col_total'] ?? 130.0;
+                                            final statusWidth = colWidths['sale_col_status'] ?? 110.0;
+                                            final actionsWidth = colWidths['sale_col_actions'] ?? 140.0;
+
+                                            return Expanded(
+                                              child: SingleChildScrollView(
+                                                scrollDirection: Axis.vertical,
+                                                child: SingleChildScrollView(
+                                                  scrollDirection: Axis.horizontal,
+                                                  child: DataTable(
+                                                    headingRowColor:
+                                                        WidgetStateProperty.all(
+                                                      Colors.grey.shade50,
                                                     ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Date & Time',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Customer',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Items',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Grand Total',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Status',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Actions',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                                rows:
-                                                    pageData.items.map((sale) {
-                                                  return DataRow(
-                                                    cells: [
-                                                      DataCell(
-                                                        Text(
-                                                          sale.receiptNo,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontFamily:
-                                                                'monospace',
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Color(
-                                                                0xFF0F766E),
-                                                          ),
+                                                    columns: [
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Receipt #',
+                                                          width: receiptWidth,
+                                                          minWidth: 100,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_receipt', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_receipt', 140.0),
                                                         ),
                                                       ),
-                                                      DataCell(
-                                                        Text(dateFmt.format(
-                                                            sale.createdAt)),
-                                                      ),
-                                                      DataCell(
-                                                        Text(
-                                                            sale.customerName ??
-                                                                'Walk-in'),
-                                                      ),
-                                                      DataCell(
-                                                        Text(
-                                                            '${sale.itemsCount} items'),
-                                                      ),
-                                                      DataCell(
-                                                        Text(
-                                                          currencyFmt.format(
-                                                              sale.grandTotal),
-                                                          style:
-                                                              const TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Date & Time',
+                                                          width: dateWidth,
+                                                          minWidth: 120,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_date', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_date', 160.0),
                                                         ),
                                                       ),
-                                                      DataCell(
-                                                        Container(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 3,
-                                                          ),
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color: _getStatusColor(
-                                                                    sale.status)
-                                                                .withValues(
-                                                                    alpha: 0.1),
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10),
-                                                            border: Border.all(
-                                                              color:
-                                                                  _getStatusColor(
-                                                                sale.status,
-                                                              ).withValues(
-                                                                      alpha:
-                                                                          0.3),
-                                                            ),
-                                                          ),
-                                                          child: Text(
-                                                            sale.status,
-                                                            style: TextStyle(
-                                                              color: _getStatusColor(
-                                                                  sale.status),
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 11,
-                                                            ),
-                                                          ),
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Customer',
+                                                          width: custWidth,
+                                                          minWidth: 110,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_cust', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_cust', 180.0),
                                                         ),
                                                       ),
-                                                      DataCell(
-                                                        Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            IconButton(
-                                                              tooltip:
-                                                                  'View Details',
-                                                              icon: const Icon(
-                                                                Icons
-                                                                    .visibility_outlined,
-                                                                size: 18,
-                                                              ),
-                                                              onPressed: () {
-                                                                SaleDetailDrawer
-                                                                    .show(
-                                                                  context,
-                                                                  sale.id,
-                                                                  () => ref
-                                                                      .refresh(
-                                                                    salesListProvider,
-                                                                  ),
-                                                                );
-                                                              },
-                                                            ),
-                                                            if (sale.status !=
-                                                                    'VOIDED' &&
-                                                                sale.status !=
-                                                                    'REFUNDED') ...[
-                                                              IconButton(
-                                                                tooltip:
-                                                                    'Process Return',
-                                                                icon:
-                                                                    const Icon(
-                                                                  Icons
-                                                                      .assignment_return_outlined,
-                                                                  size: 18,
-                                                                  color: Color(
-                                                                      0xFF0F766E),
-                                                                ),
-                                                                onPressed: () {
-                                                                  showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (ctx) =>
-                                                                            ReturnDialog(
-                                                                      saleId:
-                                                                          sale.id,
-                                                                      receiptNo:
-                                                                          sale.receiptNo,
-                                                                      onReturnSuccess:
-                                                                          () {
-                                                                        ref.invalidate(
-                                                                          salesListProvider,
-                                                                        );
-                                                                      },
-                                                                    ),
-                                                                  );
-                                                                },
-                                                              ),
-                                                              IconButton(
-                                                                tooltip:
-                                                                    'Product Exchange',
-                                                                icon:
-                                                                    const Icon(
-                                                                  Icons
-                                                                      .swap_horiz,
-                                                                  size: 20,
-                                                                  color: Color(
-                                                                      0xFF0F766E),
-                                                                ),
-                                                                onPressed: () {
-                                                                  showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (ctx) =>
-                                                                            ProductExchangeDialog(
-                                                                      saleId:
-                                                                          sale.id,
-                                                                      receiptNo:
-                                                                          sale.receiptNo,
-                                                                      onExchangeSuccess:
-                                                                          () {
-                                                                        ref.invalidate(
-                                                                          salesListProvider,
-                                                                        );
-                                                                      },
-                                                                    ),
-                                                                  );
-                                                                },
-                                                              ),
-                                                            ],
-                                                          ],
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Items',
+                                                          width: itemsWidth,
+                                                          minWidth: 70,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_items', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_items', 100.0),
+                                                        ),
+                                                      ),
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Grand Total',
+                                                          width: totalWidth,
+                                                          minWidth: 90,
+                                                          isNumeric: true,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_total', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_total', 130.0),
+                                                        ),
+                                                      ),
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Status',
+                                                          width: statusWidth,
+                                                          minWidth: 80,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_status', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_status', 110.0),
+                                                        ),
+                                                      ),
+                                                      DataColumn(
+                                                        label: ResizableHeaderCell(
+                                                          title: 'Actions',
+                                                          width: actionsWidth,
+                                                          minWidth: 90,
+                                                          onResize: (w) => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_actions', w),
+                                                          onDoubleTapReset: () => ref
+                                                              .read(terminalPreferencesProvider.notifier)
+                                                              .setTableColumnWidth('sale_col_actions', 140.0),
                                                         ),
                                                       ),
                                                     ],
-                                                  );
-                                                }).toList(),
+                                                    rows:
+                                                        pageData.items.map((sale) {
+                                                      return DataRow(
+                                                        cells: [
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: receiptWidth,
+                                                              child: Text(
+                                                                sale.receiptNo,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontFamily:
+                                                                      'monospace',
+                                                                  fontWeight:
+                                                                      FontWeight.bold,
+                                                                  color: Color(
+                                                                      0xFF0F766E),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: dateWidth,
+                                                              child: Text(
+                                                                dateFmt.format(sale.createdAt),
+                                                                overflow: TextOverflow.ellipsis,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: custWidth,
+                                                              child: Text(
+                                                                sale.customerName ?? 'Walk-in',
+                                                                overflow: TextOverflow.ellipsis,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: itemsWidth,
+                                                              child: Text(
+                                                                '${sale.itemsCount} items',
+                                                                overflow: TextOverflow.ellipsis,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: totalWidth,
+                                                              child: Align(
+                                                                alignment: Alignment.centerRight,
+                                                                child: Text(
+                                                                  currencyFmt.format(sale.grandTotal),
+                                                                  style: const TextStyle(
+                                                                    fontWeight: FontWeight.bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: statusWidth,
+                                                              child: Align(
+                                                                alignment: Alignment.centerLeft,
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .symmetric(
+                                                                    horizontal: 8,
+                                                                    vertical: 3,
+                                                                  ),
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: _getStatusColor(
+                                                                            sale.status)
+                                                                        .withValues(
+                                                                            alpha: 0.1),
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(
+                                                                                10),
+                                                                    border: Border.all(
+                                                                      color:
+                                                                          _getStatusColor(
+                                                                        sale.status,
+                                                                      ).withValues(
+                                                                              alpha:
+                                                                                  0.3),
+                                                                    ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    sale.status,
+                                                                    style: TextStyle(
+                                                                      color: _getStatusColor(
+                                                                          sale.status),
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontSize: 11,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: actionsWidth,
+                                                              child: Row(
+                                                                mainAxisSize:
+                                                                    MainAxisSize.min,
+                                                                children: [
+                                                                  IconButton(
+                                                                    tooltip:
+                                                                        'View Details',
+                                                                    icon: const Icon(
+                                                                      Icons
+                                                                          .visibility_outlined,
+                                                                      size: 18,
+                                                                    ),
+                                                                    onPressed: () {
+                                                                      SaleDetailDrawer
+                                                                          .show(
+                                                                        context,
+                                                                        sale.id,
+                                                                        () => ref
+                                                                            .refresh(
+                                                                          salesListProvider,
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                  ),
+                                                                  if (sale.status !=
+                                                                          'VOIDED' &&
+                                                                      sale.status !=
+                                                                          'REFUNDED') ...[
+                                                                    IconButton(
+                                                                      tooltip:
+                                                                          'Process Return',
+                                                                      icon:
+                                                                          const Icon(
+                                                                        Icons
+                                                                            .assignment_return_outlined,
+                                                                        size: 18,
+                                                                        color: Color(
+                                                                            0xFF0F766E),
+                                                                      ),
+                                                                      onPressed: () {
+                                                                        showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (ctx) =>
+                                                                                  ReturnDialog(
+                                                                            saleId:
+                                                                                sale.id,
+                                                                            receiptNo:
+                                                                                sale.receiptNo,
+                                                                            onReturnSuccess:
+                                                                                () {
+                                                                              ref.invalidate(
+                                                                                salesListProvider,
+                                                                              );
+                                                                            },
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                    IconButton(
+                                                                      tooltip:
+                                                                          'Product Exchange',
+                                                                      icon:
+                                                                          const Icon(
+                                                                        Icons
+                                                                            .swap_horiz,
+                                                                        size: 20,
+                                                                        color: Color(
+                                                                            0xFF0F766E),
+                                                                      ),
+                                                                      onPressed: () {
+                                                                        showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (ctx) =>
+                                                                                  ProductExchangeDialog(
+                                                                            saleId:
+                                                                                sale.id,
+                                                                            receiptNo:
+                                                                                sale.receiptNo,
+                                                                            onExchangeSuccess:
+                                                                                () {
+                                                                              ref.invalidate(
+                                                                                salesListProvider,
+                                                                              );
+                                                                            },
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          ),
+                                            );
+                                          },
                                         ),
 
                                         // Pagination bar

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -269,6 +270,8 @@ class TerminalPreferencesNotifier extends StateNotifier<TerminalPreferencesModel
     _loadFromDisk();
   }
 
+  Timer? _saveDebounceTimer;
+
   void _loadFromDisk() {
     try {
       final file = File('pos_terminal_preferences.json');
@@ -280,11 +283,30 @@ class TerminalPreferencesNotifier extends StateNotifier<TerminalPreferencesModel
     } catch (_) {}
   }
 
-  void _saveToDisk() {
+  void _saveToDisk({bool immediate = false}) {
+    if (immediate) {
+      _saveDebounceTimer?.cancel();
+      _writePreferencesFile();
+      return;
+    }
+    _saveDebounceTimer?.cancel();
+    _saveDebounceTimer = Timer(const Duration(milliseconds: 350), () {
+      _writePreferencesFile();
+    });
+  }
+
+  void _writePreferencesFile() {
     try {
       final file = File('pos_terminal_preferences.json');
       file.writeAsStringSync(jsonEncode(state.toJson()));
     } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _saveDebounceTimer?.cancel();
+    _writePreferencesFile();
+    super.dispose();
   }
 
   void setTerminalName(String name) {
@@ -309,11 +331,26 @@ class TerminalPreferencesNotifier extends StateNotifier<TerminalPreferencesModel
 
   void toggleDarkMode(bool enabled) {
     state = state.copyWith(isDarkMode: enabled);
-    _saveToDisk();
+    _saveToDisk(immediate: true);
   }
 
   void setPosTableView(bool isTable) {
     state = state.copyWith(isPosTableView: isTable);
+    _saveToDisk(immediate: true);
+  }
+
+  void setCartPanelWidth(double width) {
+    if ((state.cartPanelWidth - width).abs() < 0.5) return;
+    state = state.copyWith(cartPanelWidth: width);
+    _saveToDisk();
+  }
+
+  void setTableColumnWidth(String key, double width) {
+    final current = state.tableColumnWidths[key];
+    if (current != null && (current - width).abs() < 0.5) return;
+    final updated = Map<String, double>.from(state.tableColumnWidths);
+    updated[key] = width;
+    state = state.copyWith(tableColumnWidths: updated);
     _saveToDisk();
   }
 }

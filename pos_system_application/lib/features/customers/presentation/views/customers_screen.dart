@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/theme.dart';
 import '../../../../core/widgets/stat_strip.dart';
+import '../../../../core/widgets/resizable_header_cell.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../crm/domain/models/loyalty_settings.dart';
 import '../../../crm/domain/models/membership_tier.dart';
 import '../../../crm/domain/models/rfm_analytics.dart';
@@ -267,131 +269,261 @@ class _CustomerDirectoryTabState extends ConsumerState<_CustomerDirectoryTab> {
                   ? const Center(child: CircularProgressIndicator())
                   : customers.isEmpty
                       ? const Center(child: Text('No customers found', style: TextStyle(color: Colors.grey)))
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.vertical,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: DataTable(
-                                    headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-                                    columns: const [
-                                      DataColumn(label: Text('Customer Name')),
-                                      DataColumn(label: Text('Phone')),
-                                      DataColumn(label: Text('Points')),
-                                      DataColumn(label: Text('Credit Limit', textAlign: TextAlign.right)),
-                                      DataColumn(label: Text('Due Balance', textAlign: TextAlign.right)),
-                                      DataColumn(label: Text('Store Credit', textAlign: TextAlign.right)),
-                                      DataColumn(label: Text('Segment')),
-                                      DataColumn(label: Text('Actions', textAlign: TextAlign.center)),
-                                    ],
-                                    rows: customers.map((c) {
-                                      final hasDue = c.dueBalance > 0;
-                                      return DataRow(
-                                        cells: [
-                                          DataCell(
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                CircleAvatar(
-                                                  radius: 14,
-                                                  backgroundColor: const Color(0xFF0F766E).withValues(alpha: 0.15),
-                                                  child: Text(
-                                                    c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
-                                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                              ],
+                      : Builder(
+                          builder: (context) {
+                            final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                            final nameWidth = colWidths['cust_col_name'] ?? 180.0;
+                            final phoneWidth = colWidths['cust_col_phone'] ?? 130.0;
+                            final ptsWidth = colWidths['cust_col_pts'] ?? 100.0;
+                            final creditWidth = colWidths['cust_col_credit'] ?? 120.0;
+                            final dueWidth = colWidths['cust_col_due'] ?? 120.0;
+                            final storeCreditWidth = colWidths['cust_col_stored'] ?? 120.0;
+                            final segWidth = colWidths['cust_col_seg'] ?? 110.0;
+                            final actionsWidth = colWidths['cust_col_actions'] ?? 170.0;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: DataTable(
+                                        headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+                                        columns: [
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Customer Name',
+                                              width: nameWidth,
+                                              minWidth: 120,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_name', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_name', 180.0),
                                             ),
                                           ),
-                                          DataCell(Text(c.phone ?? '—', style: const TextStyle(fontSize: 12))),
-                                          DataCell(
-                                            Chip(
-                                              label: Text('${c.loyaltyPointsBalance} pts', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                              backgroundColor: Colors.amber.shade50,
-                                              padding: EdgeInsets.zero,
-                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Phone',
+                                              width: phoneWidth,
+                                              minWidth: 90,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_phone', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_phone', 130.0),
                                             ),
                                           ),
-                                          DataCell(Text(currencyFmt.format(c.creditLimit), style: const TextStyle(fontSize: 12))),
-                                          DataCell(
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                              decoration: BoxDecoration(
-                                                color: hasDue ? Colors.red.shade50 : Colors.transparent,
-                                                borderRadius: BorderRadius.circular(4),
-                                                border: hasDue ? Border.all(color: Colors.red.shade200) : null,
-                                              ),
-                                              child: Text(
-                                                currencyFmt.format(c.dueBalance),
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: hasDue ? FontWeight.bold : FontWeight.normal,
-                                                  color: hasDue ? Colors.red.shade800 : Colors.black,
-                                                ),
-                                              ),
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Points',
+                                              width: ptsWidth,
+                                              minWidth: 70,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_pts', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_pts', 100.0),
                                             ),
                                           ),
-                                          DataCell(Text(currencyFmt.format(c.storeCreditBalance), style: const TextStyle(fontSize: 12, color: Colors.teal))),
-                                          DataCell(
-                                            Text(
-                                              (c.rfmSegment ?? 'NEW').replaceAll('_', ' '),
-                                              style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Credit Limit',
+                                              width: creditWidth,
+                                              minWidth: 80,
+                                              isNumeric: true,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_credit', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_credit', 120.0),
                                             ),
                                           ),
-                                          DataCell(
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                if (hasDue)
-                                                  ElevatedButton.icon(
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: const Color(0xFF0F766E),
-                                                      foregroundColor: Colors.white,
-                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                      minimumSize: Size.zero,
-                                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                    ),
-                                                    icon: const Icon(Icons.payments_outlined, size: 12),
-                                                    label: const Text('Collect', style: TextStyle(fontSize: 11)),
-                                                    onPressed: () => CollectDueDialog.show(context, customer: c),
-                                                  ),
-                                                const SizedBox(width: 4),
-                                                IconButton(
-                                                  icon: const Icon(Icons.stars, size: 16, color: Colors.amber),
-                                                  tooltip: 'Adjust Points',
-                                                  onPressed: () => AdjustPointsDialog.show(
-                                                    context,
-                                                    customerId: c.id,
-                                                    customerName: c.name,
-                                                    currentPoints: c.loyaltyPointsBalance,
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.history_edu, size: 16),
-                                                  tooltip: 'Statement / Ledger',
-                                                  onPressed: () => CustomerLedgerDialog.show(context, c),
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.edit_outlined, size: 16),
-                                                  tooltip: 'Edit Profile',
-                                                  onPressed: () => CustomerFormDialog.show(context, customer: c),
-                                                ),
-                                              ],
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Due Balance',
+                                              width: dueWidth,
+                                              minWidth: 80,
+                                              isNumeric: true,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_due', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_due', 120.0),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Store Credit',
+                                              width: storeCreditWidth,
+                                              minWidth: 80,
+                                              isNumeric: true,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_stored', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_stored', 120.0),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Segment',
+                                              width: segWidth,
+                                              minWidth: 80,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_seg', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_seg', 110.0),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            label: ResizableHeaderCell(
+                                              title: 'Actions',
+                                              width: actionsWidth,
+                                              minWidth: 100,
+                                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_actions', w),
+                                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('cust_col_actions', 170.0),
                                             ),
                                           ),
                                         ],
-                                      );
-                                    }).toList(),
+                                        rows: customers.map((c) {
+                                          final hasDue = c.dueBalance > 0;
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(
+                                                SizedBox(
+                                                  width: nameWidth,
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      CircleAvatar(
+                                                        radius: 14,
+                                                        backgroundColor: const Color(0xFF0F766E).withValues(alpha: 0.15),
+                                                        child: Text(
+                                                          c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
+                                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Flexible(
+                                                        child: Text(
+                                                          c.name,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: phoneWidth,
+                                                  child: Text(c.phone ?? '—', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: ptsWidth,
+                                                  child: Align(
+                                                    alignment: Alignment.centerLeft,
+                                                    child: Chip(
+                                                      label: Text('${c.loyaltyPointsBalance} pts', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                                      backgroundColor: Colors.amber.shade50,
+                                                      padding: EdgeInsets.zero,
+                                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: creditWidth,
+                                                  child: Align(
+                                                    alignment: Alignment.centerRight,
+                                                    child: Text(currencyFmt.format(c.creditLimit), style: const TextStyle(fontSize: 12)),
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: dueWidth,
+                                                  child: Align(
+                                                    alignment: Alignment.centerRight,
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                      decoration: BoxDecoration(
+                                                        color: hasDue ? Colors.red.shade50 : Colors.transparent,
+                                                        borderRadius: BorderRadius.circular(4),
+                                                        border: hasDue ? Border.all(color: Colors.red.shade200) : null,
+                                                      ),
+                                                      child: Text(
+                                                        currencyFmt.format(c.dueBalance),
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight: hasDue ? FontWeight.bold : FontWeight.normal,
+                                                          color: hasDue ? Colors.red.shade800 : Colors.black,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: storeCreditWidth,
+                                                  child: Align(
+                                                    alignment: Alignment.centerRight,
+                                                    child: Text(currencyFmt.format(c.storeCreditBalance), style: const TextStyle(fontSize: 12, color: Colors.teal)),
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: segWidth,
+                                                  child: Text(
+                                                    (c.rfmSegment ?? 'NEW').replaceAll('_', ' '),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: actionsWidth,
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      if (hasDue)
+                                                        ElevatedButton.icon(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: const Color(0xFF0F766E),
+                                                            foregroundColor: Colors.white,
+                                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                            minimumSize: Size.zero,
+                                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                          ),
+                                                          icon: const Icon(Icons.payments_outlined, size: 12),
+                                                          label: const Text('Collect', style: TextStyle(fontSize: 11)),
+                                                          onPressed: () => CollectDueDialog.show(context, customer: c),
+                                                        ),
+                                                      const SizedBox(width: 4),
+                                                      IconButton(
+                                                        icon: const Icon(Icons.stars, size: 16, color: Colors.amber),
+                                                        tooltip: 'Adjust Points',
+                                                        onPressed: () => AdjustPointsDialog.show(
+                                                          context,
+                                                          customerId: c.id,
+                                                          customerName: c.name,
+                                                          currentPoints: c.loyaltyPointsBalance,
+                                                        ),
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(Icons.history_edu, size: 16),
+                                                        tooltip: 'Statement / Ledger',
+                                                        onPressed: () => CustomerLedgerDialog.show(context, c),
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(Icons.edit_outlined, size: 16),
+                                                        tooltip: 'Edit Profile',
+                                                        onPressed: () => CustomerFormDialog.show(context, customer: c),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
+                              ],
+                            );
+                          },
                         ),
             ),
           ),
@@ -668,55 +800,142 @@ class _GiftCardsTab extends ConsumerWidget {
                   if (cards.isEmpty) {
                     return const Center(child: Text('No gift cards found', style: TextStyle(color: Colors.grey)));
                   }
+                  final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                  final gcNumWidth = colWidths['gc_col_num'] ?? 160.0;
+                  final gcInitWidth = colWidths['gc_col_init'] ?? 120.0;
+                  final gcBalWidth = colWidths['gc_col_bal'] ?? 130.0;
+                  final gcStatusWidth = colWidths['gc_col_status'] ?? 100.0;
+                  final gcRecipWidth = colWidths['gc_col_recip'] ?? 140.0;
+                  final gcActWidth = colWidths['gc_col_act'] ?? 140.0;
+
                   return SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-                        columns: const [
-                          DataColumn(label: Text('Card Number')),
-                          DataColumn(label: Text('Initial Value')),
-                          DataColumn(label: Text('Current Balance')),
-                          DataColumn(label: Text('Status')),
-                          DataColumn(label: Text('Recipient')),
-                          DataColumn(label: Text('Actions')),
+                        columns: [
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Card Number',
+                              width: gcNumWidth,
+                              minWidth: 100,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_num', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_num', 160.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Initial Value',
+                              width: gcInitWidth,
+                              minWidth: 80,
+                              isNumeric: true,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_init', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_init', 120.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Current Balance',
+                              width: gcBalWidth,
+                              minWidth: 80,
+                              isNumeric: true,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_bal', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_bal', 130.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Status',
+                              width: gcStatusWidth,
+                              minWidth: 70,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_status', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_status', 100.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Recipient',
+                              width: gcRecipWidth,
+                              minWidth: 90,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_recip', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_recip', 140.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Actions',
+                              width: gcActWidth,
+                              minWidth: 90,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_act', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('gc_col_act', 140.0),
+                            ),
+                          ),
                         ],
                         rows: cards.map((card) {
                           final isActive = card.status == 'ACTIVE';
                           return DataRow(
                             cells: [
-                              DataCell(Text(card.cardNumber, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace'))),
-                              DataCell(Text('৳ ${card.initialBalance.toStringAsFixed(2)}')),
-                              DataCell(Text('৳ ${card.currentBalance.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F766E)))),
                               DataCell(
-                                Chip(
-                                  label: Text(card.status, style: const TextStyle(fontSize: 10, color: Colors.white)),
-                                  backgroundColor: isActive ? Colors.green : Colors.grey,
-                                  padding: EdgeInsets.zero,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                SizedBox(
+                                  width: gcNumWidth,
+                                  child: Text(card.cardNumber, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace')),
                                 ),
                               ),
-                              DataCell(Text(card.recipientName ?? '—')),
                               DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), minimumSize: Size.zero),
-                                      icon: const Icon(Icons.add, size: 12),
-                                      label: const Text('Reload', style: TextStyle(fontSize: 11)),
-                                      onPressed: () => ReloadGiftCardDialog.show(context, card),
+                                SizedBox(
+                                  width: gcInitWidth,
+                                  child: Align(alignment: Alignment.centerRight, child: Text('৳ ${card.initialBalance.toStringAsFixed(2)}')),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: gcBalWidth,
+                                  child: Align(alignment: Alignment.centerRight, child: Text('৳ ${card.currentBalance.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F766E)))),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: gcStatusWidth,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Chip(
+                                      label: Text(card.status, style: const TextStyle(fontSize: 10, color: Colors.white)),
+                                      backgroundColor: isActive ? Colors.green : Colors.grey,
+                                      padding: EdgeInsets.zero,
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    const SizedBox(width: 6),
-                                    IconButton(
-                                      icon: Icon(isActive ? Icons.lock_outline : Icons.lock_open, size: 16),
-                                      tooltip: isActive ? 'Lock Card' : 'Unlock Card',
-                                      onPressed: () {
-                                        ref.read(crmControllerProvider.notifier).toggleGiftCardStatus(card.id, isActive ? 'LOCKED' : 'ACTIVE');
-                                      },
-                                    ),
-                                  ],
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: gcRecipWidth,
+                                  child: Text(card.recipientName ?? '—', overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: gcActWidth,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), minimumSize: Size.zero),
+                                        icon: const Icon(Icons.add, size: 12),
+                                        label: const Text('Reload', style: TextStyle(fontSize: 11)),
+                                        onPressed: () => ReloadGiftCardDialog.show(context, card),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      IconButton(
+                                        icon: Icon(isActive ? Icons.lock_outline : Icons.lock_open, size: 16),
+                                        tooltip: isActive ? 'Lock Card' : 'Unlock Card',
+                                        onPressed: () {
+                                          ref.read(crmControllerProvider.notifier).toggleGiftCardStatus(card.id, isActive ? 'LOCKED' : 'ACTIVE');
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -891,58 +1110,143 @@ class _PromotionalCampaignsTab extends ConsumerWidget {
                   if (campaigns.isEmpty) {
                     return const Center(child: Text('No promotional campaigns drafted yet.', style: TextStyle(color: Colors.grey)));
                   }
+                  final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+                  final campTitleWidth = colWidths['camp_col_title'] ?? 180.0;
+                  final campSegWidth = colWidths['camp_col_seg'] ?? 140.0;
+                  final campChanWidth = colWidths['camp_col_chan'] ?? 110.0;
+                  final campAudWidth = colWidths['camp_col_aud'] ?? 130.0;
+                  final campStatusWidth = colWidths['camp_col_status'] ?? 100.0;
+                  final campActWidth = colWidths['camp_col_act'] ?? 140.0;
+
                   return SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-                        columns: const [
-                          DataColumn(label: Text('Campaign Title')),
-                          DataColumn(label: Text('Target Segment')),
-                          DataColumn(label: Text('Channel')),
-                          DataColumn(label: Text('Audience')),
-                          DataColumn(label: Text('Status')),
-                          DataColumn(label: Text('Actions')),
+                        columns: [
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Campaign Title',
+                              width: campTitleWidth,
+                              minWidth: 120,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_title', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_title', 180.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Target Segment',
+                              width: campSegWidth,
+                              minWidth: 90,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_seg', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_seg', 140.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Channel',
+                              width: campChanWidth,
+                              minWidth: 80,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_chan', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_chan', 110.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Audience',
+                              width: campAudWidth,
+                              minWidth: 80,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_aud', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_aud', 130.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Status',
+                              width: campStatusWidth,
+                              minWidth: 70,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_status', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_status', 100.0),
+                            ),
+                          ),
+                          DataColumn(
+                            label: ResizableHeaderCell(
+                              title: 'Actions',
+                              width: campActWidth,
+                              minWidth: 90,
+                              onResize: (w) => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_act', w),
+                              onDoubleTapReset: () => ref.read(terminalPreferencesProvider.notifier).setTableColumnWidth('camp_col_act', 140.0),
+                            ),
+                          ),
                         ],
                         rows: campaigns.map((camp) {
                           return DataRow(
                             cells: [
-                              DataCell(Text(camp.title, style: const TextStyle(fontWeight: FontWeight.bold))),
-                              DataCell(Text(camp.targetSegment.replaceAll('_', ' '))),
-                              DataCell(Text(camp.channel)),
-                              DataCell(Text('${camp.audienceCount} recipients')),
                               DataCell(
-                                Chip(
-                                  label: Text(camp.status, style: const TextStyle(fontSize: 10, color: Colors.white)),
-                                  backgroundColor: camp.status == 'SENT' ? Colors.green : Colors.blueGrey,
-                                  padding: EdgeInsets.zero,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                SizedBox(
+                                  width: campTitleWidth,
+                                  child: Text(camp.title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 ),
                               ),
                               DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), minimumSize: Size.zero),
-                                      icon: const Icon(Icons.download, size: 12),
-                                      label: const Text('Export CSV', style: TextStyle(fontSize: 11)),
-                                      onPressed: () async {
-                                        final csv = await ref.read(crmControllerProvider.notifier).exportCampaignCsv(camp.id);
-                                        if (csv != null && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Campaign audience CSV exported successfully')),
-                                          );
-                                        }
-                                      },
+                                SizedBox(
+                                  width: campSegWidth,
+                                  child: Text(camp.targetSegment.replaceAll('_', ' '), overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: campChanWidth,
+                                  child: Text(camp.channel, overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: campAudWidth,
+                                  child: Text('${camp.audienceCount} recipients', overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: campStatusWidth,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Chip(
+                                      label: Text(camp.status, style: const TextStyle(fontSize: 10, color: Colors.white)),
+                                      backgroundColor: camp.status == 'SENT' ? Colors.green : Colors.blueGrey,
+                                      padding: EdgeInsets.zero,
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    const SizedBox(width: 6),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 16),
-                                      onPressed: () => CampaignDialog.show(context, campaign: camp),
-                                    ),
-                                  ],
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: campActWidth,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), minimumSize: Size.zero),
+                                        icon: const Icon(Icons.download, size: 12),
+                                        label: const Text('Export CSV', style: TextStyle(fontSize: 11)),
+                                        onPressed: () async {
+                                          final csv = await ref.read(crmControllerProvider.notifier).exportCampaignCsv(camp.id);
+                                          if (csv != null && context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Campaign audience CSV exported successfully')),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                      const SizedBox(width: 6),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, size: 16),
+                                        onPressed: () => CampaignDialog.show(context, campaign: camp),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

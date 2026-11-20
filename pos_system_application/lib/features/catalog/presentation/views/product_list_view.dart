@@ -4,6 +4,8 @@ import '../../../../app/theme.dart';
 import '../../../../core/widgets/pos_animated_card.dart';
 import '../../../../core/widgets/pos_error_card.dart';
 import '../../../../core/widgets/stat_strip.dart';
+import '../../../../core/widgets/resizable_header_cell.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../inventory/presentation/controllers/inventory_controller.dart';
 import '../../../inventory/presentation/views/stock_adjustment_dialog.dart';
 import '../../../inventory/presentation/views/stock_movements_dialog.dart';
@@ -423,6 +425,17 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
     Map<String, double> balancesMap,
   ) {
     final filterNotifier = ref.read(productFilterProvider.notifier);
+    final colWidths = ref.watch(terminalPreferencesProvider).tableColumnWidths;
+    final skuWidth = colWidths['cat_col_sku'] ?? 110.0;
+    final nameWidth = colWidths['cat_col_name'] ?? 240.0;
+    final catWidth = colWidths['cat_col_cat'] ?? 140.0;
+    final barcodeWidth = colWidths['cat_col_barcode'] ?? 130.0;
+    final sellWidth = colWidths['cat_col_sell'] ?? 110.0;
+    final costWidth = colWidths['cat_col_cost'] ?? 110.0;
+    final stockWidth = colWidths['cat_col_stock'] ?? 130.0;
+    final statusWidth = colWidths['cat_col_status'] ?? 100.0;
+    final actionsWidth = colWidths['cat_col_actions'] ?? 160.0;
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -439,34 +452,126 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                 child: DataTable(
                   headingRowColor:
                       WidgetStateProperty.all(Colors.grey.shade100),
-                  columns: const [
+                  columns: [
                     DataColumn(
-                        label: Text('SKU',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'SKU',
+                        width: skuWidth,
+                        minWidth: 70,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_sku', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_sku', 110.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Product Name',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Product Name',
+                        width: nameWidth,
+                        minWidth: 140,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_name', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_name', 240.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Category',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Category',
+                        width: catWidth,
+                        minWidth: 90,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_cat', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_cat', 140.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Barcode',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Barcode',
+                        width: barcodeWidth,
+                        minWidth: 90,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_barcode', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_barcode', 130.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Selling Price',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Selling Price',
+                        width: sellWidth,
+                        minWidth: 80,
+                        isNumeric: true,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_sell', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_sell', 110.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Cost Price',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Cost Price',
+                        width: costWidth,
+                        minWidth: 80,
+                        isNumeric: true,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_cost', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_cost', 110.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Stock on Hand',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Stock on Hand',
+                        width: stockWidth,
+                        minWidth: 90,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_stock', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_stock', 130.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Status',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Status',
+                        width: statusWidth,
+                        minWidth: 70,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_status', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_status', 100.0),
+                      ),
+                    ),
                     DataColumn(
-                        label: Text('Actions',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: ResizableHeaderCell(
+                        title: 'Actions',
+                        width: actionsWidth,
+                        minWidth: 100,
+                        onResize: (w) => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_actions', w),
+                        onDoubleTapReset: () => ref
+                            .read(terminalPreferencesProvider.notifier)
+                            .setTableColumnWidth('cat_col_actions', 160.0),
+                      ),
+                    ),
                   ],
                   rows: paginated.items.map((prod) {
                     final variant = prod.primaryVariant;
@@ -484,14 +589,18 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                     return DataRow(
                       cells: [
                         DataCell(
-                          Text(
-                            prod.sku,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          SizedBox(
+                            width: skuWidth,
+                            child: Text(
+                              prod.sku,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                         DataCell(
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 220),
+                          SizedBox(
+                            width: nameWidth,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -517,8 +626,8 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                           ),
                         ),
                         DataCell(
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 140),
+                          SizedBox(
+                            width: catWidth,
                             child: Text(
                               prod.categoryName ?? 'Uncategorized',
                               overflow: TextOverflow.ellipsis,
@@ -531,142 +640,179 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                           ),
                         ),
                         DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (variant?.barcode != null)
-                                const Icon(Icons.qr_code_2,
-                                    size: 16, color: Colors.grey),
-                              if (variant?.barcode != null)
-                                const SizedBox(width: 4),
-                              Text(barcode),
-                            ],
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            sellingPrice,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0F766E)),
-                          ),
-                        ),
-                        DataCell(Text(costPrice)),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: stockQty <= 0
-                                  ? Colors.red.shade50
-                                  : stockQty <= 5
-                                      ? Colors.amber.shade50
-                                      : Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: stockQty <= 0
-                                    ? Colors.red.shade300
-                                    : stockQty <= 5
-                                        ? Colors.amber.shade300
-                                        : Colors.green.shade300,
-                              ),
+                          SizedBox(
+                            width: barcodeWidth,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (variant?.barcode != null)
+                                  const Icon(Icons.qr_code_2,
+                                      size: 16, color: Colors.grey),
+                                if (variant?.barcode != null)
+                                  const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    barcode,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Text(
-                              stockQty <= 0
-                                  ? 'Out of Stock (0)'
-                                  : stockQty <= 5
-                                      ? 'Low: ${stockQty.toStringAsFixed(0)}'
-                                      : '${stockQty.toStringAsFixed(0)} on hand',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: stockQty <= 0
-                                    ? Colors.red.shade800
-                                    : stockQty <= 5
-                                        ? Colors.amber.shade900
-                                        : Colors.green.shade800,
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: sellWidth,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                sellingPrice,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0F766E)),
                               ),
                             ),
                           ),
                         ),
                         DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: prod.isActive
-                                  ? Colors.green.shade50
-                                  : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: prod.isActive
-                                    ? Colors.green.shade300
-                                    : Colors.grey.shade300,
-                              ),
+                          SizedBox(
+                            width: costWidth,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(costPrice),
                             ),
-                            child: Text(
-                              prod.isActive ? 'Active' : 'Inactive',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: prod.isActive
-                                    ? Colors.green.shade700
-                                    : Colors.grey.shade600,
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: stockWidth,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: stockQty <= 0
+                                      ? Colors.red.shade50
+                                      : stockQty <= 5
+                                          ? Colors.amber.shade50
+                                          : Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: stockQty <= 0
+                                        ? Colors.red.shade300
+                                        : stockQty <= 5
+                                            ? Colors.amber.shade300
+                                            : Colors.green.shade300,
+                                  ),
+                                ),
+                                child: Text(
+                                  stockQty <= 0
+                                      ? 'Out of Stock (0)'
+                                      : stockQty <= 5
+                                          ? 'Low: ${stockQty.toStringAsFixed(0)}'
+                                          : '${stockQty.toStringAsFixed(0)} on hand',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: stockQty <= 0
+                                        ? Colors.red.shade800
+                                        : stockQty <= 5
+                                            ? Colors.amber.shade900
+                                            : Colors.green.shade800,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                         DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.tune, size: 20),
-                                tooltip: 'Adjust Physical Stock',
-                                onPressed: () async {
-                                  if (variant == null) return;
-                                  final adjusted =
-                                      await StockAdjustmentDialog.show(
-                                    context,
-                                    productVariantId: variant.id,
-                                    productName: prod.name,
-                                    currentStock: stockQty,
-                                  );
-                                  if (adjusted != null) {
-                                    ref.invalidate(stockBalancesProvider);
-                                    ref.invalidate(paginatedProductsProvider);
-                                  }
-                                },
+                          SizedBox(
+                            width: statusWidth,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: prod.isActive
+                                      ? Colors.green.shade50
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: prod.isActive
+                                        ? Colors.green.shade300
+                                        : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Text(
+                                  prod.isActive ? 'Active' : 'Inactive',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: prod.isActive
+                                        ? Colors.green.shade700
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.history, size: 20),
-                                tooltip: 'Stock Movement Ledger',
-                                onPressed: () {
-                                  if (variant == null) return;
-                                  StockMovementsDialog.show(
-                                    context,
-                                    productVariantId: variant.id,
-                                    productName: prod.name,
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                                tooltip: 'Edit Product',
-                                onPressed: () => _openFormDialog(prod),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.qr_code_2, size: 20),
-                                tooltip: 'Print Barcode & Shelf Tag',
-                                onPressed: () {
-                                  BarcodePrintDialog.show(
-                                    context,
-                                    product: prod,
-                                    variant: variant,
-                                  );
-                                },
-                              ),
-                            ],
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: actionsWidth,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.tune, size: 20),
+                                  tooltip: 'Adjust Physical Stock',
+                                  onPressed: () async {
+                                    if (variant == null) return;
+                                    final adjusted =
+                                        await StockAdjustmentDialog.show(
+                                      context,
+                                      productVariantId: variant.id,
+                                      productName: prod.name,
+                                      currentStock: stockQty,
+                                    );
+                                    if (adjusted != null) {
+                                      ref.invalidate(stockBalancesProvider);
+                                      ref.invalidate(paginatedProductsProvider);
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.history, size: 20),
+                                  tooltip: 'Stock Movement Ledger',
+                                  onPressed: () {
+                                    if (variant == null) return;
+                                    StockMovementsDialog.show(
+                                      context,
+                                      productVariantId: variant.id,
+                                      productName: prod.name,
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 20),
+                                  tooltip: 'Edit Product',
+                                  onPressed: () => _openFormDialog(prod),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.qr_code_2, size: 20),
+                                  tooltip: 'Print Barcode & Shelf Tag',
+                                  onPressed: () {
+                                    BarcodePrintDialog.show(
+                                      context,
+                                      product: prod,
+                                      variant: variant,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
