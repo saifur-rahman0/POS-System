@@ -191,12 +191,16 @@ class _CustomerDirectoryTabState extends ConsumerState<_CustomerDirectoryTab> {
                 StatStripItem(
                   label: 'TOTAL CUSTOMERS',
                   value: '${paginated?.total ?? 0}',
+                  numericValue: paginated?.total ?? 0,
                   icon: Icons.people_alt_outlined,
                   color: AppColors.accentTeal,
                 ),
                 StatStripItem(
                   label: 'OUTSTANDING DUES',
                   value: currencyFmt.format(paginated?.totalOutstandingDues ?? 0.0),
+                  numericValue: paginated?.totalOutstandingDues ?? 0.0,
+                  prefix: '৳ ',
+                  decimalDigits: 2,
                   icon: Icons.account_balance_wallet_outlined,
                   color: AppColors.accentRose,
                   badge: (paginated?.totalOutstandingDues ?? 0.0) > 0 ? 'DUE' : null,
@@ -204,12 +208,14 @@ class _CustomerDirectoryTabState extends ConsumerState<_CustomerDirectoryTab> {
                 StatStripItem(
                   label: 'ACTIVE LOYALTY PROFILES',
                   value: '${customers.where((c) => c.loyaltyPointsBalance > 0).length}',
+                  numericValue: customers.where((c) => c.loyaltyPointsBalance > 0).length,
                   icon: Icons.stars_outlined,
                   color: AppColors.accentPurple,
                 ),
                 StatStripItem(
                   label: 'OVER CREDIT LIMIT',
                   value: '${customers.where((c) => c.dueBalance > (c.creditLimit > 0 ? c.creditLimit : 99999999)).length}',
+                  numericValue: customers.where((c) => c.dueBalance > (c.creditLimit > 0 ? c.creditLimit : 99999999)).length,
                   icon: Icons.warning_amber_rounded,
                   color: AppColors.accentAmber,
                 ),

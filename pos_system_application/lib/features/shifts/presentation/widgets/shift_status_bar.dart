@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pos_client/app/theme.dart';
 import '../../../../core/widgets/pos_error_card.dart';
 import '../../domain/models/register_shift.dart';
 import '../controllers/shift_controller.dart';
@@ -96,11 +98,11 @@ class ShiftStatusBar extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.teal.shade200),
+        border: Border.all(color: AppColors.accentTeal.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.teal.withValues(alpha: 0.05),
-            blurRadius: 4,
+            color: AppColors.accentTeal.withValues(alpha: 0.05),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -109,64 +111,64 @@ class ShiftStatusBar extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Shift #${shift.id.substring(0, 6).toUpperCase()}',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '($openedStr)',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          if (shift.cashierName != null) ...[
-            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                shift.cashierName!,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.accentGreen,
+                shape: BoxShape.circle,
               ),
             ),
-          ],
-          const SizedBox(width: 16),
-          // Live Expected Drawer Cash Pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.teal.shade50,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.teal.shade200),
+            const SizedBox(width: 8),
+            Text(
+              'Shift #${shift.id.substring(0, 6).toUpperCase()}',
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.point_of_sale, size: 14, color: Colors.teal),
-                const SizedBox(width: 4),
-                Text(
-                  'Drawer: ৳${expectedCash.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal.shade900,
-                  ),
+            const SizedBox(width: 8),
+            Text(
+              '($openedStr)',
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
+            ),
+            if (shift.cashierName != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-              ],
+                child: Text(
+                  shift.cashierName!,
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                ),
+              ),
+            ],
+            const SizedBox(width: 16),
+            // Live Expected Drawer Cash Pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.accentTeal.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.accentTeal.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.point_of_sale, size: 14, color: AppColors.accentTeal),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Drawer: ৳${expectedCash.toStringAsFixed(2)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF0F766E),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
+            const SizedBox(width: 10),
           // Drawer Quick Actions
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(

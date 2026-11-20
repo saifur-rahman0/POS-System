@@ -81,18 +81,21 @@ class _ProductListViewState extends ConsumerState<ProductListView> {
                 StatStripItem(
                   label: 'TOTAL PRODUCTS',
                   value: '$totalProducts',
+                  numericValue: totalProducts,
                   icon: Icons.inventory_2_outlined,
                   color: AppColors.accentTeal,
                 ),
                 StatStripItem(
                   label: 'UNITS IN STOCK',
                   value: '$totalUnits',
+                  numericValue: totalUnits,
                   icon: Icons.all_inbox_rounded,
                   color: AppColors.accentBlue,
                 ),
                 StatStripItem(
                   label: 'ACTIVE CATEGORIES',
                   value: '${categories.length}',
+                  numericValue: categories.length,
                   icon: Icons.category_outlined,
                   color: AppColors.accentPurple,
                 ),

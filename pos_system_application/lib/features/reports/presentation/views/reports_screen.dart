@@ -306,6 +306,9 @@ class ReportsScreen extends ConsumerWidget {
                     child: KpiMetricCard(
                       title: 'GROSS REVENUE',
                       value: currencyFmt.format(m.grossSales),
+                      numericValue: m.grossSales,
+                      prefix: '৳ ',
+                      decimalDigits: 2,
                       changeLabel: '${m.totalOrders} total sales transactions',
                       accentColor: AppColors.accentTeal,
                       icon: Icons.payments_rounded,
@@ -317,6 +320,9 @@ class ReportsScreen extends ConsumerWidget {
                     child: KpiMetricCard(
                       title: 'NET SALES',
                       value: currencyFmt.format(m.netSales),
+                      numericValue: m.netSales,
+                      prefix: '৳ ',
+                      decimalDigits: 2,
                       changeLabel: 'Refunds: ${currencyFmt.format(m.totalRefunds)}',
                       accentColor: AppColors.accentPurple,
                       icon: Icons.account_balance_wallet_rounded,
@@ -328,6 +334,9 @@ class ReportsScreen extends ConsumerWidget {
                     child: KpiMetricCard(
                       title: 'GROSS PROFIT',
                       value: currencyFmt.format(m.grossProfit),
+                      numericValue: m.grossProfit,
+                      prefix: '৳ ',
+                      decimalDigits: 2,
                       changePercent: m.profitMarginPct,
                       changeLabel: 'Margin: ${m.profitMarginPct.toStringAsFixed(1)}%',
                       accentColor: AppColors.accentGreen,
@@ -340,6 +349,9 @@ class ReportsScreen extends ConsumerWidget {
                     child: KpiMetricCard(
                       title: 'AVG ORDER VALUE',
                       value: currencyFmt.format(m.averageBasketValue),
+                      numericValue: m.averageBasketValue,
+                      prefix: '৳ ',
+                      decimalDigits: 2,
                       changeLabel: '${m.totalItemsSold.toStringAsFixed(0)} units sold',
                       accentColor: AppColors.accentBlue,
                       icon: Icons.shopping_bag_outlined,
@@ -892,6 +904,9 @@ class ReportsScreen extends ConsumerWidget {
                       child: KpiMetricCard(
                         title: 'TOTAL OUTSTANDING DUES',
                         value: currencyFmt.format(dues.totalOutstandingDue),
+                        numericValue: dues.totalOutstandingDue,
+                        prefix: '৳ ',
+                        decimalDigits: 2,
                         changeLabel: '${dues.totalCustomersWithDue} accounts with active credit balance',
                         accentColor: AppColors.accentRose,
                         icon: Icons.account_balance_wallet_outlined,
@@ -902,6 +917,8 @@ class ReportsScreen extends ConsumerWidget {
                       child: KpiMetricCard(
                         title: 'ACCOUNTS OVER CREDIT LIMIT',
                         value: '$overdueAccountsCount',
+                        numericValue: overdueAccountsCount,
+                        decimalDigits: 0,
                         changeLabel: 'Over credit limit threshold',
                         accentColor: AppColors.accentAmber,
                         icon: Icons.warning_amber_rounded,

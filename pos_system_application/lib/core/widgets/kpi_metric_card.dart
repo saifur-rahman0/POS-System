@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pos_client/app/theme.dart';
+import 'animated_counter.dart';
 
 class KpiMetricCard extends StatefulWidget {
   final String title;
   final String value;
+  final num? numericValue;
+  final String? prefix;
+  final int? decimalDigits;
   final String? subtitle;
   final double? changePercent;
   final String? changeLabel;
@@ -17,6 +21,9 @@ class KpiMetricCard extends StatefulWidget {
     super.key,
     required this.title,
     required this.value,
+    this.numericValue,
+    this.prefix,
+    this.decimalDigits,
     this.subtitle,
     this.changePercent,
     this.changeLabel,
@@ -128,13 +135,28 @@ class _KpiMetricCardState extends State<KpiMetricCard>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  widget.value,
-                  style: GoogleFonts.inter(
-                    fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
+                if (widget.numericValue != null)
+                  AnimatedCounter(
+                    value: widget.numericValue!,
+                    prefix: widget.prefix ?? '',
+                    decimalDigits: widget.decimalDigits ?? 0,
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  )
+                else
+                  Text(
+                    widget.value,
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
                 if (widget.changeLabel != null) ...[
                   const SizedBox(height: 4),
                   Text(

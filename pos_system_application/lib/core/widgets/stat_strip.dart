@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pos_client/app/theme.dart';
+import 'animated_counter.dart';
 
 class StatStripItem {
   final String label;
   final String value;
+  final num? numericValue;
+  final String? prefix;
+  final int? decimalDigits;
   final IconData icon;
   final Color color;
   final String? badge;
@@ -12,6 +16,9 @@ class StatStripItem {
   const StatStripItem({
     required this.label,
     required this.value,
+    this.numericValue,
+    this.prefix,
+    this.decimalDigits,
     required this.icon,
     this.color = AppColors.accentTeal,
     this.badge,
@@ -88,9 +95,26 @@ class _StatStripCell extends StatelessWidget {
             const SizedBox(height: 1),
             Row(
               children: [
-                Text(item.value,
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
+                if (item.numericValue != null)
+                  AnimatedCounter(
+                    value: item.numericValue!,
+                    prefix: item.prefix ?? '',
+                    decimalDigits: item.decimalDigits ?? 0,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  )
+                else
+                  Text(
+                    item.value,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 if (item.badge != null) ...[
                   const SizedBox(width: 6),
                   Container(
