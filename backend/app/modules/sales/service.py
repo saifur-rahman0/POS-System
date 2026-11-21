@@ -8,7 +8,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.modules.business.models import Branch
 from app.modules.catalog.models import ImeiDevice, ProductVariant
@@ -106,10 +106,13 @@ class CheckoutService:
         variants_map: dict[uuid.UUID, ProductVariant],
         change_amount: Decimal = Decimal("0.0000"),
         customer_name: str | None = None,
+        items: list[SaleItem] | None = None,
+        payments: list[PaymentTender] | None = None,
     ) -> SaleOut:
         """Maps internal Sale entity to public response DTO."""
         items_out = []
-        for item in sale.items:
+        raw_items = items if items is not None else sale.items
+        for item in raw_items:
             variant = variants_map.get(item.product_variant_id)
             product_name = variant.product.name if variant and variant.product else "Item"
             sku = variant.product.sku if variant and variant.product else ""
@@ -133,6 +136,7 @@ class CheckoutService:
                 )
             )
 
+        raw_payments = payments if payments is not None else sale.payments
         payments_out = [
             PaymentTenderOut(
                 id=p.id,
@@ -142,7 +146,7 @@ class CheckoutService:
                 status=p.status,
                 received_at=p.received_at,
             )
-            for p in sale.payments
+            for p in raw_payments
         ]
 
         return SaleOut(
@@ -329,7 +333,7 @@ class CheckoutService:
         requested_variant_ids = [item.product_variant_id for item in payload.items]
         variants_stmt = (
             select(ProductVariant)
-            .options(selectinload(ProductVariant.product))
+            .options(joinedload(ProductVariant.product))
             .where(
                 ProductVariant.business_id == business_id,
                 ProductVariant.id.in_(requested_variant_ids),
@@ -920,18 +924,13 @@ class CheckoutService:
         # Commit entire atomic transaction
         await session.commit()
 
-        # Reload sale with all relations for return mapping
-        reloaded = await self.sales_repo.get_by_id(session, business_id, sale_id)
-        if not reloaded:
-            raise AppException(
-                "Failed to load completed sale", code="INTERNAL_ERROR", status_code=500
-            )
-
         sale_out = self._map_sale_out(
-            reloaded,
+            sale,
             variants_map,
             change_amount=change_amount,
             customer_name=customer.name if customer else None,
+            items=sale_items,
+            payments=payment_tenders,
         )
         return sale_out, False
 
